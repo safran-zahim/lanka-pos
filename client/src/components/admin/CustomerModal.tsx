@@ -1,0 +1,237 @@
+import React, { useState, useEffect } from 'react';
+import { X, User, Phone, Mail, Save, AlertCircle, Award, Receipt, Calendar } from 'lucide-react';
+import { db, type Customer } from '../../db/db';
+import { useLiveQuery } from 'dexie-react-hooks';
+
+interface CustomerModalProps {
+    customer?: Customer | null;
+    onClose: () => void;
+    onSuccess: () => void;
+}
+
+export const CustomerModal = ({ customer, onClose, onSuccess }: CustomerModalProps) => {
+    const [formData, setFormData] = useState({
+        name: '',
+        phone: '',
+        email: ''
+    });
+    const [isSaving, setIsSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const transactions = useLiveQuery(
+        () => customer?.customer_id ? db.transactions.where('customer_id').equals(customer.customer_id!).reverse().sortBy('timestamp') : [],
+        [customer?.customer_id]
+    );
+    const pointsHistory = useLiveQuery(
+        () => customer?.customer_id ? db.customer_points.where('customer_id').equals(customer.customer_id!).reverse().sortBy('timestamp') : [],
+        [customer?.customer_id]
+    );
+
+    useEffect(() => {
+        if (customer) {
+            setFormData({
+                name: customer.name,
+                phone: customer.phone,
+                email: customer.email || ''
+            });
+        }
+    }, [customer]);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
+        if (!formData.name.trim() || !formData.phone.trim()) {
+            setError('Name and phone are required.');
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            if (customer?.customer_id) {
+                await db.customers.update(customer.customer_id, {
+                    name: formData.name.trim(),
+                    phone: formData.phone.trim(),
+                    email: formData.email.trim()
+                });
+            } else {
+                await db.customers.add({
+                    name: formData.name.trim(),
+                    phone: formData.phone.trim(),
+                    email: formData.email.trim(),
+                    loyalty_points_balance: 0,
+                    total_spend_to_date: 0
+                });
+            }
+            onSuccess();
+            onClose();
+        } catch (err: any) {
+            console.error(err);
+            if (err.name === 'ConstraintError') {
+                setError('A customer with this phone number already exists.');
+            } else {
+                setError('Failed to save customer details.');
+            }
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all" onClick={onClose}>
+            <div
+                className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-800 overflow-hidden animate-in fade-in zoom-in duration-200"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* Header Graphic */}
+                <div className="relative h-32 bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center">
+                    <button
+                        onClick={onClose}
+                        className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors bg-white/10 p-2 rounded-full backdrop-blur-md"
+                    >
+                        <X size={20} />
+                    </button>
+                    <div className="bg-white dark:bg-gray-900 p-4 rounded-3xl shadow-xl flex items-center justify-center translate-y-8 border-4 border-gray-50 dark:border-gray-900">
+                        <User size={40} className="text-blue-600" />
+                    </div>
+                </div>
+
+                <div className="px-8 pt-12 pb-8">
+                    <div className="text-center mb-8">
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                            {customer ? 'Edit Customer' : 'Add New Customer'}
+                        </h2>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+                            {customer ? 'Update customer contact information' : 'Create a new customer profile'}
+                        </p>
+                    </div>
+
+                    {error && (
+                        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/50 rounded-xl flex items-start gap-3 text-red-600 dark:text-red-400 text-sm animate-in slide-in-from-top-2">
+                            <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                            <p>{error}</p>
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Full Name</label>
+                            <div className="relative group">
+                                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={18} />
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="John Doe"
+                                    className="w-full bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl py-4 pl-12 pr-4 border-2 border-transparent focus:border-blue-500 focus:bg-white dark:focus:bg-gray-900 outline-none transition-all shadow-sm"
+                                    value={formData.name}
+                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Phone Number</label>
+                            <div className="relative group">
+                                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={18} />
+                                <input
+                                    type="tel"
+                                    required
+                                    placeholder="+94 77 123 4567"
+                                    className="w-full bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl py-4 pl-12 pr-4 border-2 border-transparent focus:border-blue-500 focus:bg-white dark:focus:bg-gray-900 outline-none transition-all shadow-sm"
+                                    value={formData.phone}
+                                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Email Address (Optional)</label>
+                            <div className="relative group">
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={18} />
+                                <input
+                                    type="email"
+                                    placeholder="john@example.com"
+                                    className="w-full bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl py-4 pl-12 pr-4 border-2 border-transparent focus:border-blue-500 focus:bg-white dark:focus:bg-gray-900 outline-none transition-all shadow-sm"
+                                    value={formData.email}
+                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="pt-6 flex gap-3">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="flex-1 px-6 py-4 rounded-xl border-2 border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-400 font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-all active:scale-95"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={isSaving}
+                                className="flex-[2] bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-70"
+                            >
+                                {isSaving ? (
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                ) : (
+                                    <Save size={20} />
+                                )}
+                                {customer ? 'Update Profile' : 'Create Profile'}
+                            </button>
+                        </div>
+                    </form>
+
+                    {customer?.customer_id && (
+                        <div className="mt-8 space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+                                    <div className="text-xs text-gray-400 uppercase tracking-widest mb-2">Points History</div>
+                                    <div className="max-h-40 overflow-y-auto space-y-2 text-sm">
+                                        {pointsHistory?.map(p => (
+                                            <div key={p.id} className="flex justify-between items-center">
+                                                <span className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                                                    <Calendar size={12} /> {new Date(p.timestamp).toLocaleString()}
+                                                </span>
+                                                <span className={p.points >= 0 ? 'text-green-600' : 'text-red-600'}>
+                                                    {p.points >= 0 ? '+' : ''}{p.points}
+                                                </span>
+                                            </div>
+                                        ))}
+                                        {pointsHistory?.length === 0 && (
+                                            <div className="text-gray-400">No points history</div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+                                    <div className="text-xs text-gray-400 uppercase tracking-widest mb-2">Purchase History</div>
+                                    <div className="max-h-40 overflow-y-auto space-y-2 text-sm">
+                                        {transactions?.map(t => (
+                                            <div key={t.transaction_id} className="flex justify-between items-center">
+                                                <span className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                                                    <Receipt size={12} /> #{t.transaction_id}
+                                                </span>
+                                                <span className="text-gray-700 dark:text-gray-200 font-medium">
+                                                    {t.total_amount.toFixed(2)}
+                                                </span>
+                                            </div>
+                                        ))}
+                                        {transactions?.length === 0 && (
+                                            <div className="text-gray-400">No purchases found</div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+                                <div className="text-sm text-gray-600 dark:text-gray-300">Points Balance</div>
+                                <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400 font-bold">
+                                    <Award size={16} /> {customer.loyalty_points_balance}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};

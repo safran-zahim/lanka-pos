@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>client</title>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script>
+    (function () {
+      try {
+        var storage = localStorage.getItem('theme-storage');
+        if (storage) {
+          var theme = JSON.parse(storage).state.theme;
+          if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } else {
+          // Default to light mode if no setting found
+          document.documentElement.classList.remove('dark');
+        }
+      } catch (e) {
+        console.error('Failed to load theme', e);
+      }
+    })();
+  </script>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>
