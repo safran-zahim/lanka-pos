@@ -130,12 +130,14 @@ export interface Purchase {
     user_id: number; // Who added the stock
     supplier_id?: number;
     ref_number?: string;
+    bill_id?: string; // For grouping unique bills
     payment_status?: 'paid' | 'partial' | 'due';
     payment_method?: 'cash' | 'bank' | 'card' | 'cheque' | 'other';
     shipping_cost?: number;
     discount?: number;
     notes?: string;
     bill_total?: number;
+    amount_paid?: number; // How much was actually paid
 }
 
 export interface Supplier {
@@ -232,6 +234,11 @@ export class POSDatabase extends Dexie {
             product_batches: '++batch_id, product_id, retail_price, created_at'
         };
 
+        const v9Stores = {
+            ...v8Stores,
+            purchases: '++purchase_id, product_id, timestamp, bill_id'
+        };
+
         this.version(1).stores(v1Stores);
         this.version(2).stores(v2Stores);
         this.version(3).stores(v3Stores);
@@ -240,6 +247,7 @@ export class POSDatabase extends Dexie {
         this.version(6).stores(v6Stores);
         this.version(7).stores(v7Stores);
         this.version(8).stores(v8Stores);
+        this.version(9).stores(v9Stores);
 
     }
 }

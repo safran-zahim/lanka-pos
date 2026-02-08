@@ -11,6 +11,7 @@ export const PurchaseHistory = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedSupplier, setSelectedSupplier] = useState<string>('All');
     const [selectedBill, setSelectedBill] = useState<string | null>(null);
+    const [filterStatus, setFilterStatus] = useState<'all' | 'due'>('all');
     const { formatCurrency } = useCurrency();
     const { formatDateTime } = useLocale();
 
@@ -33,14 +34,14 @@ export const PurchaseHistory = () => {
     const suppliers = useLiveQuery(() => db.suppliers.toArray());
 
     const groupedBills = purchases?.reduce((acc, p) => {
-        const billKey = p.ref_number
+        const billKey = p.bill_id || (p.ref_number
             ? `ref:${p.ref_number}`
-            : `ts:${new Date(p.timestamp).getTime()}|sup:${p.supplier_id ?? 'na'}`;
+            : `ts:${new Date(p.timestamp).getTime()}|sup:${p.supplier_id ?? 'na'}`);
 
         if (!acc.has(billKey)) {
             acc.set(billKey, {
                 billKey,
-                ref_number: p.ref_number || '- ',
+                ref_number: p.ref_number || '-',
                 supplierName: p.supplierName,
                 supplier_id: p.supplier_id,
                 timestamp: p.timestamp,
@@ -49,6 +50,7 @@ export const PurchaseHistory = () => {
                 shipping_cost: p.shipping_cost || 0,
                 discount: p.discount || 0,
                 bill_total: p.bill_total || 0,
+                amount_paid: p.amount_paid || 0,
                 items: [p]
             });
         } else {
@@ -62,7 +64,8 @@ export const PurchaseHistory = () => {
         const total = bill.bill_total && bill.bill_total > 0
             ? bill.bill_total
             : subtotal + (bill.shipping_cost || 0) - (bill.discount || 0);
-        return { ...bill, subtotal, total };
+        const due = Math.max(0, total - bill.amount_paid);
+        return { ...bill, subtotal, total, due };
     });
 
     const filteredBills = bills.filter(b => {
@@ -70,7 +73,8 @@ export const PurchaseHistory = () => {
             (b.ref_number && b.ref_number.toLowerCase().includes(searchQuery.toLowerCase())) ||
             b.supplierName.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesSupplier = selectedSupplier === 'All' || b.supplierName === selectedSupplier;
-        return matchesSearch && matchesSupplier;
+        const matchesStatus = filterStatus === 'all' || b.due > 0;
+        return matchesSearch && matchesSupplier && matchesStatus;
     });
 
     return (
@@ -101,6 +105,21 @@ export const PurchaseHistory = () => {
                     />
                 </div>
 
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setFilterStatus('all')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${filterStatus === 'all' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700'}`}
+                    >
+                        All
+                    </button>
+                    <button
+                        onClick={() => setFilterStatus('due')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${filterStatus === 'due' ? 'bg-orange-600 text-white border-orange-600' : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700'}`}
+                    >
+                        Due Only
+                    </button>
+                </div>
+
                 <div className="md:w-64">
                     <div className="relative">
                         <Filter className="absolute left-3 top-3 text-gray-400" size={20} />
@@ -127,8 +146,9 @@ export const PurchaseHistory = () => {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ref No</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Supplier</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Payment</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Items</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Paid</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider text-orange-600">Due</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -147,14 +167,20 @@ export const PurchaseHistory = () => {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                     {bill.supplierName}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                    {String(bill.payment_status).toUpperCase()} • {bill.payment_method}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
-                                    {bill.items.length}
+                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${bill.due > 0 ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30' : 'bg-green-100 text-green-600 dark:bg-green-900/30'}`}>
+                                        {bill.due > 0 ? 'Partial/Due' : 'Paid'}
+                                    </span>
+                                    <span className="ml-2 text-xs text-gray-400">{bill.payment_method}</span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900 dark:text-white">
                                     {formatCurrency(bill.total)}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-green-600">
+                                    {formatCurrency(bill.amount_paid)}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-orange-600">
+                                    {bill.due > 0 ? formatCurrency(bill.due) : '-'}
                                 </td>
                             </tr>
                         ))}
@@ -237,6 +263,14 @@ export const PurchaseHistory = () => {
                                                 <div className="flex justify-between gap-6 font-semibold text-gray-900 dark:text-white">
                                                     <span>Total</span>
                                                     <span>{formatCurrency(bill.total)}</span>
+                                                </div>
+                                                <div className="flex justify-between gap-6 text-green-600">
+                                                    <span>Paid</span>
+                                                    <span>{formatCurrency(bill.amount_paid)}</span>
+                                                </div>
+                                                <div className="flex justify-between gap-6 font-bold text-orange-600 pt-1 border-t border-gray-200 dark:border-gray-700">
+                                                    <span>Outstanding Due</span>
+                                                    <span>{formatCurrency(bill.due)}</span>
                                                 </div>
                                             </div>
                                         </div>

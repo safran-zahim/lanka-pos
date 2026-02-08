@@ -12,6 +12,7 @@ export interface CartItem extends Product {
 interface CartState {
     items: CartItem[];
     customer: Customer | null;
+    subtotal: number;
     total: number;
     tax: number;
     discount: number;
@@ -54,7 +55,7 @@ const calculateTotals = (
         const roundedFinal = Math.floor(final * factor) / factor;
         roundOffDiscount = Math.max(0, parseFloat((final - roundedFinal).toFixed(roundOffDecimals)));
     }
-    return { total, tax, discount: totalDiscount, roundOffDiscount };
+    return { subtotal, total, tax, discount: totalDiscount, roundOffDiscount };
 };
 
 export const useCartStore = create<CartState>()(
@@ -78,6 +79,7 @@ export const useCartStore = create<CartState>()(
             return {
                 items: [],
                 customer: null,
+                subtotal: 0,
                 total: 0,
                 tax: 0,
                 discount: 0,
@@ -100,15 +102,15 @@ export const useCartStore = create<CartState>()(
                         newItems = [...items, { ...product, quantity: 1, note: '' }];
                     }
 
-                    const { total, tax, discount, roundOffDiscount } = getTotals(newItems, pointsRedeemed, manualDiscount);
-                    set({ items: newItems, total, tax, discount, roundOffDiscount });
+                    const { subtotal, total, tax, discount, roundOffDiscount } = getTotals(newItems, pointsRedeemed, manualDiscount);
+                    set({ items: newItems, subtotal, total, tax, discount, roundOffDiscount });
                 },
 
                 removeItem: (productId, batchId) => {
                     const { items, pointsRedeemed, manualDiscount } = get();
                     const newItems = items.filter(item => !(item.product_id === productId && item.batch_id === batchId));
-                    const { total, tax, discount, roundOffDiscount } = getTotals(newItems, pointsRedeemed, manualDiscount);
-                    set({ items: newItems, total, tax, discount, roundOffDiscount });
+                    const { subtotal, total, tax, discount, roundOffDiscount } = getTotals(newItems, pointsRedeemed, manualDiscount);
+                    set({ items: newItems, subtotal, total, tax, discount, roundOffDiscount });
                 },
 
                 updateQuantity: (productId, quantity, batchId) => {
@@ -120,8 +122,8 @@ export const useCartStore = create<CartState>()(
                     const newItems = items.map(item =>
                         item.product_id === productId && item.batch_id === batchId ? { ...item, quantity } : item
                     );
-                    const { total, tax, discount, roundOffDiscount } = getTotals(newItems, pointsRedeemed, manualDiscount);
-                    set({ items: newItems, total, tax, discount, roundOffDiscount });
+                    const { subtotal, total, tax, discount, roundOffDiscount } = getTotals(newItems, pointsRedeemed, manualDiscount);
+                    set({ items: newItems, subtotal, total, tax, discount, roundOffDiscount });
                 },
 
                 updatePrice: (productId, price, batchId) => {
@@ -129,8 +131,8 @@ export const useCartStore = create<CartState>()(
                     const newItems = items.map(item =>
                         item.product_id === productId && item.batch_id === batchId ? { ...item, retail_price: price } : item
                     );
-                    const { total, tax, discount, roundOffDiscount } = getTotals(newItems, pointsRedeemed, manualDiscount);
-                    set({ items: newItems, total, tax, discount, roundOffDiscount });
+                    const { subtotal, total, tax, discount, roundOffDiscount } = getTotals(newItems, pointsRedeemed, manualDiscount);
+                    set({ items: newItems, subtotal, total, tax, discount, roundOffDiscount });
                 },
 
                 updateItem: (productId, updates, batchId) => {
@@ -144,15 +146,15 @@ export const useCartStore = create<CartState>()(
                             note: updates.note ?? item.note
                         };
                     });
-                    const { total, tax, discount, roundOffDiscount } = getTotals(newItems, pointsRedeemed, manualDiscount);
-                    set({ items: newItems, total, tax, discount, roundOffDiscount });
+                    const { subtotal, total, tax, discount, roundOffDiscount } = getTotals(newItems, pointsRedeemed, manualDiscount);
+                    set({ items: newItems, subtotal, total, tax, discount, roundOffDiscount });
                 },
 
                 setCustomer: (customer) => {
                     // Reset points redemption when customer changes
                     const { items, manualDiscount } = get();
-                    const { total, tax, discount, roundOffDiscount } = getTotals(items, 0, manualDiscount);
-                    set({ customer, pointsRedeemed: 0, total, tax, discount, roundOffDiscount });
+                    const { subtotal, total, tax, discount, roundOffDiscount } = getTotals(items, 0, manualDiscount);
+                    set({ customer, pointsRedeemed: 0, subtotal, total, tax, discount, roundOffDiscount });
                 },
 
                 toggleRedeemPoints: () => {
@@ -170,21 +172,21 @@ export const useCartStore = create<CartState>()(
                         newPointsRedeemed = 0;
                     }
 
-                    const { total, tax, discount, roundOffDiscount } = getTotals(items, newPointsRedeemed, manualDiscount);
-                    set({ pointsRedeemed: newPointsRedeemed, total, tax, discount, roundOffDiscount });
+                    const { subtotal, total, tax, discount, roundOffDiscount } = getTotals(items, newPointsRedeemed, manualDiscount);
+                    set({ pointsRedeemed: newPointsRedeemed, subtotal, total, tax, discount, roundOffDiscount });
                 },
 
                 setManualDiscount: (amount: number) => {
                     const { items, pointsRedeemed } = get();
-                    const { total, tax, discount, roundOffDiscount } = getTotals(items, pointsRedeemed, amount);
-                    set({ manualDiscount: amount, total, tax, discount, roundOffDiscount });
+                    const { subtotal, total, tax, discount, roundOffDiscount } = getTotals(items, pointsRedeemed, amount);
+                    set({ manualDiscount: amount, subtotal, total, tax, discount, roundOffDiscount });
                 },
 
-                clearCart: () => set({ items: [], customer: null, total: 0, tax: 0, discount: 0, roundOffDiscount: 0, pointsRedeemed: 0, manualDiscount: 0 }),
+                clearCart: () => set({ items: [], customer: null, subtotal: 0, total: 0, tax: 0, discount: 0, roundOffDiscount: 0, pointsRedeemed: 0, manualDiscount: 0 }),
 
                 setCart: (items, customer = null, pointsRedeemed = 0, manualDiscount = 0) => {
-                    const { total, tax, discount, roundOffDiscount } = getTotals(items, pointsRedeemed, manualDiscount);
-                    set({ items, customer, pointsRedeemed, manualDiscount, total, tax, discount, roundOffDiscount });
+                    const { subtotal, total, tax, discount, roundOffDiscount } = getTotals(items, pointsRedeemed, manualDiscount);
+                    set({ items, customer, pointsRedeemed, manualDiscount, subtotal, total, tax, discount, roundOffDiscount });
                 },
             };
         },
@@ -198,7 +200,7 @@ const recalcTotalsFromSettings = () => {
     const { items, pointsRedeemed, manualDiscount } = useCartStore.getState();
     const { taxRate, taxEnabled, loyaltyEnabled, loyaltyPointValue, roundOffEnabled, roundOffDecimals } = useSettingsStore.getState();
     const effectivePoints = loyaltyEnabled ? pointsRedeemed : 0;
-    const { total, tax, discount, roundOffDiscount } = calculateTotals(
+    const { subtotal, total, tax, discount, roundOffDiscount } = calculateTotals(
         items,
         effectivePoints,
         manualDiscount,
@@ -209,7 +211,7 @@ const recalcTotalsFromSettings = () => {
         roundOffEnabled,
         roundOffDecimals
     );
-    useCartStore.setState({ total, tax, discount, roundOffDiscount, pointsRedeemed: effectivePoints });
+    useCartStore.setState({ subtotal, total, tax, discount, roundOffDiscount, pointsRedeemed: effectivePoints });
 };
 
 useSettingsStore.subscribe((state, prevState) => {

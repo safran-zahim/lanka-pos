@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Plus, Image as ImageIcon } from 'lucide-react';
+import { X, Plus, Image as ImageIcon, RefreshCw } from 'lucide-react';
 import { db } from '../../db/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { CategoryManager } from '../CategoryManager';
@@ -53,6 +53,23 @@ export const AddProductModal = ({ onClose, onSuccess }: AddProductModalProps) =>
     );
 
     const { addToast } = useToast();
+    const products = useLiveQuery(() => db.products.toArray());
+
+    const handleGenerateSKU = () => {
+        if (!products) return;
+
+        // Find highest numeric SKU
+        const numericSKUs = products
+            .map(p => parseInt(p.sku_code))
+            .filter(n => !isNaN(n));
+
+        const nextSKU = numericSKUs.length > 0
+            ? Math.max(...numericSKUs) + 1
+            : 10001; // Starting number if none exist
+
+        setFormData({ ...formData, sku_code: nextSKU.toString() });
+        addToast(`Generated SKU: ${nextSKU}`, 'info');
+    };
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -158,8 +175,18 @@ export const AddProductModal = ({ onClose, onSuccess }: AddProductModalProps) =>
                                     </div>
                                     <div className="space-y-2">
                                         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">SKU*</label>
-                                        <input required type="text" className="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="SKU Code"
-                                            value={formData.sku_code} onChange={e => setFormData({ ...formData, sku_code: e.target.value })} />
+                                        <div className="relative">
+                                            <input required type="text" className="w-full p-2.5 pr-12 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="SKU Code"
+                                                value={formData.sku_code} onChange={e => setFormData({ ...formData, sku_code: e.target.value })} />
+                                            <button
+                                                type="button"
+                                                onClick={handleGenerateSKU}
+                                                className="absolute right-2 top-1.5 p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-colors"
+                                                title="Generate Sequential SKU"
+                                            >
+                                                <RefreshCw size={18} />
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className="space-y-2">
                                         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">Barcode Type</label>

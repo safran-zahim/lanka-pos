@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Settings, Trash2 } from 'lucide-react';
+import { X, Save, Settings, Trash2, RefreshCw } from 'lucide-react';
 import { db } from '../../db/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { Product } from '../../db/db';
 import { CategoryManager } from '../CategoryManager';
 import { useCurrency } from '../../hooks/useCurrency';
+import { useToast } from '../../store/useToast';
 
 interface EditProductModalProps {
     product: Product;
@@ -32,6 +33,25 @@ export const EditProductModal = ({ product, onClose, onSuccess }: EditProductMod
         () => selectedCategoryObj ? db.sub_categories.where('category_id').equals(selectedCategoryObj.category_id!).toArray() : [],
         [selectedCategoryObj]
     );
+
+    const products = useLiveQuery(() => db.products.toArray());
+    const { addToast } = useToast();
+
+    const handleGenerateSKU = () => {
+        if (!products) return;
+
+        // Find highest numeric SKU
+        const numericSKUs = products
+            .map(p => parseInt(p.sku_code))
+            .filter(n => !isNaN(n));
+
+        const nextSKU = numericSKUs.length > 0
+            ? Math.max(...numericSKUs) + 1
+            : 10001; // Starting number if none exist
+
+        setFormData({ ...formData, sku_code: nextSKU.toString() });
+        addToast(`Generated SKU: ${nextSKU}`, 'info');
+    };
 
     useEffect(() => {
         if (product) {
@@ -99,13 +119,23 @@ export const EditProductModal = ({ product, onClose, onSuccess }: EditProductMod
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">SKU Code</label>
-                                <input
-                                    required
-                                    type="text"
-                                    className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none border border-gray-300 dark:border-transparent"
-                                    value={formData.sku_code}
-                                    onChange={e => setFormData({ ...formData, sku_code: e.target.value })}
-                                />
+                                <div className="relative">
+                                    <input
+                                        required
+                                        type="text"
+                                        className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white p-2 pr-10 rounded focus:ring-2 focus:ring-blue-500 outline-none border border-gray-300 dark:border-transparent"
+                                        value={formData.sku_code}
+                                        onChange={e => setFormData({ ...formData, sku_code: e.target.value })}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleGenerateSKU}
+                                        className="absolute right-2 top-1.5 p-1 text-blue-600 hover:bg-blue-200/50 rounded transition-colors"
+                                        title="Generate Sequential SKU"
+                                    >
+                                        <RefreshCw size={16} />
+                                    </button>
+                                </div>
                             </div>
                             <div className="col-span-1">
                                 <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Category</label>

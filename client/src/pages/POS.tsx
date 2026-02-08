@@ -20,7 +20,7 @@ import { useSettingsStore } from '../store/useSettingsStore';
 import { useCurrency } from '../hooks/useCurrency';
 
 export const POS = () => {
-    const { items, addItem, removeItem, updateQuantity, total, tax, discount, roundOffDiscount, pointsRedeemed, toggleRedeemPoints, clearCart, customer, setCustomer, setManualDiscount, updateItem } = useCartStore();
+    const { items, addItem, removeItem, updateQuantity, subtotal, total, tax, discount, roundOffDiscount, pointsRedeemed, toggleRedeemPoints, clearCart, customer, setCustomer, setManualDiscount, updateItem } = useCartStore();
     const { user } = useAuthStore();
     const { addToast } = useToast();
     const { taxRate, taxEnabled, loyaltyEnabled, loyaltyEarnRate, loadSettings, updateSetting } = useSettingsStore();
@@ -536,76 +536,76 @@ export const POS = () => {
                             ? 'text-red-600 dark:text-red-400'
                             : 'text-emerald-600 dark:text-emerald-400';
                         return (
-                        <div
-                            key={item.product_id}
-                            className="bg-white dark:bg-gray-800 p-3 rounded-xl flex flex-col gap-2 shadow-sm border border-gray-200 dark:border-gray-700 cursor-pointer hover:ring-2 hover:ring-blue-200 dark:hover:ring-blue-900/40"
-                            onClick={() => setEditingItem(item)}
-                        >
-                            <div className="flex justify-between items-start">
-                                <div className="font-medium text-gray-900 dark:text-white leading-tight">
-                                    {item.name} <span className="text-xs text-gray-500">({item.sku_code})</span>
-                                    <div className={`text-[10px] font-semibold ${remainingClass}`}>
-                                        {remainingLabel}
+                            <div
+                                key={item.product_id}
+                                className="bg-white dark:bg-gray-800 p-3 rounded-xl flex flex-col gap-2 shadow-sm border border-gray-200 dark:border-gray-700 cursor-pointer hover:ring-2 hover:ring-blue-200 dark:hover:ring-blue-900/40"
+                                onClick={() => setEditingItem(item)}
+                            >
+                                <div className="flex justify-between items-start">
+                                    <div className="font-medium text-gray-900 dark:text-white leading-tight">
+                                        {item.name} <span className="text-xs text-gray-500">({item.sku_code})</span>
+                                        <div className={`text-[10px] font-semibold ${remainingClass}`}>
+                                            {remainingLabel}
+                                        </div>
+                                    </div>
+                                    <div className="font-bold text-gray-900 dark:text-white">{formatCurrency(item.retail_price * item.quantity)}</div>
+                                </div>
+
+                                {item.note && (
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                                        <StickyNote size={12} />
+                                        <span className="line-clamp-1">{item.note}</span>
+                                    </div>
+                                )}
+
+                                <div className="flex justify-between items-center">
+                                    {/* Quantity Controls */}
+                                    <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                updateQuantity(item.product_id!, item.quantity - 1, item.batch_id);
+                                            }}
+                                            className="p-1 hover:text-red-500 hover:bg-white dark:hover:bg-gray-600 rounded-md transition-all"
+                                        >
+                                            <Minus size={14} />
+                                        </button>
+                                        <span className="w-8 text-center font-bold text-sm text-gray-800 dark:text-gray-200">{item.quantity}</span>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                updateQuantity(item.product_id!, item.quantity + 1, item.batch_id);
+                                            }}
+                                            className="p-1 hover:text-green-500 hover:bg-white dark:hover:bg-gray-600 rounded-md transition-all"
+                                        >
+                                            <Plus size={14} />
+                                        </button>
+                                    </div>
+
+                                    {/* Price Edit & Remove */}
+                                    <div className="flex items-center space-x-3">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setEditingItem(item);
+                                            }}
+                                            className="text-xs flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                                        >
+                                            <Edit2 size={12} />
+                                            <span>{formatCurrency(item.retail_price)}</span>
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                removeItem(item.product_id!, item.batch_id);
+                                            }}
+                                            className="text-gray-400 hover:text-red-500 transition-colors"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
                                     </div>
                                 </div>
-                                <div className="font-bold text-gray-900 dark:text-white">{formatCurrency(item.retail_price * item.quantity)}</div>
                             </div>
-
-                            {item.note && (
-                                <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                                    <StickyNote size={12} />
-                                    <span className="line-clamp-1">{item.note}</span>
-                                </div>
-                            )}
-
-                            <div className="flex justify-between items-center">
-                                {/* Quantity Controls */}
-                                <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            updateQuantity(item.product_id!, item.quantity - 1, item.batch_id);
-                                        }}
-                                        className="p-1 hover:text-red-500 hover:bg-white dark:hover:bg-gray-600 rounded-md transition-all"
-                                    >
-                                        <Minus size={14} />
-                                    </button>
-                                    <span className="w-8 text-center font-bold text-sm text-gray-800 dark:text-gray-200">{item.quantity}</span>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            updateQuantity(item.product_id!, item.quantity + 1, item.batch_id);
-                                        }}
-                                        className="p-1 hover:text-green-500 hover:bg-white dark:hover:bg-gray-600 rounded-md transition-all"
-                                    >
-                                        <Plus size={14} />
-                                    </button>
-                                </div>
-
-                                {/* Price Edit & Remove */}
-                                <div className="flex items-center space-x-3">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setEditingItem(item);
-                                        }}
-                                        className="text-xs flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline font-medium"
-                                    >
-                                        <Edit2 size={12} />
-                                        <span>{formatCurrency(item.retail_price)}</span>
-                                    </button>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            removeItem(item.product_id!, item.batch_id);
-                                        }}
-                                        className="text-gray-400 hover:text-red-500 transition-colors"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
                         );
                     })}
                     {items.length === 0 && (
@@ -621,7 +621,7 @@ export const POS = () => {
                     <div className="space-y-2 mb-4">
                         <div className="flex justify-between text-gray-600 dark:text-gray-400 text-sm">
                             <span>Subtotal</span>
-                            <span>{formatCurrency(total + discount)}</span>
+                            <span>{formatCurrency(subtotal)}</span>
                         </div>
                         {discount > 0 && (
                             <div className="flex justify-between text-green-600 dark:text-green-400 text-sm font-medium">
@@ -775,7 +775,7 @@ export const POS = () => {
             {/* Discount Modal */}
             {showDiscountModal && (
                 <DiscountModal
-                    subtotal={total}
+                    subtotal={subtotal}
                     onConfirm={(amount) => {
                         setManualDiscount(amount);
                         setShowDiscountModal(false);

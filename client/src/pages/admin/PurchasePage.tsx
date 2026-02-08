@@ -38,6 +38,7 @@ export const PurchasePage = () => {
     const [shipping, setShipping] = useState(0);
     const [paymentStatus, setPaymentStatus] = useState('due');
     const [paymentMethod, setPaymentMethod] = useState('cash');
+    const [paidAmount, setPaidAmount] = useState(0);
 
     // Section D: Notes
     const [notes, setNotes] = useState('');
@@ -105,7 +106,8 @@ export const PurchasePage = () => {
             // This schema is too simple for a full PO.
             // For now, we will just update Stock Quantity and add to 'purchases' table per item.
 
-            const timestamp = new Date(date);
+            const timestamp = new Date(`${date}T${new Date().toLocaleTimeString('en-GB')}`);
+            const billId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
             for (const item of items) {
                 // Update Product Stock
@@ -126,7 +128,7 @@ export const PurchasePage = () => {
                     note: refNo ? `PO ${refNo}` : undefined
                 });
 
-                // Log Purchase (per item as per current simple schema)
+                // Log Purchase
                 await db.purchases.add({
                     product_id: item.product_id,
                     quantity: Number(item.qty),
@@ -135,12 +137,14 @@ export const PurchasePage = () => {
                     user_id: 1, // Todo: Get actual user
                     supplier_id: supplierId ? Number(supplierId) : undefined,
                     ref_number: refNo,
+                    bill_id: billId,
                     payment_status: paymentStatus as any,
                     payment_method: paymentMethod as any,
                     shipping_cost: Number(shipping) || 0,
                     discount: Number(discount) || 0,
                     notes: notes || undefined,
-                    bill_total: Number(grandTotal) || 0
+                    bill_total: Number(grandTotal) || 0,
+                    amount_paid: Number(paidAmount) || 0
                 });
             }
 
@@ -411,7 +415,11 @@ export const PurchasePage = () => {
                                     {['paid', 'partial', 'due'].map(status => (
                                         <button
                                             key={status}
-                                            onClick={() => setPaymentStatus(status)}
+                                            onClick={() => {
+                                                setPaymentStatus(status);
+                                                if (status === 'paid') setPaidAmount(grandTotal);
+                                                if (status === 'due') setPaidAmount(0);
+                                            }}
                                             className={`py-2 rounded-lg text-sm capitalize font-medium border ${paymentStatus === status
                                                 ? 'bg-blue-600 text-white border-blue-600'
                                                 : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700'
@@ -422,6 +430,20 @@ export const PurchasePage = () => {
                                     ))}
                                 </div>
                             </div>
+
+                            {paymentStatus === 'partial' && (
+                                <div className="animate-in fade-in slide-in-from-top-2">
+                                    <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Amount Paid</label>
+                                    <input
+                                        type="number"
+                                        className="w-full p-2.5 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg outline-none font-bold text-blue-600 dark:text-blue-400"
+                                        value={paidAmount}
+                                        onChange={e => setPaidAmount(Number(e.target.value))}
+                                        placeholder="0.00"
+                                    />
+                                    <p className="text-[10px] text-gray-500 mt-1">Due: {formatCurrency(Math.max(0, grandTotal - paidAmount))}</p>
+                                </div>
+                            )}
 
                             <div>
                                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Payment Method</label>
