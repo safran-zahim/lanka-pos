@@ -4,7 +4,7 @@ export interface User {
     user_id?: number;
     username: string;
     password_hash: string;
-    role: 'admin' | 'manager' | 'cashier';
+    role: 'admin' | 'manager' | 'cashier' | 'super_admin';
     subscription_status?: 'active' | 'past_due' | 'blocked' | 'canceled';
     hourly_rate?: number;
     contact_info?: string;

@@ -33,7 +33,7 @@ export const authorize = (roles: string[]) => {
 
 export const requireActiveSubscription = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-        if (req.user?.role === 'admin') {
+        if (req.user?.role === 'admin' || req.user?.role === 'super_admin') {
             return next();
         }
         const config = await getAppConfig();

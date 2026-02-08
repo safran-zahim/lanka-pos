@@ -19,6 +19,7 @@ import { SettingsPage } from './pages/admin/SettingsPage';
 import { ReceiptSettingsPage } from './pages/admin/ReceiptSettingsPage';
 import { HelpPage } from './pages/admin/HelpPage';
 import { ReportsPage } from './pages/admin/ReportsPage';
+import { SubscriptionPlans } from './pages/admin/SubscriptionPlans';
 import { ThemeProvider } from './components/ThemeProvider';
 import { ToastContainer } from './components/ui/ToastContainer';
 
@@ -42,7 +43,7 @@ function App() {
             />
           </Route>
 
-          <Route element={<ProtectedRoute allowedRoles={['admin', 'manager']} />}>
+          <Route element={<ProtectedRoute allowedRoles={['admin', 'manager', 'super_admin']} />}>
             <Route element={<AdminLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/admin/products" element={<ProductList />} />
@@ -64,6 +65,12 @@ function App() {
           <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
             <Route element={<AdminLayout />}>
               <Route path="/admin/users" element={<UserList />} />
+            </Route>
+          </Route>
+
+          <Route element={<ProtectedRoute allowedRoles={['super_admin']} />}>
+            <Route element={<AdminLayout />}>
+              <Route path="/admin/plans" element={<SubscriptionPlans />} />
             </Route>
           </Route>
         </Routes>

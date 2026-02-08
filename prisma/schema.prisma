@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Staff {
@@ -102,5 +102,19 @@ model CustomerPointLedger {
 model AppConfig {
   key                String @id
   subscriptionStatus String @default("active")
+  subscriptionPlanId String?
+  subscriptionPlan   SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id])
   updatedAt          DateTime @updatedAt
+}
+
+model SubscriptionPlan {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  price     Decimal
+  duration  Int      @default(30) // in days
+  features  String   // JSON string of enabled features
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  configs   AppConfig[]
 }

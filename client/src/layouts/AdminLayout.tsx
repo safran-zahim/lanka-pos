@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Package, Users, LogOut, ShoppingCart, FileText, Truck, Settings, HelpCircle, Menu, X, AlertTriangle, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, Package, Users, LogOut, ShoppingCart, FileText, Truck, Settings, HelpCircle, Menu, X, AlertTriangle, BarChart3, Shield } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -42,6 +42,9 @@ export const AdminLayout = () => {
         { path: '/admin/reports', icon: <BarChart3 size={20} />, label: 'Reports' },
         { path: '/admin/settings', icon: <Settings size={20} />, label: 'Settings' },
         { path: '/admin/receipts', icon: <FileText size={20} />, label: 'Receipts' },
+        ...(user?.role === 'super_admin'
+            ? [{ path: '/admin/plans', icon: <Shield size={20} />, label: 'Subscription Plans' }]
+            : []),
         { path: '/admin/help', icon: <HelpCircle size={20} />, label: 'Help' },
     ];
 
