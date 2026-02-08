@@ -1,15 +1,15 @@
-import React, { ButtonHTMLAttributes } from 'react';
+import type { ButtonHTMLAttributes, ReactNode, FC } from 'react';
 import { Loader } from 'lucide-react';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'ghost';
     size?: 'sm' | 'md' | 'lg';
     loading?: boolean;
-    icon?: React.ReactNode;
+    icon?: ReactNode;
     fullWidth?: boolean;
 }
 
-export const Button: React.FC<ButtonProps> = ({
+export const Button: FC<ButtonProps> = ({
     children,
     variant = 'primary',
     size = 'md',

@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { X, CreditCard, Banknote, Calculator } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import type { FormEvent } from 'react';
+import { X, CreditCard, Banknote } from 'lucide-react';
 import { useCurrency } from '../hooks/useCurrency';
 
 interface SplitPaymentModalProps {
@@ -20,7 +21,7 @@ export const SplitPaymentModal = ({ total, onConfirm, onClose }: SplitPaymentMod
         setRemaining(total - (cash + card));
     }, [cashAmount, cardAmount, total]);
 
-    const handleConfirm = (e: React.FormEvent) => {
+    const handleConfirm = (e: FormEvent) => {
         e.preventDefault();
         const cash = parseFloat(cashAmount) || 0;
         const card = parseFloat(cardAmount) || 0;

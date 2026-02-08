@@ -98,7 +98,6 @@ export const ReturnModal = ({ transaction, onClose, onSuccess }: ReturnModalProp
             const refundAmount = calculateRefundTotal();
             const taxRefund = refundAmount * getTaxRate(); // Pro-rated tax on subtotal
 
-            const originalBefore = { ...transaction };
             const updatedTotal = Math.max(0, transaction.total_amount - (refundAmount + taxRefund));
             const updatedTax = Math.max(0, transaction.tax_amount - taxRefund);
 
