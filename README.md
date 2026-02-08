@@ -109,12 +109,16 @@ docker build ./client -t pos-frontend
 
 You can host this entire system for **$0/month** using the following services:
 
-### 1. Database: Neon (or Supabase)
+### 1. Database: Supabase (or Neon)
 **Service**: Serverless PostgreSQL
-1.  Sign up at [neon.tech](https://neon.tech).
+1.  Sign up at [supabase.com](https://supabase.com).
 2.  Create a new Project.
-3.  Copy the **Connection String** (e.g., `postgresql://user:pass@ep-xyz.aws.neon.tech/neondb?sslmode=require`).
-4.  **Important**: You will use this connection string for your Backend deployment.
+3.  Go to **Project Settings** -> **Database**.
+4.  Copy the **Connection String** (Mode: **Transaction**). This goes into `DATABASE_URL`.
+    - Port should be `6543`.
+5.  Copy the **Connection String** (Mode: **Session**). This goes into `DIRECT_URL`.
+    - Port should be `5432`.
+    - *Note*: You will need to add `DIRECT_URL` to your Render environment variables as well.
 
 ### 2. Backend: Render
 **Service**: Web Service (Node.js)
@@ -123,11 +127,13 @@ You can host this entire system for **$0/month** using the following services:
 3.  Connect your GitHub repository.
 4.  **Settings**:
     - **Root Directory**: `.` (leave empty or dot)
-    - **Build Command**: `npm install && npx prisma generate --schema=prisma/schema.postgresql.prisma && npm run build`
+    - **Build Command**: `npm install && npx prisma generate --schema=prisma/schema.postgresql.prisma && npx prisma db seed && npm run build`
         - *Note*: We point to the Postgres schema specifically for production build!
+        - *Note*: `npx prisma db seed` creates the default SuperAdmin user.
     - **Start Command**: `npm start`
 5.  **Environment Variables**:
-    - `DATABASE_URL`: (Paste your Neon connection string)
+    - `DATABASE_URL`: (Paste your Transaction connection string - Port 6543)
+    - `DIRECT_URL`: (Paste your Session connection string - Port 5432)
     - `JWT_SECRET`: (Generate a random string)
     - `NODE_ENV`: `production`
 6.  Deploy.
@@ -147,6 +153,11 @@ You can host this entire system for **$0/month** using the following services:
 5.  Deploy.
 
 ---
+
+---
+
+## 🔐 Default Credentials
+See [CREDENTIALS.md](./CREDENTIALS.md) for a list of default logins and important secrets.
 
 ## 📖 API Documentation & Project Structure
 (See original README for API details)

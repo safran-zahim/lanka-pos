@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Package, Check, X, Edit, Save } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
+import { getApiUrl } from '../../config/api';
 
 interface SubscriptionPlan {
     id: string;
@@ -30,7 +31,7 @@ export const SubscriptionPlans = () => {
 
     const fetchPlans = async () => {
         try {
-            const response = await fetch('/subscription/plans', {
+            const response = await fetch(getApiUrl('/subscription/plans'), {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (response.ok) {
@@ -59,7 +60,7 @@ export const SubscriptionPlans = () => {
 
     const handleSave = async (id: string) => {
         try {
-            const response = await fetch(`/subscription/plans/${id}`, {
+            const response = await fetch(getApiUrl(`/subscription/plans/${id}`), {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -90,7 +91,7 @@ export const SubscriptionPlans = () => {
 
     const toggleActive = async (plan: SubscriptionPlan) => {
         try {
-            const response = await fetch(`/subscription/plans/${plan.id}`, {
+            const response = await fetch(getApiUrl(`/subscription/plans/${plan.id}`), {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
