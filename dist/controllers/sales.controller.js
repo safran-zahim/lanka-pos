@@ -24,7 +24,12 @@ const checkoutSchema = zod_1.z.object({
         tax: zod_1.z.number(),
         discount: zod_1.z.number(),
         grand_total: zod_1.z.number(),
+        round_off_discount: zod_1.z.number().optional()
     }),
+    loyalty: zod_1.z.object({
+        points_earned: zod_1.z.number().int().nonnegative().optional(),
+        points_redeemed: zod_1.z.number().int().nonnegative().optional(),
+    }).optional()
 });
 const checkout = async (req, res) => {
     try {
@@ -57,6 +62,11 @@ const checkout = async (req, res) => {
                     staffId: data.staff_id,
                     customerId: data.customer_id,
                     total: new decimal_js_1.Decimal(data.totals.grand_total),
+                    subtotal: new decimal_js_1.Decimal(data.totals.subtotal),
+                    tax: new decimal_js_1.Decimal(data.totals.tax),
+                    discount: new decimal_js_1.Decimal(data.totals.discount),
+                    roundOffDiscount: new decimal_js_1.Decimal(data.totals.round_off_discount || 0),
+                    paymentMethod: data.payment_method,
                     items: {
                         create: data.items.map(item => ({
                             productId: item.product_id,
@@ -69,6 +79,40 @@ const checkout = async (req, res) => {
                     items: true
                 }
             });
+            if (data.customer_id) {
+                const pointsEarned = data.loyalty?.points_earned || 0;
+                const pointsRedeemed = data.loyalty?.points_redeemed || 0;
+                const netPoints = pointsEarned - pointsRedeemed;
+                const updatedCustomer = await tx.customer.update({
+                    where: { id: data.customer_id },
+                    data: {
+                        pointsBalance: { increment: netPoints },
+                        totalSpend: { increment: new decimal_js_1.Decimal(data.totals.grand_total) }
+                    }
+                });
+                if (pointsEarned > 0) {
+                    await tx.customerPointLedger.create({
+                        data: {
+                            customerId: data.customer_id,
+                            points: pointsEarned,
+                            type: 'EARN',
+                            reference: sale.id,
+                            balanceAfter: updatedCustomer.pointsBalance
+                        }
+                    });
+                }
+                if (pointsRedeemed > 0) {
+                    await tx.customerPointLedger.create({
+                        data: {
+                            customerId: data.customer_id,
+                            points: -pointsRedeemed,
+                            type: 'REDEEM',
+                            reference: sale.id,
+                            balanceAfter: updatedCustomer.pointsBalance
+                        }
+                    });
+                }
+            }
             return sale;
         });
         res.status(201).json(result);

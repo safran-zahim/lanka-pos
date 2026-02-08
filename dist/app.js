@@ -15,11 +15,15 @@ const staff_routes_1 = __importDefault(require("./routes/staff.routes"));
 const product_routes_1 = __importDefault(require("./routes/product.routes"));
 const sales_routes_1 = __importDefault(require("./routes/sales.routes"));
 const customer_routes_1 = __importDefault(require("./routes/customer.routes"));
+const category_routes_1 = __importDefault(require("./routes/category.routes"));
+const subscription_routes_1 = __importDefault(require("./routes/subscription.routes"));
 app.use('/auth', auth_routes_1.default);
 app.use('/staff', staff_routes_1.default);
 app.use('/products', product_routes_1.default);
 app.use('/sales', sales_routes_1.default);
 app.use('/customers', customer_routes_1.default);
+app.use('/categories', category_routes_1.default);
+app.use('/subscription', subscription_routes_1.default);
 exports.default = app;
 if (require.main === module) {
     app.listen(PORT, () => {
