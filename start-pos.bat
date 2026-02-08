@@ -11,6 +11,10 @@ echo Building backend...
 call npm run build
 if errorlevel 1 goto build_error
 
+echo Seeding database (super admin)...
+call npm run seed
+if errorlevel 1 goto build_error
+
 echo Building frontend...
 pushd client
 call npm run build

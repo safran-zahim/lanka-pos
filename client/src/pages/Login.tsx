@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { db } from '../db/db';
 import { Store, Lock, AlertCircle } from 'lucide-react';
+import { getApiUrl } from '../config/api';
 
 export const Login = () => {
     const [username, setUsername] = useState('');
@@ -17,7 +18,7 @@ export const Login = () => {
 
         try {
             // Try API login first
-            const res = await fetch('/auth/login', {
+            const res = await fetch(getApiUrl('/auth/login'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
