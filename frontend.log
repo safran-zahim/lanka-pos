@@ -1,8 +1,16 @@
 
-> client@0.0.0 preview
-> vite preview
+> client@0.0.0 dev
+> vite
 
-  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m4173[22m/[39m
+
+  [32m[1mVITE[22m v7.3.1[39m  [2mready in [0m[1m805[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
 [2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
 [2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
-^C^C
+[2m12:25:18 PM[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /auth/login[39m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+[2m12:28:56 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/db/seeder.ts[22m
+[2m12:28:57 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/db/seeder.ts[22m
