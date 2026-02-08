@@ -36,3 +36,4 @@ export const seedDatabase = async () => {
 
     console.log('Database seeded!');
 };
+indexedDB.deleteDatabase('LankaPOSDB');

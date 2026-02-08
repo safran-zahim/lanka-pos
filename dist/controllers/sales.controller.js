@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getDailySummary = exports.refundSale = exports.getSale = exports.checkout = void 0;
+exports.getMonthlySummary = exports.getDailySummary = exports.refundSale = exports.getSale = exports.checkout = void 0;
 const prisma_1 = __importDefault(require("../utils/prisma"));
 const zod_1 = require("zod");
 const decimal_js_1 = require("decimal.js");
@@ -218,3 +218,65 @@ const getDailySummary = async (req, res) => {
     }
 };
 exports.getDailySummary = getDailySummary;
+const getMonthlySummary = async (req, res) => {
+    try {
+        const now = new Date();
+        const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+        const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0, 0);
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
+        const [currentAgg, previousAgg] = await Promise.all([
+            prisma_1.default.sale.aggregate({
+                where: {
+                    createdAt: {
+                        gte: startOfThisMonth,
+                        lt: startOfNextMonth
+                    }
+                },
+                _sum: { total: true },
+                _count: { _all: true }
+            }),
+            prisma_1.default.sale.aggregate({
+                where: {
+                    createdAt: {
+                        gte: startOfLastMonth,
+                        lt: startOfThisMonth
+                    }
+                },
+                _sum: { total: true },
+                _count: { _all: true }
+            })
+        ]);
+        const currentTotal = new decimal_js_1.Decimal(currentAgg._sum.total || 0).toNumber();
+        const previousTotal = new decimal_js_1.Decimal(previousAgg._sum.total || 0).toNumber();
+        const currentCount = currentAgg._count._all;
+        const previousCount = previousAgg._count._all;
+        const percentChange = (current, previous) => {
+            if (previous <= 0)
+                return null;
+            return ((current - previous) / previous) * 100;
+        };
+        res.json({
+            period: {
+                current_month_start: startOfThisMonth.toISOString(),
+                previous_month_start: startOfLastMonth.toISOString()
+            },
+            current: {
+                total_sales: currentTotal,
+                transaction_count: currentCount
+            },
+            previous: {
+                total_sales: previousTotal,
+                transaction_count: previousCount
+            },
+            percent_change: {
+                total_sales: percentChange(currentTotal, previousTotal),
+                transaction_count: percentChange(currentCount, previousCount)
+            }
+        });
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+exports.getMonthlySummary = getMonthlySummary;

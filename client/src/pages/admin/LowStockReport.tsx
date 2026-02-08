@@ -16,13 +16,19 @@ export const LowStockReport = () => {
 
     if (!products) return <div>Loading...</div>;
 
+    const getAlertLevel = (product: typeof products[number]) => {
+        const raw = product.alert_quantity;
+        if (typeof raw === 'number' && raw > 0) {
+            return raw;
+        }
+        return product.reorder_level ?? 0;
+    };
+
     // Filter for low stock items
     // Logic: stock_quantity <= alert_quantity
     // Also apply brand/category filters
     const lowStockItems = products.filter(p => {
-        const alertLevel = typeof p.alert_quantity === 'number'
-            ? p.alert_quantity
-            : (p.reorder_level ?? 0);
+        const alertLevel = getAlertLevel(p);
         const isManaged = p.manage_stock !== false;
         const isLowStock = isManaged && (p.stock_quantity <= alertLevel);
         const matchesBrand = filterBrand ? p.brand_id === filterBrand : true;
@@ -39,7 +45,11 @@ export const LowStockReport = () => {
         if (raw === undefined) return;
         const parsed = Number(raw);
         const nextValue = Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : currentValue;
-        await db.products.update(productId, { alert_quantity: nextValue, manage_stock: true });
+        await db.products.update(productId, {
+            alert_quantity: nextValue,
+            reorder_level: nextValue,
+            manage_stock: true
+        });
     };
 
     return (
@@ -105,9 +115,7 @@ export const LowStockReport = () => {
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                         {lowStockItems.map(item => {
-                            const alertLevel = typeof item.alert_quantity === 'number'
-                                ? item.alert_quantity
-                                : (item.reorder_level ?? 0);
+                            const alertLevel = getAlertLevel(item);
                             const deficit = alertLevel - item.stock_quantity;
                             const editValue = alertEdits[item.product_id!] ?? String(alertLevel);
                             return (

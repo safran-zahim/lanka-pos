@@ -98,7 +98,11 @@ export const getPlans = async (_req: Request, res: Response) => {
 
 export const updatePlan = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
+        const rawId = req.params.id;
+        const id = Array.isArray(rawId) ? rawId[0] : rawId;
+        if (!id) {
+            return res.status(400).json({ error: 'Subscription plan id is required' });
+        }
         const data = updatePlanSchema.parse(req.body);
 
         const updateData: any = { ...data };

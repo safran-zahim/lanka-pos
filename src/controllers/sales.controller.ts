@@ -231,3 +231,67 @@ export const getDailySummary = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+export const getMonthlySummary = async (req: Request, res: Response) => {
+    try {
+        const now = new Date();
+        const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+        const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0, 0);
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
+
+        const [currentAgg, previousAgg] = await Promise.all([
+            prisma.sale.aggregate({
+                where: {
+                    createdAt: {
+                        gte: startOfThisMonth,
+                        lt: startOfNextMonth
+                    }
+                },
+                _sum: { total: true },
+                _count: { _all: true }
+            }),
+            prisma.sale.aggregate({
+                where: {
+                    createdAt: {
+                        gte: startOfLastMonth,
+                        lt: startOfThisMonth
+                    }
+                },
+                _sum: { total: true },
+                _count: { _all: true }
+            })
+        ]);
+
+        const currentTotal = new Decimal(currentAgg._sum.total || 0).toNumber();
+        const previousTotal = new Decimal(previousAgg._sum.total || 0).toNumber();
+        const currentCount = currentAgg._count._all;
+        const previousCount = previousAgg._count._all;
+
+        const percentChange = (current: number, previous: number) => {
+            if (previous <= 0) return null;
+            return ((current - previous) / previous) * 100;
+        };
+
+        res.json({
+            period: {
+                current_month_start: startOfThisMonth.toISOString(),
+                previous_month_start: startOfLastMonth.toISOString()
+            },
+            current: {
+                total_sales: currentTotal,
+                transaction_count: currentCount
+            },
+            previous: {
+                total_sales: previousTotal,
+                transaction_count: previousCount
+            },
+            percent_change: {
+                total_sales: percentChange(currentTotal, previousTotal),
+                transaction_count: percentChange(currentCount, previousCount)
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};

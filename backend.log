@@ -1,53 +1,14 @@
 
 > pos-backend@1.0.0 dev
-> nodemon src/app.ts
+> nodemon --exec ts-node src/app.ts
 
 [33m[nodemon] 3.1.11[39m
 [33m[nodemon] to restart at any time, enter `rs`[39m
 [33m[nodemon] watching path(s): *.*[39m
 [33m[nodemon] watching extensions: ts,json[39m
 [32m[nodemon] starting `ts-node src/app.ts`[39m
-C:\web project\lanka pos\node_modules\ts-node\src\index.ts:859
-    return new TSError(diagnosticText, diagnosticCodes, diagnostics);
-           ^
-TSError: ⨯ Unable to compile TypeScript:
-src/controllers/category.controller.ts(51,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
-  Type 'string[]' is not assignable to type 'string'.
-
-    at createTSError (C:\web project\lanka pos\node_modules\ts-node\src\index.ts:859:12)
-    at reportTSError (C:\web project\lanka pos\node_modules\ts-node\src\index.ts:863:19)
-    at getOutput (C:\web project\lanka pos\node_modules\ts-node\src\index.ts:1077:36)
-    at Object.compile (C:\web project\lanka pos\node_modules\ts-node\src\index.ts:1433:41)
-    at Module.m._compile (C:\web project\lanka pos\node_modules\ts-node\src\index.ts:1617:30)
-    at node:internal/modules/cjs/loader:1895:10
-    at Object.require.extensions.<computed> [as .ts] (C:\web project\lanka pos\node_modules\ts-node\src\index.ts:1621:12)
-    at Module.load (node:internal/modules/cjs/loader:1465:32)
-    at Function._load (node:internal/modules/cjs/loader:1282:12)
-    at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
-  diagnosticCodes: [ 2322 ]
-}
-[31m[nodemon] app crashed - waiting for file changes before starting...[39m
-[32m[nodemon] restarting due to changes...[39m
+^C[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting child process[39m
 [32m[nodemon] starting `ts-node src/app.ts`[39m
-[32m[nodemon] restarting due to changes...[39m
-[32m[nodemon] starting `ts-node src/app.ts`[39m
-C:\web project\lanka pos\node_modules\ts-node\src\index.ts:859
-    return new TSError(diagnosticText, diagnosticCodes, diagnostics);
-           ^
-TSError: ⨯ Unable to compile TypeScript:
-src/controllers/category.controller.ts(51,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
-  Type 'string[]' is not assignable to type 'string'.
-
-    at createTSError (C:\web project\lanka pos\node_modules\ts-node\src\index.ts:859:12)
-    at reportTSError (C:\web project\lanka pos\node_modules\ts-node\src\index.ts:863:19)
-    at getOutput (C:\web project\lanka pos\node_modules\ts-node\src\index.ts:1077:36)
-    at Object.compile (C:\web project\lanka pos\node_modules\ts-node\src\index.ts:1433:41)
-    at Module.m._compile (C:\web project\lanka pos\node_modules\ts-node\src\index.ts:1617:30)
-    at node:internal/modules/cjs/loader:1895:10
-    at Object.require.extensions.<computed> [as .ts] (C:\web project\lanka pos\node_modules\ts-node\src\index.ts:1621:12)
-    at Module.load (node:internal/modules/cjs/loader:1465:32)
-    at Function._load (node:internal/modules/cjs/loader:1282:12)
-    at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
-  diagnosticCodes: [ 2322 ]
-}
-[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+Server is running on port 3000
+^C^C
