@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Search, User, Trash2, CreditCard, UserPlus, X, Award, Plus, Minus, Edit2, AlertCircle, StickyNote, Percent, Clock, PauseCircle, Calculator, Tag, RotateCcw } from 'lucide-react';
 import { useCartStore, type CartItem } from '../store/useCartStore';
 import { useAuthStore } from '../store/useAuthStore';
@@ -92,6 +92,20 @@ export const POS = () => {
     // Recent sales for return lookup
     const recentSales = useLiveQuery(
         () => db.transactions.orderBy('timestamp').reverse().toArray()
+    );
+
+    const cartQtyByProduct = useMemo(() => {
+        const map = new Map<number, number>();
+        items.forEach(item => {
+            if (!item.product_id) return;
+            map.set(item.product_id, (map.get(item.product_id) || 0) + item.quantity);
+        });
+        return map;
+    }, [items]);
+
+    const productMap = useMemo(
+        () => new Map((products || []).map(p => [p.product_id!, p])),
+        [products]
     );
 
     // Filter products
@@ -368,7 +382,16 @@ export const POS = () => {
                 <div className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900">
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                         {filteredProducts?.map((product) => {
-                            const isLowStock = product.manage_stock && product.stock_quantity <= (product.alert_quantity || 0);
+                            const cartQty = product.product_id ? (cartQtyByProduct.get(product.product_id) || 0) : 0;
+                            const remainingStock = product.manage_stock ? product.stock_quantity - cartQty : null;
+                            const isLowStock = product.manage_stock && (remainingStock ?? 0) <= (product.alert_quantity || 0);
+                            const isOutOfStock = product.manage_stock && (remainingStock ?? 0) <= 0;
+                            const stockLabel = product.manage_stock
+                                ? (isOutOfStock ? 'Out of stock' : `Stock: ${remainingStock}`)
+                                : 'Stock: Unlimited';
+                            const stockClass = isOutOfStock
+                                ? 'text-red-600 dark:text-red-400'
+                                : 'text-emerald-600 dark:text-emerald-400';
                             return (
                                 <button
                                     key={product.product_id}
@@ -379,10 +402,13 @@ export const POS = () => {
                                         <div className="font-medium text-sm leading-tight line-clamp-2 text-gray-900 dark:text-white mb-1">
                                             {product.name} <span className="text-xs text-gray-500">({product.sku_code})</span>
                                         </div>
+                                        <div className={`text-[10px] font-semibold ${stockClass}`}>
+                                            {stockLabel}
+                                        </div>
                                         {isLowStock && (
                                             <div className="flex items-center gap-1 text-[10px] text-red-600 dark:text-red-400 font-medium">
                                                 <AlertCircle size={10} />
-                                                <span>Low Stock: {product.stock_quantity}</span>
+                                                <span>Low Stock: {remainingStock}</span>
                                             </div>
                                         )}
                                     </div>
@@ -497,7 +523,19 @@ export const POS = () => {
 
                 {/* Cart Items List */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 dark:bg-gray-900/50">
-                    {items.map((item) => (
+                    {items.map((item) => {
+                        const product = item.product_id ? productMap.get(item.product_id) : undefined;
+                        const manageStock = product?.manage_stock ?? item.manage_stock;
+                        const baseStock = product?.stock_quantity ?? item.stock_quantity;
+                        const cartQty = item.product_id ? (cartQtyByProduct.get(item.product_id) || 0) : 0;
+                        const remainingStock = manageStock ? baseStock - cartQty : null;
+                        const remainingLabel = manageStock
+                            ? (remainingStock !== null && remainingStock <= 0 ? 'Remaining: 0' : `Remaining: ${remainingStock}`)
+                            : 'Remaining: Unlimited';
+                        const remainingClass = remainingStock !== null && remainingStock <= 0
+                            ? 'text-red-600 dark:text-red-400'
+                            : 'text-emerald-600 dark:text-emerald-400';
+                        return (
                         <div
                             key={item.product_id}
                             className="bg-white dark:bg-gray-800 p-3 rounded-xl flex flex-col gap-2 shadow-sm border border-gray-200 dark:border-gray-700 cursor-pointer hover:ring-2 hover:ring-blue-200 dark:hover:ring-blue-900/40"
@@ -506,6 +544,9 @@ export const POS = () => {
                             <div className="flex justify-between items-start">
                                 <div className="font-medium text-gray-900 dark:text-white leading-tight">
                                     {item.name} <span className="text-xs text-gray-500">({item.sku_code})</span>
+                                    <div className={`text-[10px] font-semibold ${remainingClass}`}>
+                                        {remainingLabel}
+                                    </div>
                                 </div>
                                 <div className="font-bold text-gray-900 dark:text-white">{formatCurrency(item.retail_price * item.quantity)}</div>
                             </div>
@@ -565,7 +606,8 @@ export const POS = () => {
                                 </div>
                             </div>
                         </div>
-                    ))}
+                        );
+                    })}
                     {items.length === 0 && (
                         <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-gray-500 opacity-50">
                             <CreditCard size={48} className="mb-2" />

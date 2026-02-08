@@ -20,13 +20,20 @@ export const ReceiptModal = ({ transaction, items, customer, user, onClose }: Re
     const { formatDateTime } = useLocale();
     const [settings, setSettings] = useState<Record<string, any>>({});
     const [loadingSettings, setLoadingSettings] = useState(true);
+    const [settingsError, setSettingsError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchSettings = async () => {
-            const allSettings = await db.settings.toArray();
-            const settingsMap = allSettings.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {} as Record<string, any>);
-            setSettings(settingsMap);
-            setLoadingSettings(false);
+            try {
+                const allSettings = await db.settings.toArray();
+                const settingsMap = allSettings.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {} as Record<string, any>);
+                setSettings(settingsMap);
+            } catch (error) {
+                console.error('Failed to load receipt settings', error);
+                setSettingsError('Failed to load receipt settings. Using defaults.');
+            } finally {
+                setLoadingSettings(false);
+            }
         };
         fetchSettings();
     }, []);
@@ -90,7 +97,18 @@ export const ReceiptModal = ({ transaction, items, customer, user, onClose }: Re
         window.open(whatsappUrl, '_blank');
     };
 
-    if (loadingSettings) return null;
+    if (loadingSettings) {
+        return (
+            <div id="receipt-modal" className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+                <div className="bg-white text-black p-6 rounded-lg w-80">
+                    <div className="flex items-center gap-2 text-gray-600">
+                        <Loader size={18} className="animate-spin" />
+                        <span>Loading receipt...</span>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     const taxRate = typeof settings['taxRate'] === 'number' ? settings['taxRate'] : 0;
     const taxEnabled = settings['taxEnabled'] !== undefined ? settings['taxEnabled'] : true;
@@ -141,6 +159,12 @@ export const ReceiptModal = ({ transaction, items, customer, user, onClose }: Re
                         <X size={24} />
                     </button>
                 </div>
+
+                {settingsError && (
+                    <div className="mb-4 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2 print:hidden">
+                        {settingsError}
+                    </div>
+                )}
 
                 {/* Receipt Content */}
                 <div className={`text-sm space-y-2 ${isModern || isElegant || isBold ? 'font-sans' : 'font-mono'} ${isThermalCompact ? 'text-xs' : ''} ${isCreative ? 'border-2 border-black p-5 rounded-lg' : ''} ${isElegant ? 'border border-gray-200 rounded-2xl p-5' : ''} ${isBold ? 'border-2 border-black rounded-xl p-5' : ''}`}>

@@ -53,6 +53,10 @@ export const useSettingsStore = create<SettingsState>((set) => ({
                 db.settings.get('timeZone')
             ]);
 
+            const systemTimeZone = typeof window !== 'undefined' && Intl.DateTimeFormat().resolvedOptions().timeZone
+                ? Intl.DateTimeFormat().resolvedOptions().timeZone
+                : 'UTC';
+
             set({
                 taxEnabled: taxEnabled?.value ?? true,
                 taxRate: taxRate?.value ?? 0.08,
@@ -65,7 +69,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
                 currencySymbol: currencySymbol?.value ?? '$',
                 currencyCode: currencyCode?.value ?? 'USD',
                 locale: locale?.value ?? 'en-US',
-                timeZone: timeZone?.value ?? 'UTC'
+                timeZone: timeZone?.value ?? systemTimeZone
             });
             set({ loading: false });
         } catch (error) {

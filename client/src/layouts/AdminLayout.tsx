@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Package, Users, LogOut, ShoppingCart, FileText, Truck, Settings, HelpCircle, Menu, X, AlertTriangle, BarChart3, Shield } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
@@ -6,6 +6,7 @@ import { ThemeToggle } from '../components/ThemeToggle';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/db';
 import { useToast } from '../store/useToast';
+import { useLocale } from '../hooks/useLocale';
 
 export const AdminLayout = () => {
     const logout = useAuthStore((state) => state.logout);
@@ -13,10 +14,17 @@ export const AdminLayout = () => {
     const addToast = useToast((state) => state.addToast);
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [time, setTime] = useState(new Date());
     const settings = useLiveQuery(() => db.settings.toArray());
     const settingsMap = settings?.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {} as Record<string, any>) || {};
     const brandName = settingsMap['companyName'] || 'Lanka POS';
     const brandLogo = settingsMap['companyLogo'] || '';
+    const { formatTime } = useLocale();
+
+    useEffect(() => {
+        const timer = setInterval(() => setTime(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, []);
 
     const handleLogout = () => {
         logout();
@@ -139,6 +147,9 @@ export const AdminLayout = () => {
                         <div className="font-semibold text-gray-900 dark:text-white">{user?.username}</div>
                     </div>
                     <div className="flex items-center gap-4">
+                        <div className="text-sm text-gray-500 dark:text-gray-400 font-mono">
+                            {formatTime(time)}
+                        </div>
                         <button
                             onClick={() => navigate('/pos')}
                             className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors"

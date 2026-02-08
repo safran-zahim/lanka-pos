@@ -109,14 +109,6 @@ export const ReceiptSettingsPage = () => {
         }
     };
 
-    if (loading) {
-        return (
-            <div className="p-6 flex justify-center items-center h-full">
-                <Loader className="animate-spin text-blue-600" size={32} />
-            </div>
-        );
-    }
-
     const [activeTab, setActiveTab] = useState<'layout' | 'business' | 'appearance' | 'digital'>('layout');
 
     const tabs = [
