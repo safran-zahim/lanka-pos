@@ -16,6 +16,7 @@ import productRoutes from './routes/product.routes';
 import salesRoutes from './routes/sales.routes';
 import customerRoutes from './routes/customer.routes';
 import categoryRoutes from './routes/category.routes';
+import subscriptionRoutes from './routes/subscription.routes';
 
 app.use('/auth', authRoutes);
 app.use('/staff', staffRoutes);
@@ -23,6 +24,7 @@ app.use('/products', productRoutes);
 app.use('/sales', salesRoutes);
 app.use('/customers', customerRoutes);
 app.use('/categories', categoryRoutes);
+app.use('/subscription', subscriptionRoutes);
 
 
 export default app;

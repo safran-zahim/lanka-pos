@@ -98,3 +98,9 @@ model CustomerPointLedger {
   balanceAfter Int?
   createdAt   DateTime @default(now())
 }
+
+model AppConfig {
+  key                String @id
+  subscriptionStatus String @default("active")
+  updatedAt          DateTime @updatedAt
+}

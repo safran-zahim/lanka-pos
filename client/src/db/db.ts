@@ -5,6 +5,7 @@ export interface User {
     username: string;
     password_hash: string;
     role: 'admin' | 'manager' | 'cashier';
+    subscription_status?: 'active' | 'past_due' | 'blocked' | 'canceled';
     hourly_rate?: number;
     contact_info?: string;
 }
