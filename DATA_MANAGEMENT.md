@@ -25,6 +25,27 @@ This script will delete all data from the following tables in the correct order:
 
 ---
 
+## 🧹 Selective Data Cleanup (Preserve Credentials)
+
+If you want to clear your business data (transactions, products, customers) but **keep** your staff accounts and system settings, run:
+
+```bash
+npm run cleanup-dummy
+```
+
+**What is kept:**
+- ✅ All **Staff** accounts (including Super Admin)
+- ✅ **AppConfig** (subscription status, etc.)
+- ✅ **SubscriptionPlans**
+
+**What is deleted:**
+- ❌ All Sales and Sale Items
+- ❌ All Customer records and points
+- ❌ All Products and Categories
+- ❌ All Shift records
+
+---
+
 ## 🌱 Re-seeding Essential Data
 
 After clearing data, you'll need to re-create the Super Admin account and default subscription plan:
@@ -68,6 +89,43 @@ After this, you can log in with:
 - **Password**: `admin123`
 
 > **Security Note**: Change the default password immediately after logging in!
+
+---
+
+## 🔄 Interactive Reset (Recommended)
+
+The easiest way to reset your database is using the interactive reset command:
+
+```bash
+npm run reset-db
+```
+
+This will:
+1. Ask for confirmation before proceeding
+2. Clear all existing data
+3. Re-seed the Super Admin account and subscription plan
+4. Show you the login credentials
+
+**Benefits:**
+- ✅ Single command does everything
+- ✅ Asks for confirmation to prevent accidents
+- ✅ Shows progress and results
+- ✅ Safer than running separate commands
+
+---
+
+## 📊 Check Database Status
+
+Before or after clearing data, you can check what's in your database:
+
+```bash
+npm run check-data
+```
+
+This shows the count of records in all tables, helping you verify:
+- Whether the database is empty
+- How much data you have
+- If the clear operation worked
 
 ---
 

@@ -73,6 +73,81 @@ The client will start at `http://localhost:5173`.
 
 ---
 
+## 🚀 Running the System (One-Click)
+
+On Windows, you can use the startup script to launch both backend and frontend:
+
+```bash
+./start-pos.bat
+```
+
+This will start both servers in **Development Mode** and provide logs in the root directory.
+
+---
+
+## 🗄️ Data Management
+
+### Check Database Status
+View the current state of your database:
+
+```bash
+npm run check-data
+```
+
+This shows the count of records in all tables.
+
+### Clear All Data
+Remove all existing data from the database:
+
+```bash
+npm run clear-data
+```
+
+⚠️ **Warning**: This permanently deletes all data including:
+- Sales transactions
+- Customers and loyalty points
+- Products and categories
+- Staff accounts
+- Subscription plans
+
+### Selective Data Cleanup (Recommended for Demos)
+Remove transactions and master data but **keep** login credentials:
+
+```bash
+npm run cleanup-dummy
+```
+
+This is ideal for resetting a demo system while keeping your administrative access.
+
+### Re-seed Essential Data
+After clearing data, create the Super Admin account:
+
+```bash
+npm run seed
+```
+
+This creates:
+- Super Admin (username: `SuperAdmin`, password: `admin123`)
+- Premium subscription plan
+- App configuration
+
+### Interactive Reset (Recommended)
+The easiest way to reset everything:
+
+```bash
+npm run reset-db
+```
+
+This single command will:
+- Ask for confirmation
+- Clear all data
+- Re-seed Super Admin and subscription plan
+- Show you the login credentials
+
+📖 **For detailed data management instructions**, see [DATA_MANAGEMENT.md](./DATA_MANAGEMENT.md)
+
+---
+
 ## 🏗️ CI/CD & Production
 
 The project is configured with **GitHub Actions** for CI/CD.
