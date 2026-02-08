@@ -184,55 +184,62 @@ export class POSDatabase extends Dexie {
 
     constructor() {
         super('LankaPOSDB');
-        this.version(1).stores({
+        const v1Stores = {
             users: '++user_id, username, role',
             products: '++product_id, &sku_code, category_id, stock_quantity',
             customers: '++customer_id, &phone, email',
             transactions: '++transaction_id, user_id, customer_id, timestamp',
             transaction_items: '++line_id, transaction_id, product_id'
-        });
+        };
 
-        // Version 2: Add categories and purchases
-        this.version(2).stores({
+        const v2Stores = {
+            ...v1Stores,
             categories: '++category_id, &name',
             purchases: '++purchase_id, product_id, timestamp'
-        });
+        };
 
-        // Version 3: Add held sales and suppliers
-        this.version(3).stores({
+        const v3Stores = {
+            ...v2Stores,
             held_sales: '++id, timestamp',
             suppliers: '++supplier_id, &name, phone'
-        });
+        };
 
-        // Version 4: Add settings
-        this.version(4).stores({
+        const v4Stores = {
+            ...v3Stores,
             settings: '&key'
-        });
+        };
 
-        // Version 5: Enhanced Product Management
-        this.version(5).stores({
+        const v5Stores = {
+            ...v4Stores,
             brands: '++brand_id, &name',
             units: '++unit_id, &name, &short_name',
             business_locations: '++location_id, &name',
-            // Updating products index if needed, but Dexie handles basic field additions without schema change if not indexed.
-            // If we want to query by brand_id, we should add it.
             products: '++product_id, &sku_code, category_id, brand_id, stock_quantity'
-        });
+        };
 
-        // Version 6: Add SubCategories
-        this.version(6).stores({
+        const v6Stores = {
+            ...v5Stores,
             sub_categories: '++sub_category_id, category_id, name, [category_id+name]'
-        });
+        };
 
-        // Version 7: Customer points history
-        this.version(7).stores({
+        const v7Stores = {
+            ...v6Stores,
             customer_points: '++id, customer_id, timestamp, type, transaction_id'
-        });
+        };
 
-        // Version 8: Product batches (multi-price stock)
-        this.version(8).stores({
+        const v8Stores = {
+            ...v7Stores,
             product_batches: '++batch_id, product_id, retail_price, created_at'
-        });
+        };
+
+        this.version(1).stores(v1Stores);
+        this.version(2).stores(v2Stores);
+        this.version(3).stores(v3Stores);
+        this.version(4).stores(v4Stores);
+        this.version(5).stores(v5Stores);
+        this.version(6).stores(v6Stores);
+        this.version(7).stores(v7Stores);
+        this.version(8).stores(v8Stores);
 
     }
 }

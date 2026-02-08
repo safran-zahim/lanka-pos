@@ -46,24 +46,23 @@ export const Login = () => {
                 }
                 return;
             }
-
-            // Fallback to local DB
-            console.log('API login failed, trying local DB');
-            const user = await db.users.where('username').equals(username).first();
-
-            if (user && user.password_hash === password) {
-                login(user); // Persist user
-                if (user.role === 'admin' || user.role === 'manager') {
-                    navigate('/dashboard');
-                } else {
-                    navigate('/pos');
-                }
-            } else {
-                setError('Invalid credentials');
-            }
         } catch (err) {
-            setError('Login failed');
-            console.error(err);
+            console.warn('API login error, falling back to local DB', err);
+        }
+
+        // Fallback to local DB
+        console.log('API login failed, trying local DB');
+        const user = await db.users.where('username').equals(username).first();
+
+        if (user && user.password_hash === password) {
+            login(user); // Persist user
+            if (user.role === 'admin' || user.role === 'manager') {
+                navigate('/dashboard');
+            } else {
+                navigate('/pos');
+            }
+        } else {
+            setError('Invalid credentials');
         }
     };
 

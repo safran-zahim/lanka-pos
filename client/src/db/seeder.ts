@@ -1,11 +1,7 @@
 import { db } from './db';
 
 export const seedDatabase = async () => {
-    const count = await db.products.count();
-    if (count > 0) return; // Already seeded
-
     console.log('Seeding database...');
-
 
     // Seed Users
     const userCount = await db.users.count();
