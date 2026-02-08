@@ -199,6 +199,47 @@ node dist/verify.js
 5) **Reports Performance**
 	- Cache aggregates (daily/weekly/monthly) if dataset grows.
 
+---
+
+## ☁️ Free Hosting Plan (End‑to‑End)
+
+This project can be hosted for free using:
+- **GitHub** (repo + CI)
+- **Vercel** (client hosting)
+- **Render** or **Railway** (backend API)
+- **Supabase** or **Neon** (PostgreSQL database)
+
+### 1) Client (Vercel)
+1. Push the repo to GitHub.
+2. In Vercel: New Project → Import the repo.
+3. Set **Root Directory** to `client`.
+4. Build command: `npm run build`
+5. Output directory: `dist`
+6. Deploy.
+
+### 2) Database (Supabase or Neon)
+1. Create a free Postgres database.
+2. Copy the connection string.
+3. Add it to the backend environment as `DATABASE_URL`.
+
+### 3) Backend (Render or Railway)
+1. Create a new Web Service from the repo (root).
+2. Build command: `npm install && npm run build`
+3. Start command: `npm start`
+4. Add environment variables:
+	- `DATABASE_URL` (from Supabase/Neon)
+	- `JWT_SECRET` (random string)
+
+### 4) CI/CD (GitHub Actions → Vercel)
+Use Vercel’s Git integration (recommended) or GitHub Actions.
+
+Minimal pipeline:
+1. On push to `main`: install, run tests, build.
+2. If successful, Vercel auto‑deploys client.
+3. Render/Railway auto‑deploys backend on push.
+
+If you want, I can add ready‑to‑use CI/CD workflows and deployment configs.
+
 6) **Consistency**
 	- Prefer shared UI helpers for money, date formatting, and status badges.
 
