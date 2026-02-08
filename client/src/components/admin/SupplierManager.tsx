@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Supplier } from '../../db/db';
-import { Plus, Edit2, Trash2, Search, Truck } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, Truck, Eye } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 import { useToast } from '../../store/useToast';
 
 export const SupplierManager = () => {
+    const navigate = useNavigate();
     const { addToast } = useToast();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
@@ -97,23 +99,36 @@ export const SupplierManager = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredSuppliers?.map((supplier) => (
-                    <div key={supplier.supplier_id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
+                    <div
+                        key={supplier.supplier_id}
+                        onClick={() => navigate(`/admin/suppliers/${supplier.supplier_id}`)}
+                        className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 cursor-pointer transition-all hover:shadow-lg group"
+                    >
                         <div className="flex justify-between items-start mb-4">
                             <div>
-                                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">{supplier.name}</h3>
+                                <h3 className="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2">
+                                    {supplier.name}
+                                    <Eye size={14} className="opacity-0 group-hover:opacity-100 text-blue-500 transition-opacity" />
+                                </h3>
                                 {(supplier.contact_person) && (
                                     <p className="text-sm text-gray-500 dark:text-gray-400">Contact: {supplier.contact_person}</p>
                                 )}
                             </div>
                             <div className="flex gap-2">
                                 <button
-                                    onClick={() => openModal(supplier)}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        openModal(supplier);
+                                    }}
                                     className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-full"
                                 >
                                     <Edit2 size={18} />
                                 </button>
                                 <button
-                                    onClick={() => handleDelete(supplier.supplier_id!)}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDelete(supplier.supplier_id!);
+                                    }}
                                     className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-gray-700 rounded-full"
                                 >
                                     <Trash2 size={18} />

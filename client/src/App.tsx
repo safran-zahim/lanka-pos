@@ -12,6 +12,7 @@ import { CustomerProfilePage } from './pages/admin/CustomerProfilePage';
 import { TransactionsPage } from './pages/admin/TransactionsPage';
 import { SaleDetailPage } from './pages/admin/SaleDetailPage';
 import { SupplierManager } from './components/admin/SupplierManager';
+import { SupplierProfilePage } from './pages/admin/SupplierProfilePage';
 import { PurchaseHistory } from './pages/admin/PurchaseHistory';
 import { PurchasePage } from './pages/admin/PurchasePage';
 import { LowStockReport } from './pages/admin/LowStockReport';
@@ -52,6 +53,7 @@ function App() {
               <Route path="/admin/transactions" element={<TransactionsPage />} />
               <Route path="/admin/transactions/:id" element={<SaleDetailPage />} />
               <Route path="/admin/suppliers" element={<SupplierManager />} />
+              <Route path="/admin/suppliers/:id" element={<SupplierProfilePage />} />
               <Route path="/admin/purchases" element={<PurchaseHistory />} />
               <Route path="/admin/purchases/new" element={<PurchasePage />} />
               <Route path="/admin/low-stock" element={<LowStockReport />} />
