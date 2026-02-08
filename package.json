@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node dist/app.js",
     "dev": "nodemon src/app.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "clear-data": "ts-node prisma/clear_data.ts",
+    "seed": "ts-node prisma/seed_super_admin.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.3.1",
