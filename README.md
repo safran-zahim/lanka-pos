@@ -122,21 +122,44 @@ You can host this entire system for **$0/month** using the following services:
 
 ### 2. Backend: Render
 **Service**: Web Service (Node.js)
-1.  Sign up at [render.com](https://render.com).
-2.  Click **New +** -> **Web Service**.
-3.  Connect your GitHub repository.
-4.  **Settings**:
-    - **Root Directory**: `.` (leave empty or dot)
-    - **Build Command**: `npm install && npx prisma generate --schema=prisma/schema.postgresql.prisma && npx prisma db seed && npm run build`
-        - *Note*: We point to the Postgres schema specifically for production build!
-        - *Note*: `npx prisma db seed` creates the default SuperAdmin user.
-    - **Start Command**: `npm start`
-5.  **Environment Variables**:
-    - `DATABASE_URL`: (Paste your Transaction connection string - Port 6543)
-    - `DIRECT_URL`: (Paste your Session connection string - Port 5432)
-    - `JWT_SECRET`: (Generate a random string)
-    - `NODE_ENV`: `production`
-6.  Deploy.
+
+#### Step-by-Step Configuration:
+
+1.  **Sign up** at [render.com](https://render.com).
+2.  Click **New +** → **Web Service**.
+3.  **Connect Repository**: Select `safran-zahim/lanka-pos`.
+
+4.  **Basic Settings**:
+    - **Name**: `lanka-pos` (or any unique name)
+    - **Language**: `Docker` (Render auto-detects this)
+    - **Branch**: `main`
+    - **Region**: `Oregon (US West)` (or your preferred region)
+    - **Root Directory**: Leave empty (or `.`)
+
+5.  **Instance Type**:
+    - **Free**: `$0/month` (512 MB RAM, 0.1 CPU)
+      - ⚠️ Free instances spin down after inactivity
+    - **Starter**: `$7/month` (512 MB RAM, 0.5 CPU) - Recommended for testing
+    - **Standard**: `$25/month` (2 GB RAM, 1 CPU) - Recommended for production
+
+6.  **Environment Variables** (Click "Add Environment Variable"):
+    ```
+    DATABASE_URL = postgresql://postgres.gsolfnhrmdjysoscbmth:123@Lankapos@aws-0-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true
+    DIRECT_URL = postgresql://postgres.gsolfnhrmdjysoscbmth:123@Lankapos@aws-0-ap-south-1.pooler.supabase.com:5432/postgres
+    JWT_SECRET = your_random_secret_key_here
+    NODE_ENV = production
+    PORT = 3000
+    ```
+
+7.  **Advanced Settings**:
+    - **Docker Build Context Directory**: `.`
+    - **Dockerfile Path**: `./Dockerfile`
+    - **Pre-Deploy Command**: `npx prisma generate --schema=prisma/schema.postgresql.prisma && npx prisma db push --schema=prisma/schema.postgresql.prisma && npx prisma db seed`
+      - *This runs migrations and seeds the SuperAdmin user*
+    - **Health Check Path**: `/` (or leave default)
+    - **Auto-Deploy**: `On Commit` (enabled by default)
+
+8.  Click **Deploy web service**.
 
 ### 3. Frontend: Vercel
 **Service**: Static Site Hosting
