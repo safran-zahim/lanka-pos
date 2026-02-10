@@ -16,8 +16,7 @@ Lanka POS is a point-of-sale system that includes a web client and a backend API
 - Super Admin: Highest role, used to manage plans and access admin features
 
 ### 1.4 References
-- README.md
-- DATA_MANAGEMENT.md
+- architecture_overview.md
 - CREDENTIALS.md
 
 ### 1.5 Overview
@@ -26,6 +25,7 @@ This SRS presents the system overview, requirements, and constraints for Lanka P
 ## 2. Overall Description
 ### 2.1 Product Perspective
 Lanka POS is a client-server application:
+- Desktop Shell: Electron (orchestrates frontend and backend)
 - Frontend: Vite + React UI
 - Backend: Node.js + Express API
 - Database: Prisma ORM
@@ -61,7 +61,7 @@ Lanka POS is a client-server application:
 ### 2.6 User Documentation
 - LOCAL_SETUP.md
 - DESKTOP_APP_GUIDE.md
-- DATA_MANAGEMENT.md
+- architecture_overview.md
 
 ### 2.7 Assumptions and Dependencies
 - Node.js and npm installed
@@ -85,6 +85,7 @@ Lanka POS is a client-server application:
 - FR-8: The system shall allow creating and updating products.
 - FR-9: The system shall track stock levels and minimum stock alerts.
 - FR-10: The system shall allow product categorization and units.
+- FR-22: The system shall allow generating sequential SKU/barcodes for products.
 
 ### 3.4 Customer Management
 - FR-11: The system shall allow creating and updating customers.
@@ -106,6 +107,9 @@ Lanka POS is a client-server application:
 ### 3.8 Local Demo/Offline Mode
 - FR-20: The system shall support local demo credentials stored in IndexedDB.
 - FR-21: The system shall allow POS workflows with local demo data.
+- FR-23: The system shall allow managing suppliers (create, update, view profile).
+- FR-24: The system shall allow tracking purchases from suppliers.
+- FR-25: The system shall support grouping purchase items by bill ID.
 
 ## 4. Non-Functional Requirements
 
@@ -116,6 +120,7 @@ Lanka POS is a client-server application:
 ### 4.2 Security
 - NFR-3: Passwords should be stored securely (hashing required in production).
 - NFR-4: JWT tokens should be validated for protected endpoints.
+- NFR-11: The backend shall implement a Cross-Origin Resource Sharing (CORS) policy.
 
 ### 4.3 Reliability and Availability
 - NFR-5: The system shall be able to run offline in local demo mode.
