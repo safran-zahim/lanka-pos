@@ -1,6 +1,0 @@
-
-> pos-backend@1.0.0 start
-> node dist/app.js
-
-Server is running on port 3000
-^C^C
