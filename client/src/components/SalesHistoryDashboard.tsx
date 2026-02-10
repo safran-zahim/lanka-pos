@@ -61,25 +61,43 @@ export const SalesHistoryDashboard = () => {
     const [startDate, setStartDate] = useState(todayValue);
     const [endDate, setEndDate] = useState(todayValue);
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [activeTab, setActiveTab] = useState<'daily' | 'transactions' | 'products'>('daily');
 
-    const transactions = useLiveQuery(() =>
-        db.transactions.orderBy('timestamp').reverse().toArray()
+    const range = useMemo(() => getRangeBounds(startDate, endDate), [startDate, endDate]);
+
+    const transactions = useLiveQuery(
+        () => db.transactions.where('timestamp').between(range.start, range.end, true, true).reverse().toArray(),
+        [range]
     );
 
     const filteredTransactions = useMemo(() => {
         const list = transactions ?? [];
-        const range = getRangeBounds(startDate, endDate);
 
         return list.filter((txn) => {
-            const timestamp = new Date(txn.timestamp);
-            const inRange = timestamp >= range.start && timestamp <= range.end;
-            const matchesSearch = txn.transaction_id?.toString().includes(searchQuery.trim());
-            const matchesPayment =
-                paymentMethod === 'all' ? true : txn.payment_method === paymentMethod;
+            const matchesSearch = txn.transaction_id?.toString().includes(searchQuery.trim()) ?? false;
+            const matchesPayment = paymentMethod === 'all' ? true : txn.payment_method === paymentMethod;
 
-            return inRange && matchesSearch && matchesPayment;
+            return matchesSearch && matchesPayment;
         });
-    }, [transactions, searchQuery, paymentMethod, startDate, endDate]);
+    }, [transactions, searchQuery, paymentMethod]);
+
+    const paginatedTransactions = useLiveQuery(
+        () => {
+            const collection = db.transactions.where('timestamp').between(range.start, range.end, true, true).reverse();
+            return collection
+                .filter((txn) => {
+                    const matchesSearch = txn.transaction_id?.toString().includes(searchQuery.trim()) ?? false;
+                    const matchesPayment = paymentMethod === 'all' ? true : txn.payment_method === paymentMethod;
+                    return matchesSearch && matchesPayment;
+                })
+                .offset((currentPage - 1) * pageSize)
+                .limit(pageSize)
+                .toArray();
+        },
+        [range, searchQuery, paymentMethod, currentPage, pageSize]
+    );
 
     const dailySummaries = useMemo(() => {
         const map = new Map<string, DailySummary>();
@@ -132,11 +150,65 @@ export const SalesHistoryDashboard = () => {
         );
     }, [filteredTransactions]);
 
+    const aggregatedProducts = useLiveQuery(async () => {
+        const txnIds = filteredTransactions.map((t) => t.transaction_id!).filter(Boolean);
+        if (txnIds.length === 0) return [];
+
+        const items = await db.transaction_items.where('transaction_id').anyOf(txnIds).toArray();
+        const productIds = Array.from(new Set(items.map((i) => i.product_id)));
+        const productsList = await db.products.where('product_id').anyOf(productIds).toArray();
+
+        const productMap = new Map(productsList.map((p) => [p.product_id, p]));
+        const txnMap = new Map(filteredTransactions.map((t) => [t.transaction_id, t]));
+
+        const aggregation = new Map<
+            number,
+            {
+                productId: number;
+                name: string;
+                sku: string;
+                quantity: number;
+                totalSales: number;
+            }
+        >();
+
+        items.forEach((item) => {
+            const product = productMap.get(item.product_id);
+            const txn = txnMap.get(item.transaction_id);
+            const isReturn = txn?.type === 'return';
+            const multiplier = isReturn ? -1 : 1;
+
+            const entry = aggregation.get(item.product_id) ?? {
+                productId: item.product_id,
+                name: product?.name ?? 'Unknown Product',
+                sku: product?.sku_code ?? 'N/A',
+                quantity: 0,
+                totalSales: 0
+            };
+
+            entry.quantity += item.quantity * multiplier;
+            entry.totalSales += item.quantity * item.price_at_sale * multiplier;
+            aggregation.set(item.product_id, entry);
+        });
+
+        return Array.from(aggregation.values()).sort((a, b) => b.totalSales - a.totalSales);
+    }, [filteredTransactions]);
+
+    const transactionsToDisplay = paginatedTransactions ?? [];
+
+    const totalPages = Math.ceil(filteredTransactions.length / pageSize);
+
     const handleReset = () => {
         setSearchQuery('');
         setPaymentMethod('all');
         setStartDate(todayValue);
         setEndDate(todayValue);
+        setCurrentPage(1);
+    };
+
+    const handlePageSizeChange = (newSize: number) => {
+        setPageSize(newSize);
+        setCurrentPage(1);
     };
 
     const handleExport = () => {
@@ -164,12 +236,21 @@ export const SalesHistoryDashboard = () => {
             RoundOffDiscount: txn.round_off_discount ?? 0
         }));
 
+        const productRows = (aggregatedProducts ?? []).map((p) => ({
+            ProductName: p.name,
+            SKU: p.sku,
+            QuantitySold: p.quantity,
+            TotalSales: p.totalSales
+        }));
+
         const workbook = XLSX.utils.book_new();
         const dailySheet = XLSX.utils.json_to_sheet(dailyRows);
         const transactionsSheet = XLSX.utils.json_to_sheet(transactionRows);
+        const productsSheet = XLSX.utils.json_to_sheet(productRows);
 
         XLSX.utils.book_append_sheet(workbook, dailySheet, 'Daily Sales');
         XLSX.utils.book_append_sheet(workbook, transactionsSheet, 'Transactions');
+        XLSX.utils.book_append_sheet(workbook, productsSheet, 'Products Sold');
 
         const fileName = `sales-history-${startDate}-to-${endDate}.xlsx`;
         XLSX.writeFile(workbook, fileName);
@@ -274,141 +355,290 @@ export const SalesHistoryDashboard = () => {
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Daily Sales</h3>
+            <div className="flex flex-col gap-4">
+                <div className="flex border-b border-gray-200 dark:border-gray-700">
+                    <button
+                        onClick={() => setActiveTab('daily')}
+                        className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${activeTab === 'daily'
+                            ? 'border-blue-600 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                            }`}
+                    >
+                        Daily Sales
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('transactions')}
+                        className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${activeTab === 'transactions'
+                            ? 'border-blue-600 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                            }`}
+                    >
+                        Transactions
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('products')}
+                        className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${activeTab === 'products'
+                            ? 'border-blue-600 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                            }`}
+                    >
+                        Products Sold
+                    </button>
                 </div>
-                <div className="overflow-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
-                            <tr>
-                                <th className="p-4 font-medium text-gray-500 dark:text-gray-400">Date</th>
-                                <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-right">Sales</th>
-                                <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-right">Returns</th>
-                                <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-right">Net</th>
-                                <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-right">Count</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                            {dailySummaries.map((summary) => (
-                                <tr key={summary.dateKey}>
-                                    <td className="p-4 text-gray-900 dark:text-white">{summary.dateLabel}</td>
-                                    <td className="p-4 text-right text-gray-900 dark:text-white">
-                                        {formatCurrency(summary.grossSales)}
-                                    </td>
-                                    <td className="p-4 text-right text-orange-600 dark:text-orange-400">
-                                        {formatCurrency(summary.returnsAmount)}
-                                    </td>
-                                    <td className="p-4 text-right font-medium text-gray-900 dark:text-white">
-                                        {formatCurrency(summary.netSales)}
-                                    </td>
-                                    <td className="p-4 text-right text-gray-500 dark:text-gray-400">
-                                        {summary.salesCount + summary.returnsCount}
-                                    </td>
-                                </tr>
-                            ))}
-                            {!dailySummaries.length && (
-                                <tr>
-                                    <td
-                                        colSpan={5}
-                                        className="p-6 text-center text-sm text-gray-500 dark:text-gray-400"
-                                    >
-                                        No daily sales found for the selected filters.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden flex-1 min-h-0">
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Transactions</h3>
-                </div>
-                <div className="overflow-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
-                            <tr>
-                                <th className="p-4 font-medium text-gray-500 dark:text-gray-400">ID</th>
-                                <th className="p-4 font-medium text-gray-500 dark:text-gray-400">Date</th>
-                                <th className="p-4 font-medium text-gray-500 dark:text-gray-400">Type</th>
-                                <th className="p-4 font-medium text-gray-500 dark:text-gray-400">Payment</th>
-                                <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-right">Amount</th>
-                                <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-center">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                            {filteredTransactions.map((txn) => {
-                                const signedAmount = getSignedAmount(txn);
-                                return (
-                                    <tr
-                                        key={txn.transaction_id}
-                                        onClick={() => navigate(`/admin/transactions/${txn.transaction_id}`)}
-                                        className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
-                                    >
-                                        <td className="p-4 text-gray-900 dark:text-white">#{txn.transaction_id}</td>
-                                        <td className="p-4 text-gray-500 dark:text-gray-400">
-                                            {formatDateTime(new Date(txn.timestamp))}
-                                        </td>
-                                        <td className="p-4">
-                                            <span
-                                                className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                    txn.type === 'return'
-                                                        ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300'
-                                                        : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                                                }`}
-                                            >
-                                                {txn.type === 'return' ? (
-                                                    <ArrowDownLeft size={12} />
-                                                ) : (
-                                                    <ArrowUpRight size={12} />
-                                                )}
-                                                {txn.type === 'return' ? 'Return' : 'Sale'}
-                                            </span>
-                                        </td>
-                                        <td className="p-4 text-gray-500 dark:text-gray-400">
-                                            {txn.payment_method}
-                                        </td>
-                                        <td
-                                            className={`p-4 text-right font-medium ${
-                                                txn.type === 'return'
-                                                    ? 'text-orange-600 dark:text-orange-400'
-                                                    : 'text-gray-900 dark:text-white'
-                                            }`}
-                                        >
-                                            {formatCurrency(signedAmount)}
-                                        </td>
-                                        <td className="p-4 text-center">
-                                            {txn.type === 'sale' && (
-                                                <button
-                                                    onClick={(event) => {
-                                                        event.stopPropagation();
-                                                        setSelectedTransaction(txn);
-                                                    }}
-                                                    className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
-                                                    title="Return Items"
-                                                >
-                                                    <RotateCcw size={18} />
-                                                </button>
-                                            )}
-                                        </td>
+                {activeTab === 'daily' && (
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+                        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Daily Sales</h3>
+                        </div>
+                        <div className="overflow-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
+                                    <tr>
+                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400">Date</th>
+                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-right">Sales</th>
+                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-right">Returns</th>
+                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-right">Net</th>
+                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-right">Count</th>
                                     </tr>
-                                );
-                            })}
-                            {!filteredTransactions.length && (
-                                <tr>
-                                    <td
-                                        colSpan={6}
-                                        className="p-6 text-center text-sm text-gray-500 dark:text-gray-400"
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                    {dailySummaries.map((summary) => (
+                                        <tr key={summary.dateKey}>
+                                            <td className="p-4 text-gray-900 dark:text-white">{summary.dateLabel}</td>
+                                            <td className="p-4 text-right text-gray-900 dark:text-white">
+                                                {formatCurrency(summary.grossSales)}
+                                            </td>
+                                            <td className="p-4 text-right text-orange-600 dark:text-orange-400">
+                                                {formatCurrency(summary.returnsAmount)}
+                                            </td>
+                                            <td className="p-4 text-right font-medium text-gray-900 dark:text-white">
+                                                {formatCurrency(summary.netSales)}
+                                            </td>
+                                            <td className="p-4 text-right text-gray-500 dark:text-gray-400">
+                                                {summary.salesCount + summary.returnsCount}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {!dailySummaries.length && (
+                                        <tr>
+                                            <td
+                                                colSpan={5}
+                                                className="p-6 text-center text-sm text-gray-500 dark:text-gray-400"
+                                            >
+                                                No daily sales found for the selected filters.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'products' && (
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+                        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Products Sold</h3>
+                        </div>
+                        <div className="overflow-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
+                                    <tr>
+                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400">Product</th>
+                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400">SKU</th>
+                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-right">Qty</th>
+                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-right">Total Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                    {aggregatedProducts?.map((p) => (
+                                        <tr key={p.productId}>
+                                            <td className="p-4 text-gray-900 dark:text-white font-medium">{p.name}</td>
+                                            <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">{p.sku}</td>
+                                            <td className="p-4 text-right text-gray-900 dark:text-white">
+                                                {p.quantity % 1 === 0 ? p.quantity : p.quantity.toFixed(2)}
+                                            </td>
+                                            <td className="p-4 text-right font-medium text-gray-900 dark:text-white">
+                                                {formatCurrency(p.totalSales)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {(!aggregatedProducts || aggregatedProducts.length === 0) && (
+                                        <tr>
+                                            <td
+                                                colSpan={4}
+                                                className="p-6 text-center text-sm text-gray-500 dark:text-gray-400"
+                                            >
+                                                {!aggregatedProducts ? (
+                                                    <div className="flex justify-center p-4">
+                                                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                                                    </div>
+                                                ) : "No products sold found for the selected filters."}
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'transactions' && (
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden flex-1 min-h-0">
+                        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Transactions</h3>
+                            <div className="flex items-center gap-2">
+                                <label className="text-sm text-gray-500 dark:text-gray-400">Show:</label>
+                                <select
+                                    value={pageSize}
+                                    onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                                    className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white px-2 py-1 text-sm"
+                                >
+                                    <option value={10}>10</option>
+                                    <option value={25}>25</option>
+                                    <option value={50}>50</option>
+                                    <option value={100}>100</option>
+                                </select>
+                                <span className="text-sm text-gray-500 dark:text-gray-400">per page</span>
+                            </div>
+                        </div>
+                        <div className="overflow-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
+                                    <tr>
+                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400">ID</th>
+                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400">Date</th>
+                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400">Type</th>
+                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400">Payment</th>
+                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-right">Amount</th>
+                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                    {transactionsToDisplay.map((txn) => {
+                                        const signedAmount = getSignedAmount(txn);
+                                        return (
+                                            <tr
+                                                key={txn.transaction_id}
+                                                onClick={() => navigate(`/admin/transactions/${txn.transaction_id}`)}
+                                                className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+                                            >
+                                                <td className="p-4 text-gray-900 dark:text-white">#{txn.transaction_id}</td>
+                                                <td className="p-4 text-gray-500 dark:text-gray-400">
+                                                    {formatDateTime(new Date(txn.timestamp))}
+                                                </td>
+                                                <td className="p-4">
+                                                    <span
+                                                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${txn.type === 'return'
+                                                            ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300'
+                                                            : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                                                            }`}
+                                                    >
+                                                        {txn.type === 'return' ? (
+                                                            <ArrowDownLeft size={12} />
+                                                        ) : (
+                                                            <ArrowUpRight size={12} />
+                                                        )}
+                                                        {txn.type === 'return' ? 'Return' : 'Sale'}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4 text-gray-500 dark:text-gray-400">
+                                                    {txn.payment_method}
+                                                </td>
+                                                <td
+                                                    className={`p-4 text-right font-medium ${txn.type === 'return'
+                                                        ? 'text-orange-600 dark:text-orange-400'
+                                                        : 'text-gray-900 dark:text-white'
+                                                        }`}
+                                                >
+                                                    {formatCurrency(signedAmount)}
+                                                </td>
+                                                <td className="p-4 text-center">
+                                                    {txn.type === 'sale' && (
+                                                        <button
+                                                            onClick={(event) => {
+                                                                event.stopPropagation();
+                                                                setSelectedTransaction(txn);
+                                                            }}
+                                                            className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+                                                            title="Return Items"
+                                                        >
+                                                            <RotateCcw size={18} />
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                    {!filteredTransactions.length && (
+                                        <tr>
+                                            <td
+                                                colSpan={6}
+                                                className="p-6 text-center text-sm text-gray-500 dark:text-gray-400"
+                                            >
+                                                {(!paginatedTransactions && transactions) ? (
+                                                    <div className="flex justify-center p-4">
+                                                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                                                    </div>
+                                                ) : "No transactions found for the selected filters."}
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                        {filteredTransactions.length > 0 && (
+                            <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                                <div className="text-sm text-gray-500 dark:text-gray-400">
+                                    Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredTransactions.length)} of {filteredTransactions.length} transactions
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                        disabled={currentPage === 1}
+                                        className="px-3 py-1 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                                     >
-                                        No transactions found for the selected filters.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                        Previous
+                                    </button>
+                                    <div className="flex items-center gap-1">
+                                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                            let pageNum;
+                                            if (totalPages <= 5) {
+                                                pageNum = i + 1;
+                                            } else if (currentPage <= 3) {
+                                                pageNum = i + 1;
+                                            } else if (currentPage >= totalPages - 2) {
+                                                pageNum = totalPages - 4 + i;
+                                            } else {
+                                                pageNum = currentPage - 2 + i;
+                                            }
+                                            return (
+                                                <button
+                                                    key={pageNum}
+                                                    onClick={() => setCurrentPage(pageNum)}
+                                                    className={`px-3 py-1 rounded-lg text-sm ${currentPage === pageNum
+                                                        ? 'bg-blue-600 text-white'
+                                                        : 'border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                                        }`}
+                                                >
+                                                    {pageNum}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    <button
+                                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                        disabled={currentPage === totalPages}
+                                        className="px-3 py-1 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             {selectedTransaction && (

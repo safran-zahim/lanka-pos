@@ -6,6 +6,7 @@ import { Dashboard } from './pages/Dashboard';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AdminLayout } from './layouts/AdminLayout';
 import { ProductList } from './pages/admin/ProductList';
+import { ProductHistoryPage } from './pages/admin/ProductHistoryPage';
 import { UserList } from './pages/admin/UserList';
 import { CustomerList } from './pages/admin/CustomerList';
 import { CustomerProfilePage } from './pages/admin/CustomerProfilePage';
@@ -48,6 +49,7 @@ function App() {
             <Route element={<AdminLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/admin/products" element={<ProductList />} />
+              <Route path="/admin/products/:id/history" element={<ProductHistoryPage />} />
               <Route path="/admin/customers" element={<CustomerList />} />
               <Route path="/admin/customers/:id" element={<CustomerProfilePage />} />
               <Route path="/admin/transactions" element={<TransactionsPage />} />

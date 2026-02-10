@@ -82,7 +82,9 @@ export const ReceiptModal = ({ transaction, items, customer, user, onClose }: Re
             `Total: ${formatCurrency(total)}`,
             `Payment: ${transaction.payment_method.toUpperCase()}`,
             divider,
-            footer || 'Thank you for your business.'
+            footer || 'Thank you for your business.',
+            divider,
+            'Powered by TapLanka POS - 0787843332'
         ].filter(Boolean);
 
         const receiptText = lines.join('\n');
@@ -99,7 +101,7 @@ export const ReceiptModal = ({ transaction, items, customer, user, onClose }: Re
 
     if (loadingSettings) {
         return (
-            <div id="receipt-modal" className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+            <div id="receipt-modal" className="fixed inset-0 bg-black/80 flex items-center justify-center z-[200]">
                 <div className="bg-white text-black p-6 rounded-lg w-80">
                     <div className="flex items-center gap-2 text-gray-600">
                         <Loader size={18} className="animate-spin" />
@@ -125,7 +127,7 @@ export const ReceiptModal = ({ transaction, items, customer, user, onClose }: Re
     const isThermalCompact = receiptTemplate === 'thermal-compact';
 
     // Content settings
-    const header = settings['companyName'] || settings['receiptHeader'] || 'Lanka POS';
+    const header = settings['companyName'] || settings['receiptHeader'] || 'TapLanka Pos Systems';
     const address = settings['companyAddress'] || settings['receiptAddress'] || '123 Main Street, City';
     const phone = settings['companyPhone'] || settings['receiptPhone'] || '+94 77 123 4567';
     const email = settings['companyEmail'] || settings['receiptEmail'] || '';
@@ -146,7 +148,7 @@ export const ReceiptModal = ({ transaction, items, customer, user, onClose }: Re
         : '';
 
     return (
-        <div id="receipt-modal" className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 print:bg-white print:static print:h-auto print:w-auto">
+        <div id="receipt-modal" className="fixed inset-0 bg-black/80 flex items-center justify-center z-[200] print:bg-white print:static print:h-auto print:w-auto">
             <div className={`bg-white text-black p-8 rounded-lg ${receiptWidth} ${receiptHeight} max-h-[90vh] overflow-y-auto print:w-full print:shadow-none print:p-0 print:max-h-none`}>
 
                 {/* Actions (Hidden on Print) */}
@@ -320,7 +322,7 @@ export const ReceiptModal = ({ transaction, items, customer, user, onClose }: Re
 
                     {receiptType === 'a4' && (
                         <div className="mt-8 text-xs text-gray-500">
-                            <p>Powered by Lanka POS</p>
+                            <p>Powered by TapLanka POS - 0787843332</p>
                             <p>{new Date().toLocaleString()}</p>
                         </div>
                     )}

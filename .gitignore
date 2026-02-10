@@ -36,3 +36,10 @@ Thumbs.db
 
 # TypeScript cache
 *.tsbuildinfo
+
+# Redundant documentation and logs
+DATA_CLEANUP_SUMMARY.md
+DATA_COMMANDS.md
+DATA_MANAGEMENT.md
+backend.log
+frontend.log

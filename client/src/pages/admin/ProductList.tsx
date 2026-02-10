@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Plus, Search, Edit, Package, Tag, Scale, FolderTree } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Search, Edit, Package, Tag, Scale, FolderTree, History, PlusCircle } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/db';
 import { AddProductModal } from '../../components/admin/AddProductModal';
-// import { PurchaseModal } from '../../components/admin/PurchaseModal'; // Removed
+import { AddStockModal } from '../../components/admin/AddStockModal';
 import { EditProductModal } from '../../components/admin/EditProductModal';
 import type { Product } from '../../db/db';
 import { useCurrency } from '../../hooks/useCurrency';
@@ -12,9 +13,10 @@ import { UnitManager } from '../../components/admin/settings/UnitManager';
 import { CategoryManagerPanel } from '../../components/admin/settings/CategoryManagerPanel';
 
 export const ProductList = () => {
+    const navigate = useNavigate();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    // const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false); // Removed
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+    const [addStockProduct, setAddStockProduct] = useState<Product | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'brands' | 'units'>('products');
     const { formatCurrency } = useCurrency();
@@ -95,8 +97,7 @@ export const ProductList = () => {
                                 {filteredProducts?.map((product) => (
                                     <tr
                                         key={product.product_id}
-                                        onClick={() => setEditingProduct(product)}
-                                        className="border-b border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer transition-colors"
+                                        className="border-b border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                                     >
                                         <td className="px-6 py-4 font-mono text-sm">{product.sku_code}</td>
                                         <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{product.name}</td>
@@ -110,17 +111,50 @@ export const ProductList = () => {
                                         </td>
                                         <td className="px-6 py-4 font-semibold">{formatCurrency(product.retail_price)}</td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${product.stock_quantity <= product.reorder_level
-                                                ? 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400'
-                                                : 'bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400'
-                                                }`}>
-                                                {product.stock_quantity}
-                                            </span>
+                                            <div className="flex flex-col gap-1">
+                                                <span className={`px-2 py-1 rounded-full text-xs font-medium w-fit ${product.stock_quantity <= (product.reorder_level || 0)
+                                                    ? 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400'
+                                                    : 'bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400'
+                                                    }`}>
+                                                    {product.stock_quantity} {product.unit_id}
+                                                </span>
+                                                <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-1">
+                                                    Batch Tracking
+                                                </span>
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500">
-                                                <Edit size={16} />
-                                                <span className="text-xs">Click to edit</span>
+                                            <div className="flex items-center gap-4">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setAddStockProduct(product);
+                                                    }}
+                                                    className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                                                    title="Add Stock / New Batch"
+                                                >
+                                                    <PlusCircle size={18} />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigate(`/admin/products/${product.product_id}/history`);
+                                                    }}
+                                                    className="p-2 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors"
+                                                    title="Price History & Batches"
+                                                >
+                                                    <History size={18} />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setEditingProduct(product);
+                                                    }}
+                                                    className="p-2 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                                                    title="Edit Product Details"
+                                                >
+                                                    <Edit size={18} />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -172,6 +206,14 @@ export const ProductList = () => {
                 <EditProductModal
                     product={editingProduct}
                     onClose={() => setEditingProduct(null)}
+                    onSuccess={() => { }}
+                />
+            )}
+
+            {activeTab === 'products' && addStockProduct && (
+                <AddStockModal
+                    product={addStockProduct}
+                    onClose={() => setAddStockProduct(null)}
                     onSuccess={() => { }}
                 />
             )}

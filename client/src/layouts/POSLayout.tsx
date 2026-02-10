@@ -13,7 +13,7 @@ export const POSLayout: React.FC<{ children: React.ReactNode }> = ({ children })
     const navigate = useNavigate();
     const settings = useLiveQuery(() => db.settings.toArray());
     const settingsMap = settings?.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {} as Record<string, any>) || {};
-    const brandName = settingsMap['companyName'] || settingsMap['receiptHeader'] || 'Lanka POS';
+    const brandName = settingsMap['companyName'] || settingsMap['receiptHeader'] || 'TapLanka POS';
     const logoUrl = settingsMap['companyLogo'] || settingsMap['receiptLogo'] || '';
     const showLogo = Boolean(logoUrl) || settingsMap['showLogo'] || false;
     const { formatTime } = useLocale();

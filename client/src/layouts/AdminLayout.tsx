@@ -17,7 +17,7 @@ export const AdminLayout = () => {
     const [time, setTime] = useState(new Date());
     const settings = useLiveQuery(() => db.settings.toArray());
     const settingsMap = settings?.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {} as Record<string, any>) || {};
-    const brandName = settingsMap['companyName'] || 'Lanka POS';
+    const brandName = settingsMap['companyName'] || 'TapLanka POS';
     const brandLogo = settingsMap['companyLogo'] || '';
     const { formatTime } = useLocale();
 

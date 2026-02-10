@@ -20,17 +20,34 @@ export const SupplierProfilePage = () => {
         [supplierId]
     );
 
+    interface GroupedBill {
+        billKey: string;
+        ref_number: string;
+        timestamp: Date | string | number;
+        payment_status: string;
+        payment_method: string;
+        shipping_cost: number;
+        discount: number;
+        bill_total: number;
+        amount_paid: number;
+        itemCount: number;
+        subtotal: number;
+        total: number;
+        due: number;
+    }
+
     const groupedBills = useMemo(() => {
         if (!allPurchases) return [];
 
-        const acc = new Map<string, any>();
+        const acc = new Map<string, GroupedBill>();
 
         allPurchases.forEach(p => {
             const billKey = p.bill_id || (p.ref_number
                 ? `ref:${p.ref_number}`
                 : `ts:${new Date(p.timestamp).getTime()}|sup:${p.supplier_id ?? 'na'}`);
 
-            if (!acc.has(billKey)) {
+            const existing = acc.get(billKey);
+            if (!existing) {
                 acc.set(billKey, {
                     billKey,
                     ref_number: p.ref_number || '-',
@@ -42,12 +59,13 @@ export const SupplierProfilePage = () => {
                     bill_total: p.bill_total || 0,
                     amount_paid: p.amount_paid || 0,
                     itemCount: 1,
-                    subtotal: p.quantity * p.cost_price
+                    subtotal: (p.quantity || 0) * (p.cost_price || 0),
+                    total: 0,
+                    due: 0
                 });
             } else {
-                const bill = acc.get(billKey)!;
-                bill.itemCount += 1;
-                bill.subtotal += p.quantity * p.cost_price;
+                existing.itemCount += 1;
+                existing.subtotal += (p.quantity || 0) * (p.cost_price || 0);
             }
         });
 

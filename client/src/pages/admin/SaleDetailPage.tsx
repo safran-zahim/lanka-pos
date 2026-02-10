@@ -44,6 +44,15 @@ export const SaleDetailPage = () => {
     const [taxAmount, setTaxAmount] = useState(transaction?.tax_amount || 0);
     const [totalAmount, setTotalAmount] = useState(transaction?.total_amount || 0);
 
+    if (transaction === undefined) {
+        return (
+            <div className="p-6 flex flex-col items-center justify-center h-[50vh]">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-4"></div>
+                <div className="text-gray-500">Loading transaction...</div>
+            </div>
+        );
+    }
+
     if (!transaction) {
         return (
             <div className="p-6">
@@ -53,7 +62,7 @@ export const SaleDetailPage = () => {
                 >
                     <ArrowLeft size={20} />
                 </button>
-                <div className="mt-4 text-gray-500">Sale not found.</div>
+                <div className="mt-4 text-gray-500 font-medium">Sale not found. It may have been deleted or the ID is incorrect.</div>
             </div>
         );
     }

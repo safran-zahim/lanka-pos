@@ -17,7 +17,7 @@ export const ReceiptSettingsPage = () => {
     const [a4Orientation, setA4Orientation] = useState<'portrait' | 'landscape'>('portrait');
 
     // Receipt Content Settings
-    const [header, setHeader] = useState('Lanka POS');
+    const [header, setHeader] = useState('TapLanka POS');
     const [address, setAddress] = useState('123 Main Street, City');
     const [phone, setPhone] = useState('+94 77 123 4567');
     const [email, setEmail] = useState('');
@@ -120,8 +120,11 @@ export const ReceiptSettingsPage = () => {
 
     if (loading) {
         return (
-            <div className="p-6 flex justify-center items-center h-full">
-                <Loader className="animate-spin text-blue-600" size={32} />
+            <div className="p-6 flex justify-center items-center h-full min-h-[400px]">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader className="animate-spin text-blue-600" size={40} />
+                    <p className="text-gray-500 font-medium animate-pulse">Initializing Receipt Settings...</p>
+                </div>
             </div>
         );
     }
@@ -308,7 +311,7 @@ export const ReceiptSettingsPage = () => {
                                                 className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
                                                 value={header}
                                                 onChange={(e) => setHeader(e.target.value)}
-                                                placeholder="Lanka POS"
+                                                placeholder="TapLanka POS"
                                             />
                                         </div>
                                         <div className="space-y-2">
@@ -502,7 +505,7 @@ export const ReceiptSettingsPage = () => {
                                         {(isModern || isBold) && (
                                             <div className="bg-blue-600 text-white rounded-xl p-4 mb-6 flex items-center justify-between">
                                                 <div>
-                                                    <div className="text-lg font-bold">{header || 'LANKA POS'}</div>
+                                                    <div className="text-lg font-bold">{header || 'TAPLANKA POS'}</div>
                                                     <div className="text-[10px] opacity-90">{address || '123 Main Street, Colombo'}</div>
                                                 </div>
                                                 {showLogo && (
@@ -519,7 +522,7 @@ export const ReceiptSettingsPage = () => {
                                             <div className="bg-gradient-to-r from-gray-900 to-gray-700 text-white rounded-2xl p-5 mb-6">
                                                 <div className="flex items-center justify-between">
                                                     <div>
-                                                        <div className="text-lg font-bold tracking-wide">{header || 'LANKA POS'}</div>
+                                                        <div className="text-lg font-bold tracking-wide">{header || 'TAPLANKA POS'}</div>
                                                         <div className="text-[10px] opacity-80">{address || '123 Main Street, Colombo'}</div>
                                                         {phone && <div className="text-[10px] opacity-80">Tel: {phone}</div>}
                                                     </div>
@@ -547,7 +550,7 @@ export const ReceiptSettingsPage = () => {
                                         )}
 
                                         {!(isModern || isElegant || isBold) && (
-                                            <div className="text-center font-bold text-sm mb-1 uppercase tracking-tighter">{header || 'LANKA POS'}</div>
+                                            <div className="text-center font-bold text-sm mb-1 uppercase tracking-tighter">{header || 'TAPLANKA POS'}</div>
                                         )}
                                         {!(isModern || isElegant || isBold) && (
                                             <div className="text-center space-y-0.5 opacity-80 mb-6">
@@ -617,7 +620,8 @@ export const ReceiptSettingsPage = () => {
 
                                         <div className="text-center space-y-1 mt-auto">
                                             <div className="font-bold italic">{footer || 'Thank you for shopping!'}</div>
-                                            <div className="text-[9px] opacity-50 uppercase tracking-widest">Powered by Lanka POS</div>
+                                            <div className="text-[9px] opacity-50 uppercase tracking-widest">Powered by TapLanka POS - 0787843332</div>
+
                                         </div>
                                     </div>
                                 </div>

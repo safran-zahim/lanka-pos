@@ -30,7 +30,7 @@ export const HelpPage = () => {
     return (
         <div className="p-6 max-w-4xl mx-auto">
             <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">Help & Documentation</h1>
-            <p className="text-gray-600 dark:text-gray-400 mb-8">Guide to using the Lanka POS System features and modules.</p>
+            <p className="text-gray-600 dark:text-gray-400 mb-8">Guide to using the TapLanka POS System features and modules.</p>
 
             <Section title="POS Terminal & Sales" icon={ShoppingCart} defaultOpen={true}>
                 <h3 className="font-bold text-gray-900 dark:text-white mt-2">Processing a Sale</h3>
