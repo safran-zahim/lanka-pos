@@ -39,48 +39,50 @@ export const UnitManager = () => {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Product Units</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Configure units (kg, pc, etc)</p>
                 {!isAdding && (
                     <button
                         onClick={() => setIsAdding(true)}
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm"
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
                     >
-                        <Plus size={16} />
+                        <Plus size={14} />
                         Add Unit
                     </button>
                 )}
             </div>
 
             {isAdding && (
-                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
-                    <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4 md:items-end">
-                        <div className="flex-1 space-y-1">
-                            <label className="text-xs text-gray-500 dark:text-gray-400">Unit Name</label>
-                            <input
-                                autoFocus
-                                required
-                                type="text"
-                                placeholder="e.g. Pieces"
-                                className="w-full p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                                value={formData.name}
-                                onChange={e => setFormData({ ...formData, name: e.target.value })}
-                            />
+                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg border border-gray-200 dark:border-gray-600 animate-fadeIn">
+                    <form onSubmit={handleSubmit} className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Unit Name</label>
+                                <input
+                                    autoFocus
+                                    required
+                                    type="text"
+                                    placeholder="e.g. Pieces"
+                                    className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                    value={formData.name}
+                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Short Name</label>
+                                <input
+                                    required
+                                    type="text"
+                                    placeholder="e.g. pc"
+                                    className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                    value={formData.short_name}
+                                    onChange={e => setFormData({ ...formData, short_name: e.target.value })}
+                                />
+                            </div>
                         </div>
-                        <div className="flex-1 space-y-1">
-                            <label className="text-xs text-gray-500 dark:text-gray-400">Short Name</label>
-                            <input
-                                required
-                                type="text"
-                                placeholder="e.g. pc"
-                                className="w-full p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                                value={formData.short_name}
-                                onChange={e => setFormData({ ...formData, short_name: e.target.value })}
-                            />
-                        </div>
-                        <div className="flex items-center pb-3">
-                            <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-200">
+                        <div className="flex items-center justify-between">
+                            <label className="flex items-center gap-2 cursor-pointer text-xs text-gray-700 dark:text-gray-300">
                                 <input
                                     type="checkbox"
                                     className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
@@ -89,27 +91,27 @@ export const UnitManager = () => {
                                 />
                                 Allow Decimals
                             </label>
-                        </div>
-                        <div className="flex gap-2">
-                            <button
-                                type="submit"
-                                className="bg-green-600 hover:bg-green-700 text-white p-2 rounded"
-                                title="Save"
-                            >
-                                <Save size={20} />
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setIsAdding(false);
-                                    setEditingId(null);
-                                    setFormData({ name: '', short_name: '', allow_decimal: false });
-                                }}
-                                className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded"
-                                title="Cancel"
-                            >
-                                <X size={20} />
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    type="submit"
+                                    className="bg-blue-600 hover:bg-blue-700 text-white p-1.5 rounded transition-colors"
+                                    title="Save"
+                                >
+                                    <Save size={16} />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsAdding(false);
+                                        setEditingId(null);
+                                        setFormData({ name: '', short_name: '', allow_decimal: false });
+                                    }}
+                                    className="bg-gray-400 hover:bg-gray-500 text-white p-1.5 rounded transition-colors"
+                                    title="Cancel"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>

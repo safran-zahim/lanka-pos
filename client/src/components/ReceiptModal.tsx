@@ -6,6 +6,8 @@ import { useDigitalReceipt } from '../hooks/useDigitalReceipt';
 import { useCurrency } from '../hooks/useCurrency';
 import { useLocale } from '../hooks/useLocale';
 
+import { APP_CONFIG } from '../config/appConfig';
+
 interface ReceiptModalProps {
     transaction: Transaction;
     items: (TransactionItem & { name: string })[];
@@ -82,9 +84,9 @@ export const ReceiptModal = ({ transaction, items, customer, user, onClose }: Re
             `Total: ${formatCurrency(total)}`,
             `Payment: ${transaction.payment_method.toUpperCase()}`,
             divider,
-            footer || 'Thank you for your business.',
+            footer || 'Developed by Tap Lanka POS 0705083388',
             divider,
-            'Powered by TapLanka POS - 0787843332'
+            `Powered by ${APP_CONFIG.appName} - ${APP_CONFIG.company.supportPhone}`
         ].filter(Boolean);
 
         const receiptText = lines.join('\n');
@@ -127,11 +129,11 @@ export const ReceiptModal = ({ transaction, items, customer, user, onClose }: Re
     const isThermalCompact = receiptTemplate === 'thermal-compact';
 
     // Content settings
-    const header = settings['companyName'] || settings['receiptHeader'] || 'TapLanka Pos Systems';
-    const address = settings['companyAddress'] || settings['receiptAddress'] || '123 Main Street, City';
-    const phone = settings['companyPhone'] || settings['receiptPhone'] || '+94 77 123 4567';
+    const header = settings['companyName'] || settings['receiptHeader'] || APP_CONFIG.appName;
+    const address = settings['companyAddress'] || settings['receiptAddress'] || APP_CONFIG.company.address;
+    const phone = settings['companyPhone'] || settings['receiptPhone'] || APP_CONFIG.company.supportPhone;
     const email = settings['companyEmail'] || settings['receiptEmail'] || '';
-    const footer = settings['receiptFooter'] || 'Thank you for your business!';
+    const footer = settings['receiptFooter'] || 'Developed by Tap Lanka POS 0705083388';
     const logoUrl = settings['companyLogo'] || settings['receiptLogo'] || '';
     const showLogo = Boolean(logoUrl) || settings['showLogo'] || false;
     const showTaxID = settings['showTaxID'] || false;
@@ -322,7 +324,7 @@ export const ReceiptModal = ({ transaction, items, customer, user, onClose }: Re
 
                     {receiptType === 'a4' && (
                         <div className="mt-8 text-xs text-gray-500">
-                            <p>Powered by TapLanka POS - 0787843332</p>
+                            <p>Powered by {APP_CONFIG.appName} - {APP_CONFIG.company.supportPhone}</p>
                             <p>{new Date().toLocaleString()}</p>
                         </div>
                     )}

@@ -5,6 +5,8 @@ import { db } from '../db/db';
 import { Store, Lock, AlertCircle } from 'lucide-react';
 import { getApiUrl } from '../config/api';
 
+import { APP_CONFIG } from '../config/appConfig';
+
 export const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -77,7 +79,7 @@ export const Login = () => {
                     <div className="bg-white/10 p-4 rounded-2xl w-16 h-16 flex items-center justify-center mb-8 backdrop-blur-sm border border-white/20 shadow-xl">
                         <Store size={32} className="text-white" />
                     </div>
-                    <h1 className="text-5xl font-extrabold mb-6 tracking-tight">TapLanka POS</h1>
+                    <h1 className="text-5xl font-extrabold mb-6 tracking-tight">{APP_CONFIG.appName}</h1>
                     <p className="text-xl text-blue-100 font-light leading-relaxed">
                         The advanced point of sale solution for modern businesses. Manage inventory, sales, and customers with ease.
                     </p>

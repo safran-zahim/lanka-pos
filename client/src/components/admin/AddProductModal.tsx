@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { X, Plus, Image as ImageIcon, RefreshCw } from 'lucide-react';
 import { db } from '../../db/db';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -6,7 +6,6 @@ import { CategoryManager } from '../CategoryManager';
 import { BrandManager } from './settings/BrandManager';
 import { UnitManager } from './settings/UnitManager';
 import { useToast } from '../../store/useToast';
-import { useCurrency } from '../../hooks/useCurrency';
 
 interface AddProductModalProps {
     onClose: () => void;
@@ -14,7 +13,6 @@ interface AddProductModalProps {
 }
 
 export const AddProductModal = ({ onClose, onSuccess }: AddProductModalProps) => {
-    const { currencySymbol } = useCurrency();
     const [formData, setFormData] = useState({
         name: '',
         sku_code: '',
@@ -27,8 +25,6 @@ export const AddProductModal = ({ onClose, onSuccess }: AddProductModalProps) =>
         alert_quantity: '',
         description: '',
         image: '' as string,
-        cost_price: '',
-        retail_price: '',
         tax_type: 'inclusive'
     });
 
@@ -99,15 +95,14 @@ export const AddProductModal = ({ onClose, onSuccess }: AddProductModalProps) =>
                 brand_id: formData.brand_id,
                 category_id: formData.category_id || (categories?.[0]?.name || 'Uncategorized'),
                 sub_category_id: formData.sub_category_id,
-                manage_stock: formData.manage_stock,
-                alert_quantity: Number(formData.alert_quantity) || 0,
                 description: formData.description,
                 image: formData.image,
-                cost_price: Number(formData.cost_price) || 0,
-                retail_price: Number(formData.retail_price) || 0,
-                // tax_type: formData.tax_type, // TODO: Add to DB schema if needed
-                stock_quantity: 0, // Initial stock 0
-                reorder_level: Number(formData.alert_quantity) || 0 // Backward compat
+                cost_price: 0,
+                retail_price: 0,
+                stock_quantity: 0,
+                alert_quantity: parseInt(formData.alert_quantity) || 0,
+                manage_stock: formData.manage_stock,
+                reorder_level: 0
             });
             addToast("Product added successfully!", 'success');
             onSuccess();
@@ -120,12 +115,12 @@ export const AddProductModal = ({ onClose, onSuccess }: AddProductModalProps) =>
 
     const ModalOverlay = ({ title, onClose, children }: any) => (
         <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md border border-gray-200 dark:border-gray-700">
-                <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
                     <h3 className="font-bold text-gray-800 dark:text-white">{title}</h3>
                     <button onClick={onClose}><X size={20} className="text-gray-500" /></button>
                 </div>
-                <div className="p-4">{children}</div>
+                <div className="p-4 overflow-y-auto max-h-[80vh]">{children}</div>
             </div>
         </div>
     );
@@ -319,23 +314,6 @@ export const AddProductModal = ({ onClose, onSuccess }: AddProductModalProps) =>
                                             />
                                         </div>
                                         <p className="text-xs text-center text-gray-500">Max File size: 5MB. Aspect ratio 1:1 recommended.</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Pricing */}
-                            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                                <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4">Pricing</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">Cost Price ({currencySymbol}, Excl. Tax)*</label>
-                                        <input required type="number" step="0.01" className="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                                            value={formData.cost_price} onChange={e => setFormData({ ...formData, cost_price: e.target.value })} />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">Retail Price ({currencySymbol}, Inc. Tax)*</label>
-                                        <input required type="number" step="0.01" className="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                                            value={formData.retail_price} onChange={e => setFormData({ ...formData, retail_price: e.target.value })} />
                                     </div>
                                 </div>
                             </div>

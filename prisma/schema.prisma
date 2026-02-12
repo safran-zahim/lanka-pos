@@ -28,17 +28,85 @@ model Shift {
 }
 
 model Product {
+  id            String   @id @default(uuid())
+  name          String
+  skuCode       String?  @unique
+  barcode       String?
+  description   String?
+  price         Decimal
+  stock         Int      @default(0)
+  reorderLevel  Int      @default(10)
+  
+  category      String?    // Legacy field
+  categoryId    String?
+  categoryRel   Category?  @relation(fields: [categoryId], references: [id])
+  
+  brandId       String?
+  brand         Brand?     @relation(fields: [brandId], references: [id])
+  
+  unitId        String?
+  unit          Unit?      @relation(fields: [unitId], references: [id])
+  
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  saleItems     SaleItem[]
+  purchaseItems PurchaseItem[]
+}
+
+model Brand {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Unit {
+  id           String    @id @default(uuid())
+  name         String    @unique
+  shortName    String
+  allowDecimal Boolean   @default(false)
+  products     Product[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Supplier {
+  id            String   @id @default(uuid())
+  name          String
+  contactPerson String?
+  email         String?
+  phone         String?
+  address       String?
+  taxId         String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  purchases     Purchase[]
+}
+
+model Purchase {
   id          String   @id @default(uuid())
-  name        String
-  category    String?  // Keep for backward compatibility or migration
-  categoryId  String?
-  categoryRel Category? @relation(fields: [categoryId], references: [id])
-  price       Decimal
-  stock       Int
-  minStock    Int      @default(10)
+  supplierId  String
+  supplier    Supplier @relation(fields: [supplierId], references: [id])
+  totalAmount Decimal
+  paidAmount  Decimal  @default(0)
+  status      String   // PENDING, COMPLETED, PARTIAL
+  date        DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  saleItems   SaleItem[]
+  items       PurchaseItem[]
+}
+
+model PurchaseItem {
+  id         String   @id @default(uuid())
+  purchaseId String
+  purchase   Purchase @relation(fields: [purchaseId], references: [id])
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  quantity   Int
+  costPrice  Decimal
 }
 
 model Category {

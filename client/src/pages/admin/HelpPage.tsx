@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronRight, ShoppingCart, Package, Truck, Settings, FileText, Monitor } from 'lucide-react';
 import { useCurrency } from '../../hooks/useCurrency';
 
+import { APP_CONFIG } from '../../config/appConfig';
+
 const Section = ({ title, icon: Icon, children, defaultOpen = false }: { title: string, icon: any, children: React.ReactNode, defaultOpen?: boolean }) => {
     const [isOpen, setIsOpen] = useState(defaultOpen);
     return (
@@ -30,7 +32,7 @@ export const HelpPage = () => {
     return (
         <div className="p-6 max-w-4xl mx-auto">
             <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">Help & Documentation</h1>
-            <p className="text-gray-600 dark:text-gray-400 mb-8">Guide to using the TapLanka POS System features and modules.</p>
+            <p className="text-gray-600 dark:text-gray-400 mb-8">Guide to using the {APP_CONFIG.appName} features and modules.</p>
 
             <Section title="POS Terminal & Sales" icon={ShoppingCart} defaultOpen={true}>
                 <h3 className="font-bold text-gray-900 dark:text-white mt-2">Processing a Sale</h3>
@@ -148,7 +150,7 @@ export const HelpPage = () => {
 
             <Section title="System Information" icon={Monitor}>
                 <div className="text-sm">
-                    <p><b>Version</b>: 1.0.0</p>
+                    <p><b>Version</b>: {APP_CONFIG.appVersion}</p>
                     <p><b>Database</b>: IndexedDB (Client-side)</p>
                     <p><b>Tech Stack</b>: React, TypeScript, Tailwind CSS, Dexie.js</p>
                 </div>

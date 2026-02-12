@@ -3,6 +3,8 @@ import { Image as ImageIcon, Save, Loader } from 'lucide-react';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { db } from '../../db/db';
 
+import { APP_CONFIG } from '../../config/appConfig';
+
 interface BrandingPageProps {
     hideSave?: boolean;
     onSaveReady?: (save: () => Promise<void>) => void;
@@ -13,7 +15,7 @@ export const BrandingPage = ({ hideSave, onSaveReady, onSavingChange }: Branding
     const { updateSetting, loadSettings, loading } = useSettingsStore();
     const [isSaving, setIsSaving] = useState(false);
 
-    const [companyName, setCompanyName] = useState('TapLanka POS');
+    const [companyName, setCompanyName] = useState(APP_CONFIG.appName);
     const [logo, setLogo] = useState('');
     const [address, setAddress] = useState('');
     const [phone, setPhone] = useState('');
@@ -28,7 +30,7 @@ export const BrandingPage = ({ hideSave, onSaveReady, onSavingChange }: Branding
         const fetchBranding = async () => {
             const settings = await db.settings.toArray();
             const map = settings.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {} as Record<string, any>);
-            setCompanyName(map.companyName || 'TapLanka POS');
+            setCompanyName(map.companyName || APP_CONFIG.appName);
             setLogo(map.companyLogo || '');
             setAddress(map.companyAddress || '');
             setPhone(map.companyPhone || '');
@@ -55,7 +57,7 @@ export const BrandingPage = ({ hideSave, onSaveReady, onSavingChange }: Branding
         setIsSaving(true);
         onSavingChange?.(true);
         try {
-            await updateSetting('companyName', companyName.trim() || 'TapLanka POS');
+            await updateSetting('companyName', companyName.trim() || APP_CONFIG.appName);
             await updateSetting('companyLogo', logo || '');
             await updateSetting('companyAddress', address || '');
             await updateSetting('companyPhone', phone || '');

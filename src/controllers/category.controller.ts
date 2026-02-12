@@ -46,13 +46,12 @@ export const getCategories = async (req: Request, res: Response) => {
 
 export const deleteCategory = async (req: Request, res: Response) => {
     try {
-        const rawId = req.params.id;
-        const id = Array.isArray(rawId) ? rawId[0] : rawId;
+        const { id } = req.params;
         if (!id) {
             return res.status(400).json({ error: "Category id is required" });
         }
         await prisma.category.delete({
-            where: { id },
+            where: { id: String(id) },
         });
         res.status(204).send();
     } catch (error) {

@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import { z } from 'zod';
+import { Decimal } from 'decimal.js';
+
 
 const customerSchema = z.object({
     name: z.string(),
@@ -83,8 +85,18 @@ export const getCustomerDetails = async (req: Request, res: Response) => {
         const customer = await prisma.customer.findUnique({
             where: { id: String(id) },
             include: {
-                sales: { include: { items: { include: { product: true } } }, orderBy: { createdAt: 'desc' } },
-                pointsLedger: { orderBy: { createdAt: 'desc' } }
+                sales: {
+                    include: { items: { include: { product: true } } },
+                    orderBy: { createdAt: 'desc' },
+                    take: 10 // Limit recent sales
+                },
+                pointsLedger: {
+                    orderBy: { createdAt: 'desc' },
+                    take: 10
+                },
+                _count: {
+                    select: { sales: true }
+                }
             }
         });
 
@@ -92,8 +104,27 @@ export const getCustomerDetails = async (req: Request, res: Response) => {
             return res.status(404).json({ error: 'Customer not found' });
         }
 
-        res.json(customer);
+        // Calculate aggregates
+        const totalSpentAggregate = await prisma.sale.aggregate({
+            where: { customerId: String(id) },
+            _sum: { total: true },
+            _max: { createdAt: true }
+        });
+
+        const totalSpent = totalSpentAggregate._sum.total || new Decimal(0);
+        const lastVisit = totalSpentAggregate._max.createdAt || customer.createdAt; // Fallback to creation date
+
+        res.json({
+            ...customer,
+            stats: {
+                totalSpent,
+                lastVisit,
+                pointsBalance: customer.pointsBalance || 0,
+                visitCount: customer._count.sales
+            }
+        });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'Internal server error' });
     }
 };

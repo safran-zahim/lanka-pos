@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Save, Settings, Trash2, RefreshCw } from 'lucide-react';
 import { db } from '../../db/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { Product } from '../../db/db';
 import { CategoryManager } from '../CategoryManager';
-import { useCurrency } from '../../hooks/useCurrency';
 import { useToast } from '../../store/useToast';
 
 interface EditProductModalProps {
@@ -14,14 +13,11 @@ interface EditProductModalProps {
 }
 
 export const EditProductModal = ({ product, onClose, onSuccess }: EditProductModalProps) => {
-    const { currencySymbol } = useCurrency();
     const [formData, setFormData] = useState({
         sku_code: '',
         name: '',
         category_id: '',
         sub_category_id: '',
-        cost_price: '',
-        retail_price: '',
         reorder_level: ''
     });
 
@@ -60,8 +56,6 @@ export const EditProductModal = ({ product, onClose, onSuccess }: EditProductMod
                 name: product.name,
                 category_id: product.category_id,
                 sub_category_id: product.sub_category_id || '',
-                cost_price: product.cost_price.toString(),
-                retail_price: product.retail_price.toString(),
                 reorder_level: product.reorder_level.toString()
             });
         }
@@ -75,8 +69,6 @@ export const EditProductModal = ({ product, onClose, onSuccess }: EditProductMod
                 name: formData.name,
                 category_id: formData.category_id,
                 sub_category_id: formData.sub_category_id,
-                cost_price: parseFloat(formData.cost_price),
-                retail_price: parseFloat(formData.retail_price),
                 reorder_level: parseInt(formData.reorder_level) || 0
                 // Note: stock_quantity is explicitly excluded here
             });
@@ -191,30 +183,6 @@ export const EditProductModal = ({ product, onClose, onSuccess }: EditProductMod
                             />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Cost Price ({currencySymbol})</label>
-                                <input
-                                    required
-                                    type="number"
-                                    step="0.01"
-                                    className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none border border-gray-300 dark:border-transparent"
-                                    value={formData.cost_price}
-                                    onChange={e => setFormData({ ...formData, cost_price: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Retail Price ({currencySymbol})</label>
-                                <input
-                                    required
-                                    type="number"
-                                    step="0.01"
-                                    className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none border border-gray-300 dark:border-transparent"
-                                    value={formData.retail_price}
-                                    onChange={e => setFormData({ ...formData, retail_price: e.target.value })}
-                                />
-                            </div>
-                        </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>

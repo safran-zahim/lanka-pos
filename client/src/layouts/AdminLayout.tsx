@@ -8,6 +8,8 @@ import { db } from '../db/db';
 import { useToast } from '../store/useToast';
 import { useLocale } from '../hooks/useLocale';
 
+import { APP_CONFIG } from '../config/appConfig';
+
 export const AdminLayout = () => {
     const logout = useAuthStore((state) => state.logout);
     const user = useAuthStore((state) => state.user);
@@ -17,7 +19,7 @@ export const AdminLayout = () => {
     const [time, setTime] = useState(new Date());
     const settings = useLiveQuery(() => db.settings.toArray());
     const settingsMap = settings?.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {} as Record<string, any>) || {};
-    const brandName = settingsMap['companyName'] || 'TapLanka POS';
+    const brandName = settingsMap['companyName'] || APP_CONFIG.appName;
     const brandLogo = settingsMap['companyLogo'] || '';
     const { formatTime } = useLocale();
 

@@ -39,53 +39,53 @@ export const BrandManager = () => {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Product Brands</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Manage brands & manufacturers</p>
                 {!isAdding && (
                     <button
                         onClick={() => setIsAdding(true)}
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm"
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
                     >
-                        <Plus size={16} />
+                        <Plus size={14} />
                         Add Brand
                     </button>
                 )}
             </div>
 
             {isAdding && (
-                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg border border-gray-200 dark:border-gray-600 animate-fadeIn">
+                    <form onSubmit={handleSubmit} className="space-y-3">
+                        <div className="grid grid-cols-1 gap-3">
                             <div className="space-y-1">
-                                <label className="text-xs text-gray-500 dark:text-gray-400">Brand Name *</label>
+                                <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Brand Name *</label>
                                 <input
                                     autoFocus
                                     required
                                     type="text"
-                                    placeholder="e.g. Nike, Apple, Samsung"
-                                    className="w-full p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                    placeholder="e.g. Nike, Apple"
+                                    className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
                                 />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-xs text-gray-500 dark:text-gray-400">Description</label>
+                                <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</label>
                                 <input
                                     type="text"
                                     placeholder="Optional description"
-                                    className="w-full p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                                     value={formData.description}
                                     onChange={e => setFormData({ ...formData, description: e.target.value })}
                                 />
                             </div>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex justify-end gap-2">
                             <button
                                 type="submit"
-                                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2"
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1.5 transition-colors"
                             >
-                                <Save size={18} />
+                                <Save size={14} />
                                 {editingId ? 'Update' : 'Save'}
                             </button>
                             <button
@@ -95,9 +95,9 @@ export const BrandManager = () => {
                                     setEditingId(null);
                                     setFormData({ name: '', description: '' });
                                 }}
-                                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded flex items-center gap-2"
+                                className="bg-gray-400 hover:bg-gray-500 text-white px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1.5 transition-colors"
                             >
-                                <X size={18} />
+                                <X size={14} />
                                 Cancel
                             </button>
                         </div>

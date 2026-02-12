@@ -180,7 +180,15 @@ docker build ./client -t pos-frontend
 
 ---
 
+
+## 📦 Building the Desktop Application
+
+For detailed instructions on building the Electron desktop application (Windows .exe), please refer to [BUILD.md](./BUILD.md).
+
+---
+
 ## ☁️ Free Hosting Guide (End-to-End)
+
 
 You can host this entire system for **$0/month** using the following services:
 

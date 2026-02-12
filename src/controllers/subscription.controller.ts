@@ -98,8 +98,7 @@ export const getPlans = async (_req: Request, res: Response) => {
 
 export const updatePlan = async (req: Request, res: Response) => {
     try {
-        const rawId = req.params.id;
-        const id = Array.isArray(rawId) ? rawId[0] : rawId;
+        const { id } = req.params;
         if (!id) {
             return res.status(400).json({ error: 'Subscription plan id is required' });
         }
@@ -111,7 +110,7 @@ export const updatePlan = async (req: Request, res: Response) => {
         }
 
         const plan = await prisma.subscriptionPlan.update({
-            where: { id },
+            where: { id: String(id) },
             data: updateData
         });
 

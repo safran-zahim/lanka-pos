@@ -5,6 +5,8 @@ import { db } from '../../db/db';
 import { useCurrency } from '../../hooks/useCurrency';
 import { useLocale } from '../../hooks/useLocale';
 
+import { APP_CONFIG } from '../../config/appConfig';
+
 export const ProductHistoryPage = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -155,7 +157,7 @@ export const ProductHistoryPage = () => {
                 </div>
             </div>
             <div className="text-center text-xs text-gray-400 mt-8">
-                Powered by TapLanka POS - 0787843332
+                Powered by {APP_CONFIG.appName} - {APP_CONFIG.company.supportPhone}
             </div>
 
         </div>

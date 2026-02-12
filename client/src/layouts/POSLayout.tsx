@@ -7,13 +7,15 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/db';
 import { useLocale } from '../hooks/useLocale';
 
+import { APP_CONFIG } from '../config/appConfig';
+
 export const POSLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [time, setTime] = useState(new Date());
     const { user, logout } = useAuthStore();
     const navigate = useNavigate();
     const settings = useLiveQuery(() => db.settings.toArray());
     const settingsMap = settings?.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {} as Record<string, any>) || {};
-    const brandName = settingsMap['companyName'] || settingsMap['receiptHeader'] || 'TapLanka POS';
+    const brandName = settingsMap['companyName'] || settingsMap['receiptHeader'] || APP_CONFIG.appName;
     const logoUrl = settingsMap['companyLogo'] || settingsMap['receiptLogo'] || '';
     const showLogo = Boolean(logoUrl) || settingsMap['showLogo'] || false;
     const { formatTime } = useLocale();

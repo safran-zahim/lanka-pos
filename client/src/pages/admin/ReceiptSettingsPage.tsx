@@ -4,6 +4,8 @@ import { Save, Loader, Printer, MessageSquare, FileText, Maximize2 } from 'lucid
 import { useToast } from '../../store/useToast';
 import { useCurrency } from '../../hooks/useCurrency';
 
+import { APP_CONFIG } from '../../config/appConfig';
+
 export const ReceiptSettingsPage = () => {
     const { loadSettings, updateSetting, loading } = useSettingsStore();
     const { addToast } = useToast();
@@ -17,11 +19,11 @@ export const ReceiptSettingsPage = () => {
     const [a4Orientation, setA4Orientation] = useState<'portrait' | 'landscape'>('portrait');
 
     // Receipt Content Settings
-    const [header, setHeader] = useState('TapLanka POS');
-    const [address, setAddress] = useState('123 Main Street, City');
-    const [phone, setPhone] = useState('+94 77 123 4567');
+    const [header, setHeader] = useState(APP_CONFIG.appName);
+    const [address, setAddress] = useState(APP_CONFIG.company.address);
+    const [phone, setPhone] = useState(APP_CONFIG.company.supportPhone);
     const [email, setEmail] = useState('');
-    const [footer, setFooter] = useState('Thank you for your business!');
+    const [footer, setFooter] = useState('Developed by Tap Lanka POS 0705083388');
     const [logoUrl, setLogoUrl] = useState('');
     const [showTaxID, setShowTaxID] = useState(true);
     const [taxID, setTaxID] = useState('');
@@ -415,7 +417,7 @@ export const ReceiptSettingsPage = () => {
                                                 className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all resize-none"
                                                 value={footer}
                                                 onChange={(e) => setFooter(e.target.value)}
-                                                placeholder="Thank you for your business!"
+                                                placeholder="Developed by Tap Lanka POS 0705083388"
                                             />
                                         </div>
                                     </div>
@@ -619,8 +621,8 @@ export const ReceiptSettingsPage = () => {
                                         )}
 
                                         <div className="text-center space-y-1 mt-auto">
-                                            <div className="font-bold italic">{footer || 'Thank you for shopping!'}</div>
-                                            <div className="text-[9px] opacity-50 uppercase tracking-widest">Powered by TapLanka POS - 0787843332</div>
+                                            <div className="font-bold italic">{footer || 'Developed by Tap Lanka POS 0705083388'}</div>
+                                            <div className="text-[9px] opacity-50 uppercase tracking-widest">Powered by {APP_CONFIG.appName} - {APP_CONFIG.company.supportPhone}</div>
 
                                         </div>
                                     </div>

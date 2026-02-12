@@ -24,8 +24,35 @@ import { ReportsPage } from './pages/admin/ReportsPage';
 import { SubscriptionPlans } from './pages/admin/SubscriptionPlans';
 import { ThemeProvider } from './components/ThemeProvider';
 import { ToastContainer } from './components/ui/ToastContainer';
+import { useSettingsStore } from './store/useSettingsStore';
+import { useEffect } from 'react';
 
 function App() {
+  const { loadSettings, loading } = useSettingsStore();
+
+  useEffect(() => {
+    loadSettings();
+
+    // Auth Sync: Ensure standalone 'token' key exists for components reading it directly
+    const authState = localStorage.getItem('pos-auth-storage');
+    if (authState) {
+      try {
+        const parsed = JSON.parse(authState);
+        const token = parsed.state?.token;
+        if (token && !localStorage.getItem('token')) {
+          localStorage.setItem('token', token);
+          sessionStorage.setItem('token', token);
+        }
+      } catch (e) {
+        console.error('Failed to sync auth token', e);
+      }
+    }
+  }, [loadSettings]);
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+
   return (
     <BrowserRouter>
       <ThemeProvider>
