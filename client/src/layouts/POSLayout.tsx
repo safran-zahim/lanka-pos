@@ -3,9 +3,8 @@ import { Clock, LogOut } from 'lucide-react';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../db/db';
 import { useLocale } from '../hooks/useLocale';
+import { getApiUrl } from '../config/api';
 
 import { APP_CONFIG } from '../config/appConfig';
 
@@ -13,8 +12,29 @@ export const POSLayout: React.FC<{ children: React.ReactNode }> = ({ children })
     const [time, setTime] = useState(new Date());
     const { user, logout } = useAuthStore();
     const navigate = useNavigate();
-    const settings = useLiveQuery(() => db.settings.toArray());
-    const settingsMap = settings?.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {} as Record<string, any>) || {};
+    const token = useAuthStore((state) => state.token);
+    const [settingsMap, setSettingsMap] = useState<Record<string, any>>({});
+    useEffect(() => {
+        const loadSettings = async () => {
+            if (!token) return;
+            try {
+                const response = await fetch(getApiUrl('/settings'), {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!response.ok) return;
+                const settingsList = await response.json();
+                const map = (settingsList || []).reduce((acc: Record<string, any>, setting: any) => {
+                    acc[setting.key] = setting.value;
+                    return acc;
+                }, {});
+                setSettingsMap(map);
+            } catch (error) {
+                console.error('Failed to load settings', error);
+            }
+        };
+
+        loadSettings();
+    }, [token]);
     const brandName = settingsMap['companyName'] || settingsMap['receiptHeader'] || APP_CONFIG.appName;
     const logoUrl = settingsMap['companyLogo'] || settingsMap['receiptLogo'] || '';
     const showLogo = Boolean(logoUrl) || settingsMap['showLogo'] || false;

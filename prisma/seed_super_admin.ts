@@ -19,21 +19,32 @@ async function main() {
     });
     console.log('Plan created:', plan.name);
 
-    // Create Super Admin
-    const password = 'admin123';
-    const exists = await prisma.staff.findFirst({ where: { role: 'super_admin' } });
+    // Create Staff Users
+    const users = [
+        { id: 1, name: 'SuperAdmin', role: 'super_admin', password: 'admin123' },
+        { id: 2, name: 'Admin', role: 'admin', password: 'admin123' },
+        { id: 3, name: 'Manager', role: 'manager', password: 'manager123' },
+        { id: 4, name: 'Cashier', role: 'cashier', password: 'cashier123' }
+    ];
 
-    if (!exists) {
-        await prisma.staff.create({
-            data: {
-                name: 'SuperAdmin',
-                role: 'super_admin',
-                password: password
-            }
+    for (const user of users) {
+        const exists = await prisma.staff.findUnique({ 
+            where: { id: user.id } 
         });
-        console.log('Super Admin created: SuperAdmin / admin123');
-    } else {
-        console.log('Super Admin already exists');
+
+        if (!exists) {
+            await prisma.staff.create({
+                data: {
+                    id: user.id,
+                    name: user.name,
+                    role: user.role,
+                    password: user.password
+                }
+            });
+            console.log(`${user.role} created: ${user.name} / ${user.password} (ID: ${user.id})`);
+        } else {
+            console.log(`${user.name} already exists (ID: ${user.id})`);
+        }
     }
 
     // Update AppConfig to use plan

@@ -6,15 +6,10 @@ import { Decimal } from 'decimal.js';
 const productImportSchema = z.object({
     name: z.string(),
     category: z.string().optional(), // We might need to map category name to Category ID or create if not exists.
-    price: z.number(), // retail price
-    stock: z.number().int().default(0),
+    price: z.number().optional(), // retail price (stored per purchase batch)
+    stock: z.number().int().optional(),
     reorderLevel: z.number().int().default(10),
-    costPrice: z.number().optional(), // Added for completeness, though Product model in schema might need checking if it has costPrice.
-    // Checking schema: Product has price, stock, minStock. No costPrice in Product model! (PurchaseItem has it).
-    // Wait, step 6 schema: Product model has price, stock, minStock. No costPrice.
-    // But implementation plan didn't say to add costPrice to Product.
-    // PurchaseItem has costPrice.
-    // Logic: Product 'price' is retail price.
+    costPrice: z.number().optional(), // stored per purchase batch
 });
 
 // We should check if we need to handle Categories.
@@ -55,15 +50,44 @@ export const bulkImportProducts = async (req: Request, res: Response) => {
                     // Let's find by name if category matches, or just create.
                     // If we have a unique SKU field in future, use it.
 
-                    await tx.product.create({
+                    const created = await tx.product.create({
                         data: {
                             name: data.name,
-                            price: new Decimal(data.price),
-                            stock: data.stock,
                             reorderLevel: data.reorderLevel,
                             categoryId: categoryId,
+                            price: data.price ? new Decimal(data.price) : undefined
                         }
                     });
+
+                    if ((data.stock || 0) > 0) {
+                        const costPrice = data.costPrice ?? 0;
+                        const retailPrice = data.price ?? 0;
+
+                        // Get or create default supplier for bulk imports
+                        const supplier = await tx.supplier.findFirst({
+                            where: { name: 'Bulk Import' }
+                        }) || await tx.supplier.create({
+                            data: { name: 'Bulk Import' }
+                        });
+
+                        await tx.purchase.create({
+                            data: {
+                                supplierId: supplier.id,
+                                totalAmount: new Decimal(costPrice * data.stock!),
+                                paidAmount: new Decimal(costPrice * data.stock!),
+                                status: 'COMPLETED',
+                                date: new Date(),
+                                items: {
+                                    create: [{
+                                        productId: created.id,
+                                        quantity: data.stock!,
+                                        costPrice: new Decimal(costPrice),
+                                        retailPrice: new Decimal(retailPrice)
+                                    }]
+                                }
+                            }
+                        });
+                    }
                     importedCount++;
                 } catch (error: any) {
                     console.error(`Error importing product ${p.name}:`, error);

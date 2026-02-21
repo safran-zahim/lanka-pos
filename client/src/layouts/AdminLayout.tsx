@@ -3,22 +3,42 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Package, Users, LogOut, ShoppingCart, FileText, Truck, Settings, HelpCircle, Menu, X, AlertTriangle, BarChart3, Shield } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { ThemeToggle } from '../components/ThemeToggle';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../db/db';
 import { useToast } from '../store/useToast';
 import { useLocale } from '../hooks/useLocale';
+import { getApiUrl } from '../config/api';
 
 import { APP_CONFIG } from '../config/appConfig';
 
 export const AdminLayout = () => {
     const logout = useAuthStore((state) => state.logout);
     const user = useAuthStore((state) => state.user);
+    const token = useAuthStore((state) => state.token);
     const addToast = useToast((state) => state.addToast);
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [time, setTime] = useState(new Date());
-    const settings = useLiveQuery(() => db.settings.toArray());
-    const settingsMap = settings?.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {} as Record<string, any>) || {};
+    const [settingsMap, setSettingsMap] = useState<Record<string, any>>({});
+    useEffect(() => {
+        const loadSettings = async () => {
+            if (!token) return;
+            try {
+                const response = await fetch(getApiUrl('/settings'), {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!response.ok) return;
+                const settingsList = await response.json();
+                const map = (settingsList || []).reduce((acc: Record<string, any>, setting: any) => {
+                    acc[setting.key] = setting.value;
+                    return acc;
+                }, {});
+                setSettingsMap(map);
+            } catch (error) {
+                console.error('Failed to load settings', error);
+            }
+        };
+
+        loadSettings();
+    }, [token]);
     const brandName = settingsMap['companyName'] || APP_CONFIG.appName;
     const brandLogo = settingsMap['companyLogo'] || '';
     const { formatTime } = useLocale();

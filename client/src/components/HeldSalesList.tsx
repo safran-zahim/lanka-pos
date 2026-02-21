@@ -1,7 +1,9 @@
 import { X, PlayCircle, Trash2, Clock } from 'lucide-react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type HeldSale } from '../db/db';
+import { useEffect, useState } from 'react';
+import type { HeldSale } from '../db/db';
 import { useCurrency } from '../hooks/useCurrency';
+import { getApiUrl } from '../config/api';
+import { useAuthStore } from '../store/useAuthStore';
 
 interface HeldSalesListProps {
     onRestore: (sale: HeldSale) => void;
@@ -9,12 +11,36 @@ interface HeldSalesListProps {
 }
 
 export const HeldSalesList = ({ onRestore, onClose }: HeldSalesListProps) => {
-    const heldSales = useLiveQuery(() => db.held_sales.orderBy('timestamp').reverse().toArray());
     const { formatCurrency } = useCurrency();
+    const { token } = useAuthStore();
+    const [heldSales, setHeldSales] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchHeldSales = async () => {
+            if (!token) return;
+            try {
+                const response = await fetch(getApiUrl('/sales/held'), {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Failed to load held sales');
+                const payload = await response.json();
+                setHeldSales(Array.isArray(payload) ? payload : payload.data || []);
+            } catch (error) {
+                console.error('Failed to load held sales', error);
+            }
+        };
+
+        fetchHeldSales();
+    }, [token]);
 
     const handleDelete = async (id: number) => {
         if (confirm('Discard this held sale?')) {
-            await db.held_sales.delete(id);
+            if (!token) return;
+            await fetch(getApiUrl(`/sales/held/${id}`), {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setHeldSales((prev) => prev.filter((sale) => sale.id !== id));
         }
     };
 
@@ -39,10 +65,10 @@ export const HeldSalesList = ({ onRestore, onClose }: HeldSalesListProps) => {
                                     {sale.note || `Sale #${sale.id}`}
                                 </div>
                                 <div className="text-sm text-gray-500 dark:text-gray-400">
-                                    {new Date(sale.timestamp).toLocaleString()}
+                                    {new Date(sale.createdAt || sale.timestamp).toLocaleString()}
                                 </div>
                                 <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                                    {sale.items.length} items • Total: {formatCurrency(sale.items.reduce((sum, i) => sum + (i.product.retail_price * i.quantity), 0))}
+                                    {(sale.items || []).length} items • Total: {formatCurrency((sale.items || []).reduce((sum: number, i: any) => sum + ((i.product?.retail_price || 0) * i.quantity), 0))}
                                 </div>
                             </div>
                             <div className="flex gap-2">

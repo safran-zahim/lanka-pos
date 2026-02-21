@@ -1,12 +1,13 @@
-import { useMemo, useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Transaction } from '../db/db';
+import { useEffect, useMemo, useState } from 'react';
+import type { Transaction } from '../db/db';
 import { ArrowDownLeft, ArrowUpRight, Download, RotateCcw, Search } from 'lucide-react';
 import { ReturnModal } from './ReturnModal';
 import { useNavigate } from 'react-router-dom';
 import { useCurrency } from '../hooks/useCurrency';
 import { useLocale } from '../hooks/useLocale';
 import * as XLSX from 'xlsx';
+import { useAuthStore } from '../store/useAuthStore';
+import { getApiUrl } from '../config/api';
 
 type PaymentFilter = 'all' | Transaction['payment_method'];
 
@@ -54,6 +55,7 @@ export const SalesHistoryDashboard = () => {
     const navigate = useNavigate();
     const { formatCurrency } = useCurrency();
     const { formatDate, formatDateTime } = useLocale();
+    const token = useAuthStore((state) => state.token);
 
     const todayValue = toDateInputValue(new Date());
     const [searchQuery, setSearchQuery] = useState('');
@@ -67,10 +69,48 @@ export const SalesHistoryDashboard = () => {
 
     const range = useMemo(() => getRangeBounds(startDate, endDate), [startDate, endDate]);
 
-    const transactions = useLiveQuery(
-        () => db.transactions.where('timestamp').between(range.start, range.end, true, true).reverse().toArray(),
-        [range]
-    );
+    const [sales, setSales] = useState<any[]>([]);
+    const saleItemsBySaleId = useMemo(() => {
+        const map = new Map<string, any[]>();
+        sales.forEach((sale) => {
+            map.set(String(sale.id), sale.items || []);
+        });
+        return map;
+    }, [sales]);
+
+    useEffect(() => {
+        if (!token) return;
+        const loadSales = async () => {
+            try {
+                const url = getApiUrl(`/sales?start=${range.start.toISOString()}&end=${range.end.toISOString()}&includeItems=true&limit=200`);
+                const response = await fetch(url, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Failed to load sales');
+                const payload = await response.json();
+                setSales(payload || []);
+            } catch (error) {
+                console.error('Failed to load sales', error);
+            }
+        };
+
+        loadSales();
+    }, [token, range.start, range.end]);
+
+    const transactions = useMemo(() => {
+        return (sales || []).map((sale: any) => ({
+            transaction_id: sale.id,
+            user_id: sale.staffId,
+            customer_id: sale.customerId || undefined,
+            timestamp: new Date(sale.createdAt),
+            total_amount: Number(sale.total || 0),
+            tax_amount: Number(sale.tax || 0),
+            round_off_discount: Number(sale.roundOffDiscount || 0),
+            payment_method: sale.paymentMethod || 'cash',
+            status: 'completed',
+            type: sale.parentSaleId ? 'return' : 'sale'
+        })) as Transaction[];
+    }, [sales]);
 
     const filteredTransactions = useMemo(() => {
         const list = transactions ?? [];
@@ -83,21 +123,10 @@ export const SalesHistoryDashboard = () => {
         });
     }, [transactions, searchQuery, paymentMethod]);
 
-    const paginatedTransactions = useLiveQuery(
-        () => {
-            const collection = db.transactions.where('timestamp').between(range.start, range.end, true, true).reverse();
-            return collection
-                .filter((txn) => {
-                    const matchesSearch = txn.transaction_id?.toString().includes(searchQuery.trim()) ?? false;
-                    const matchesPayment = paymentMethod === 'all' ? true : txn.payment_method === paymentMethod;
-                    return matchesSearch && matchesPayment;
-                })
-                .offset((currentPage - 1) * pageSize)
-                .limit(pageSize)
-                .toArray();
-        },
-        [range, searchQuery, paymentMethod, currentPage, pageSize]
-    );
+    const paginatedTransactions = useMemo(() => {
+        return filteredTransactions
+            .slice((currentPage - 1) * pageSize, currentPage * pageSize);
+    }, [filteredTransactions, currentPage, pageSize]);
 
     const dailySummaries = useMemo(() => {
         const map = new Map<string, DailySummary>();
@@ -150,49 +179,37 @@ export const SalesHistoryDashboard = () => {
         );
     }, [filteredTransactions]);
 
-    const aggregatedProducts = useLiveQuery(async () => {
-        const txnIds = filteredTransactions.map((t) => t.transaction_id!).filter(Boolean);
-        if (txnIds.length === 0) return [];
+    const aggregatedProducts = useMemo(() => {
+        const aggregation = new Map<string, {
+            productId: string;
+            name: string;
+            sku: string;
+            quantity: number;
+            totalSales: number;
+        }>();
 
-        const items = await db.transaction_items.where('transaction_id').anyOf(txnIds).toArray();
-        const productIds = Array.from(new Set(items.map((i) => i.product_id)));
-        const productsList = await db.products.where('product_id').anyOf(productIds).toArray();
+        filteredTransactions.forEach((txn) => {
+            const items = saleItemsBySaleId.get(String(txn.transaction_id)) || [];
+            const multiplier = txn.type === 'return' ? -1 : 1;
 
-        const productMap = new Map(productsList.map((p) => [p.product_id, p]));
-        const txnMap = new Map(filteredTransactions.map((t) => [t.transaction_id, t]));
+            items.forEach((item: any) => {
+                const productId = String(item.productId || item.product_id);
+                const entry = aggregation.get(productId) ?? {
+                    productId,
+                    name: item.name || item.product?.name || 'Unknown Product',
+                    sku: item.skuCode || item.sku_code || item.product?.skuCode || 'N/A',
+                    quantity: 0,
+                    totalSales: 0
+                };
 
-        const aggregation = new Map<
-            number,
-            {
-                productId: number;
-                name: string;
-                sku: string;
-                quantity: number;
-                totalSales: number;
-            }
-        >();
-
-        items.forEach((item) => {
-            const product = productMap.get(item.product_id);
-            const txn = txnMap.get(item.transaction_id);
-            const isReturn = txn?.type === 'return';
-            const multiplier = isReturn ? -1 : 1;
-
-            const entry = aggregation.get(item.product_id) ?? {
-                productId: item.product_id,
-                name: product?.name ?? 'Unknown Product',
-                sku: product?.sku_code ?? 'N/A',
-                quantity: 0,
-                totalSales: 0
-            };
-
-            entry.quantity += item.quantity * multiplier;
-            entry.totalSales += item.quantity * item.price_at_sale * multiplier;
-            aggregation.set(item.product_id, entry);
+                entry.quantity += Number(item.quantity || 0) * multiplier;
+                entry.totalSales += Number(item.quantity || 0) * Number(item.price || 0) * multiplier;
+                aggregation.set(productId, entry);
+            });
         });
 
         return Array.from(aggregation.values()).sort((a, b) => b.totalSales - a.totalSales);
-    }, [filteredTransactions]);
+    }, [filteredTransactions, saleItemsBySaleId]);
 
     const transactionsToDisplay = paginatedTransactions ?? [];
 
@@ -643,7 +660,7 @@ export const SalesHistoryDashboard = () => {
 
             {selectedTransaction && (
                 <ReturnModal
-                    transaction={selectedTransaction}
+                    saleId={selectedTransaction.transaction_id?.toString() || ''}
                     onClose={() => setSelectedTransaction(null)}
                     onSuccess={() => setSelectedTransaction(null)}
                 />

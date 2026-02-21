@@ -4,7 +4,7 @@ import { X, User, Phone, Mail, Save, AlertCircle, Award } from 'lucide-react';
 interface CustomerModalProps {
     customer?: any | null;
     onClose: () => void;
-    onSuccess: () => void;
+    onSuccess: (createdCustomer?: any) => void;
 }
 
 export const CustomerModal = ({ customer, onClose, onSuccess }: CustomerModalProps) => {
@@ -63,10 +63,21 @@ export const CustomerModal = ({ customer, onClose, onSuccess }: CustomerModalPro
 
             if (!response.ok) {
                 const errData = await response.json();
-                throw new Error(errData.error || 'Failed to save customer');
+                // Handle error properly - could be string, array, or object
+                let errorMessage = 'Failed to save customer';
+                if (typeof errData.error === 'string') {
+                    errorMessage = errData.error;
+                } else if (Array.isArray(errData.error)) {
+                    // Zod validation errors
+                    errorMessage = errData.error.map((e: any) => e.message).join(', ');
+                } else if (errData.error && typeof errData.error === 'object') {
+                    errorMessage = JSON.stringify(errData.error);
+                }
+                throw new Error(errorMessage);
             }
 
-            onSuccess();
+            const savedCustomer = await response.json();
+            onSuccess(savedCustomer);
             onClose();
         } catch (err: any) {
             console.error(err);

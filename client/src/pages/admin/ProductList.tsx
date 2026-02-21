@@ -1,33 +1,152 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../../db/db';
-import { Plus, Package, Tag, Scale, FolderTree, History, PlusCircle, Edit } from 'lucide-react';
+import { useEffect } from 'react';
+import { Plus, Package, Tag, Scale, FolderTree, History, Edit, Eye, EyeOff } from 'lucide-react';
 import { AddProductModal } from '../../components/admin/AddProductModal';
-import { AddStockModal } from '../../components/admin/AddStockModal';
-import { EditProductModal } from '../../components/admin/EditProductModal';
 import { useCurrency } from '../../hooks/useCurrency';
 import { BrandManager } from '../../components/admin/settings/BrandManager';
 import { UnitManager } from '../../components/admin/settings/UnitManager';
 import { CategoryManagerPanel } from '../../components/admin/settings/CategoryManagerPanel';
 import { DataTable, type Column } from '../../components/ui/DataTable';
-import type { Product } from '../../db/db';
+import { db, type Product } from '../../db/db';
 import { BulkUploadModal } from '../../components/shared/BulkUploadModal';
 import { Upload } from 'lucide-react';
+import { useAuthStore } from '../../store/useAuthStore';
+import { useToast } from '../../store/useToast';
+import { getApiUrl } from '../../config/api';
 
 export const ProductList = () => {
     const navigate = useNavigate();
+    const { addToast } = useToast();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<any | null>(null);
-    const [addStockProduct, setAddStockProduct] = useState<any | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'brands' | 'units'>('products');
     const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
     const { formatCurrency } = useCurrency();
+    const token = useAuthStore((state) => state.token);
+    const [products, setProducts] = useState<Product[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [togglingProductId, setTogglingProductId] = useState<string | number | null>(null);
+    const [showInactive, setShowInactive] = useState(false);
 
-    // Use Dexie Live Query
-    const products = useLiveQuery(() => db.products.toArray()) || [];
-    const [loading] = useState(false); // Local DB is fast, loading is usually not needed but kept for UI compatibility
+    const loadProducts = async () => {
+        if (!token) return;
+        setLoading(true);
+        try {
+            const response = await fetch(getApiUrl('/products?showInactive=true'), {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Failed to load products');
+            const payload = await response.json();
+            const mapped = (payload || []).map((product: any): Product => ({
+                product_id: product.id,
+                sku_code: product.skuCode || '',
+                name: product.name,
+                description: product.description || '',
+                category_id: product.categoryId ?? product.category_id ?? '',
+                brand_id: product.brandId ?? product.brand_id ?? '',
+                unit_id: product.unitId ?? product.unit_id ?? '',
+                sub_category_id: product.subCategoryId ?? product.sub_category_id ?? '',
+                cost_price: Number(product.costPrice || 0),
+                retail_price: Number(product.retailPrice ?? product.price ?? 0),
+                stock_quantity: Number(product.stock || 0),
+                alert_quantity: Number(product.reorderLevel || 0),
+                manage_stock: true,
+                barcode: product.barcode || '',
+                barcode_type: product.barcodeType || '',
+                image: undefined,
+                tax_type: undefined,
+                tax_amount: undefined,
+                business_locations: [],
+                reorder_level: Number(product.reorderLevel || 0),
+                has_purchase: Boolean(product.hasPurchase),
+                isActive: product.isActive !== false,
+                categoryRel: product.categoryRel,
+                subCategory: product.subCategory,
+                unit: product.unit
+            }));
+            setProducts(mapped);
+            try {
+                await db.products.bulkPut(mapped);
+            } catch (error) {
+                console.error('Failed to sync products to local storage', error);
+            }
+        } catch (error) {
+            console.error('Failed to load products', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadProducts();
+    }, [token]);
+
+    const toggleProductStatus = async (product: Product) => {
+        if (!product.product_id) return;
+        if (!token) {
+            addToast('Missing auth token', 'error');
+            return;
+        }
+
+        setTogglingProductId(product.product_id);
+        try {
+            const response = await fetch(getApiUrl(`/products/${product.product_id}/toggle-status`), {
+                method: 'PATCH',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                let errorMessage = `Failed to update: ${response.status} ${response.statusText}`;
+                try {
+                    const errorPayload = await response.json();
+                    if (typeof errorPayload?.error === 'string') {
+                        errorMessage = errorPayload.error;
+                    } else if (typeof errorPayload?.message === 'string') {
+                        // Sometimes error might be under 'message'
+                        errorMessage = errorPayload.message;
+                    }
+                } catch {
+                    // Ignore JSON parse errors, keep the status code message
+                    console.warn('Failed to parse error response JSON');
+                }
+
+                // Add URL for debugging if it's a 404
+                if (response.status === 404) {
+                    errorMessage += ` (${response.url})`;
+                }
+
+                throw new Error(errorMessage);
+            }
+
+            const updatedProduct = await response.json();
+            const statusMessage = updatedProduct.isActive
+                ? `Product "${product.name}" is now active`
+                : `Product "${product.name}" is now inactive`;
+
+            addToast(statusMessage, 'success');
+
+            // Reload products to get updated status
+            await loadProducts();
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to update product status';
+            console.error('Failed to toggle product status', error);
+            addToast(message, 'error');
+        } finally {
+            setTogglingProductId(null);
+        }
+    };
+
+    const getRowClassName = (product: Product): string => {
+        if (product.isActive === false) {
+            return 'bg-gray-50 dark:bg-gray-700/30 opacity-60';
+        }
+        return '';
+    };
 
     // Use filtering on fetched products
     const filteredProducts = products.filter(product => {
@@ -35,8 +154,10 @@ export const ProductList = () => {
         const name = (product?.name || '').toLowerCase();
         const sku_code = (product?.sku_code || '').toLowerCase();
 
-        return name.includes(search) ||
-            sku_code.includes(search);
+        const matchesSearch = name.includes(search) || sku_code.includes(search);
+        const matchesStatus = showInactive || product.isActive !== false;
+
+        return matchesSearch && matchesStatus;
     });
 
     const tabs = [
@@ -56,13 +177,46 @@ export const ProductList = () => {
         {
             accessorKey: 'name',
             header: 'Name',
+            cell: (row: any) => (
+                <div className="flex items-center gap-2">
+                    <span className={row.isActive === false ? 'text-gray-400 line-through' : ''}>
+                        {row.name}
+                    </span>
+                    {row.isActive === false && (
+                        <span className="px-2 py-0.5 bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 text-xs font-semibold rounded">
+                            Inactive
+                        </span>
+                    )}
+                </div>
+            ),
+            sortable: true
+        },
+        {
+            accessorKey: 'barcode',
+            header: 'Barcode',
+            cell: (row: any) => (
+                <div className="flex flex-col">
+                    {row.barcode ? (
+                        <>
+                            <span className="font-mono text-sm">{row.barcode}</span>
+                            {row.barcode_type ? (
+                                <span className="text-xs text-gray-500 dark:text-gray-400">{row.barcode_type}</span>
+                            ) : (
+                                <span className="text-xs text-gray-400">Type unknown</span>
+                            )}
+                        </>
+                    ) : (
+                        <span className="text-gray-400 text-xs">—</span>
+                    )}
+                </div>
+            ),
             sortable: true
         },
         {
             header: 'Category',
             cell: (row: any) => (
                 <div>
-                    <div>{row.category?.name || row.category_id || (row.categoryName || 'Uncategorized')}</div>
+                    <div>{row.categoryRel?.name || row.category_id || (row.categoryName || 'Uncategorized')}</div>
                     {row.subCategory?.name && (
                         <span className="text-gray-400 text-xs block dark:text-gray-500">
                             {row.subCategory.name}
@@ -74,16 +228,24 @@ export const ProductList = () => {
         {
             accessorKey: 'retail_price',
             header: 'Price',
-            cell: (row: any) => <span className="font-semibold">{formatCurrency(Number(row.retail_price || 0))}</span>,
+            cell: (row: any) => {
+                if (row.has_purchase === false) {
+                    return <span className="text-gray-400 text-xs">Not set</span>;
+                }
+                return <span className="font-semibold">{formatCurrency(Number(row.retail_price || 0))}</span>;
+            },
             sortable: true
         },
         {
             accessorKey: 'stock_quantity',
             header: 'Stock',
             cell: (row: any) => {
+                if (row.has_purchase === false) {
+                    return <span className="text-gray-400 text-xs">Not set</span>;
+                }
                 const stock = row.stock_quantity || 0;
                 const reorder = row.alert_quantity || row.reorder_level || 0;
-                const unit = row.unit_id || '';
+                const unitShortName = row.unit?.shortName || row.unit?.short_name || '';
 
                 return (
                     <div className="flex flex-col gap-1">
@@ -91,7 +253,7 @@ export const ProductList = () => {
                             ? 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400'
                             : 'bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400'
                             }`}>
-                            {stock} {unit}
+                            {stock} {unitShortName}
                         </span>
                     </div>
                 );
@@ -102,16 +264,6 @@ export const ProductList = () => {
             header: 'Actions',
             cell: (row: any) => (
                 <div className="flex items-center gap-2">
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setAddStockProduct(row);
-                        }}
-                        className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
-                        title="Add Stock / New Batch"
-                    >
-                        <PlusCircle size={18} />
-                    </button>
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
@@ -131,6 +283,26 @@ export const ProductList = () => {
                         title="Edit Product Details"
                     >
                         <Edit size={18} />
+                    </button>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            toggleProductStatus(row);
+                        }}
+                        disabled={togglingProductId === row.product_id}
+                        className={`p-2 rounded-lg transition-colors ${row.isActive === false
+                                ? 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50'
+                                : 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/50'
+                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                        title={row.isActive === false ? 'Mark as Active' : 'Mark as Inactive'}
+                    >
+                        {togglingProductId === row.product_id ? (
+                            <div className="animate-spin"><Package size={18} /></div>
+                        ) : row.isActive === false ? (
+                            <EyeOff size={18} />
+                        ) : (
+                            <Eye size={18} />
+                        )}
                     </button>
                 </div>
             )
@@ -183,6 +355,18 @@ export const ProductList = () => {
             </div>
             {activeTab === 'products' && (
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="mb-4 flex items-center gap-3">
+                        <input
+                            type="checkbox"
+                            id="showInactive"
+                            checked={showInactive}
+                            onChange={(e) => setShowInactive(e.target.checked)}
+                            className="rounded border-gray-300 dark:border-gray-600"
+                        />
+                        <label htmlFor="showInactive" className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                            Show inactive products
+                        </label>
+                    </div>
                     <DataTable
                         data={filteredProducts}
                         columns={columns}
@@ -191,6 +375,8 @@ export const ProductList = () => {
                         searchable
                         onSearch={setSearchTerm}
                         keyField="product_id"
+                        onRowClick={(row) => navigate(`/admin/products/${row.product_id}/history`)}
+                        getRowClassName={getRowClassName}
                     />
                 </div>
             )}
@@ -228,23 +414,15 @@ export const ProductList = () => {
             {activeTab === 'products' && isAddModalOpen && (
                 <AddProductModal
                     onClose={() => setIsAddModalOpen(false)}
-                    onSuccess={() => { }}
+                    onSuccess={loadProducts}
                 />
             )}
 
             {activeTab === 'products' && editingProduct && (
-                <EditProductModal
+                <AddProductModal
                     product={editingProduct}
                     onClose={() => setEditingProduct(null)}
-                    onSuccess={() => { }}
-                />
-            )}
-
-            {activeTab === 'products' && addStockProduct && (
-                <AddStockModal
-                    product={addStockProduct}
-                    onClose={() => setAddStockProduct(null)}
-                    onSuccess={() => { }}
+                    onSuccess={loadProducts}
                 />
             )}
 
@@ -252,7 +430,7 @@ export const ProductList = () => {
                 isOpen={isBulkModalOpen}
                 onClose={() => setIsBulkModalOpen(false)}
                 type="products"
-                onSuccess={() => { /* useLiveQuery handles updates */ }}
+                onSuccess={loadProducts}
             />
         </div>
     );

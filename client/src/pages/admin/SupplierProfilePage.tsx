@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Phone, Mail, Truck, Receipt, DollarSign, MapPin, User } from 'lucide-react';
+import { ArrowLeft, Phone, Mail, Truck, Receipt, MapPin, User } from 'lucide-react';
 import { useCurrency } from '../../hooks/useCurrency';
 import { useLocale } from '../../hooks/useLocale';
 import { useToast } from '../../store/useToast';
@@ -8,7 +8,7 @@ import { useToast } from '../../store/useToast';
 export const SupplierProfilePage = () => {
     const navigate = useNavigate();
     const { id } = useParams();
-    const { formatCurrency } = useCurrency();
+    const { formatCurrency, currencySymbol } = useCurrency();
     const { formatDateTime } = useLocale();
     const { addToast } = useToast();
     const [supplier, setSupplier] = useState<any | null>(null);
@@ -55,7 +55,7 @@ export const SupplierProfilePage = () => {
         );
     }
 
-    const { stats, purchases } = supplier;
+    const { stats, purchases, payments } = supplier;
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -120,19 +120,19 @@ export const SupplierProfilePage = () => {
                 <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 font-bold text-blue-600 dark:text-blue-400">
                     <div className="text-xs text-gray-400 uppercase tracking-wider">Total Spend</div>
                     <div className="mt-2 text-2xl flex items-center gap-2">
-                        <DollarSign size={20} /> {formatCurrency(stats?.totalPurchased || 0)}
+                        <span className="text-sm font-semibold">{currencySymbol}</span> {formatCurrency(stats?.totalPurchased || 0)}
                     </div>
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 font-bold text-green-600 dark:text-green-400">
                     <div className="text-xs text-gray-400 uppercase tracking-wider">Total Paid</div>
                     <div className="mt-2 text-2xl flex items-center gap-2">
-                        <DollarSign size={20} /> {formatCurrency(stats?.totalPaid || 0)}
+                        <span className="text-sm font-semibold">{currencySymbol}</span> {formatCurrency(stats?.totalPaid || 0)}
                     </div>
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 font-bold text-orange-600 dark:text-orange-400">
                     <div className="text-xs text-gray-400 uppercase tracking-wider">Balance Due</div>
                     <div className="mt-2 text-2xl flex items-center gap-2">
-                        <DollarSign size={20} /> {formatCurrency(stats?.totalDue || 0)}
+                        <span className="text-sm font-semibold">{currencySymbol}</span> {formatCurrency(stats?.totalDue || 0)}
                     </div>
                 </div>
             </div>
@@ -179,6 +179,40 @@ export const SupplierProfilePage = () => {
                             ) : (
                                 <tr>
                                     <td colSpan={5} className="text-center py-6 text-gray-500">No recent purchases found.</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 overflow-hidden">
+                <h2 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <span className="text-xs font-semibold">{currencySymbol}</span> Payment History
+                </h2>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                        <thead className="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                            <tr>
+                                <th className="px-4 py-3">Date</th>
+                                <th className="px-4 py-3">Method</th>
+                                <th className="px-4 py-3 text-right">Amount</th>
+                                <th className="px-4 py-3 text-right">Purchase</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                            {(payments || []).length > 0 ? (
+                                (payments || []).map((payment: any) => (
+                                    <tr key={payment.id} className="text-gray-700 dark:text-gray-300">
+                                        <td className="px-4 py-3">{formatDateTime(new Date(payment.paidAt))}</td>
+                                        <td className="px-4 py-3 capitalize">{payment.method}</td>
+                                        <td className="px-4 py-3 text-right text-green-600 font-medium">{formatCurrency(Number(payment.amount))}</td>
+                                        <td className="px-4 py-3 text-right text-gray-500">#{payment.purchaseId}</td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={4} className="text-center py-6 text-gray-500">No payments recorded yet.</td>
                                 </tr>
                             )}
                         </tbody>

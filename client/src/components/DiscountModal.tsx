@@ -4,7 +4,7 @@ import { useCurrency } from '../hooks/useCurrency';
 
 interface DiscountModalProps {
     subtotal: number;
-    onConfirm: (discountAmount: number) => void;
+    onConfirm: (discount: { mode: 'amount' | 'percent'; value: number }) => void;
     onClose: () => void;
 }
 
@@ -29,7 +29,7 @@ export const DiscountModal = ({ subtotal, onConfirm, onClose }: DiscountModalPro
             return;
         }
 
-        onConfirm(discountAmount);
+        onConfirm({ mode, value: numValue });
     };
 
     return (

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
-import { db } from '../db/db';
 import { Store, Lock, AlertCircle } from 'lucide-react';
 import { getApiUrl } from '../config/api';
 
@@ -19,52 +18,36 @@ export const Login = () => {
         setError('');
 
         try {
-            // Try API login first
             const res = await fetch(getApiUrl('/auth/login'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
 
-            if (res.ok) {
-                const data = await res.json();
-                // Map API user to Local User format if needed, or just use what's returned
-                // API returns: { token, staff: { id, name, role }, subscriptionStatus }
-                const apiUser: any = {
-                    username: data.staff.name,
-                    role: data.staff.role,
-                    // Add other fields if needed or map them
-                };
-                login(apiUser, data.token);
-                if (data.staff.role === 'admin' || data.staff.role === 'manager' || data.staff.role === 'super_admin') {
-                    // Check if super_admin
-                    if (data.staff.role === 'super_admin') {
-                        navigate('/admin/plans');
-                        return;
-                    }
-                    navigate('/dashboard');
-                } else {
-                    navigate('/pos');
-                }
+            if (!res.ok) {
+                setError('Invalid credentials');
                 return;
             }
-        } catch (err) {
-            console.warn('API login error, falling back to local DB', err);
-        }
 
-        // Fallback to local DB
-        console.log('API login failed, trying local DB');
-        const user = await db.users.where('username').equals(username).first();
-
-        if (user && user.password_hash === password) {
-            login(user); // Persist user
-            if (user.role === 'admin' || user.role === 'manager') {
+            const data = await res.json();
+            const apiUser: any = {
+                user_id: data.staff.id,
+                username: data.staff.name,
+                role: data.staff.role
+            };
+            login(apiUser, data.token);
+            if (data.staff.role === 'admin' || data.staff.role === 'manager' || data.staff.role === 'super_admin') {
+                if (data.staff.role === 'super_admin') {
+                    navigate('/admin/plans');
+                    return;
+                }
                 navigate('/dashboard');
             } else {
                 navigate('/pos');
             }
-        } else {
-            setError('Invalid credentials');
+        } catch (err) {
+            console.warn('API login error', err);
+            setError('Login failed. Please try again.');
         }
     };
 

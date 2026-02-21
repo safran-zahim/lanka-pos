@@ -20,6 +20,7 @@ interface DataTableProps<T> {
     pagination?: boolean;
     searchable?: boolean;
     onSearch?: (term: string) => void;
+    getRowClassName?: (item: T) => string; // Optional row styling function
 }
 
 export function DataTable<T>({
@@ -33,7 +34,8 @@ export function DataTable<T>({
     isLoading = false,
     pagination = true,
     searchable = true,
-    onSearch
+    onSearch,
+    getRowClassName
 }: DataTableProps<T>) {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState<{ key: keyof T | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
@@ -173,7 +175,7 @@ export function DataTable<T>({
                                 <tr
                                     key={String(item[keyField])}
                                     onClick={() => onRowClick && onRowClick(item)}
-                                    className={`hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+                                    className={`hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors ${onRowClick ? 'cursor-pointer' : ''} ${getRowClassName ? getRowClassName(item) : ''}`}
                                 >
                                     {enableSelection && (
                                         <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>

@@ -16,6 +16,7 @@ import { SupplierManager } from './components/admin/SupplierManager';
 import { SupplierProfilePage } from './pages/admin/SupplierProfilePage';
 import { PurchaseHistory } from './pages/admin/PurchaseHistory';
 import { PurchasePage } from './pages/admin/PurchasePage';
+import { PurchaseDetailPage } from './pages/admin/PurchaseDetailPage';
 import { LowStockReport } from './pages/admin/LowStockReport';
 import { SettingsPage } from './pages/admin/SettingsPage';
 import { ReceiptSettingsPage } from './pages/admin/ReceiptSettingsPage';
@@ -85,6 +86,7 @@ function App() {
               <Route path="/admin/suppliers/:id" element={<SupplierProfilePage />} />
               <Route path="/admin/purchases" element={<PurchaseHistory />} />
               <Route path="/admin/purchases/new" element={<PurchasePage />} />
+              <Route path="/admin/purchases/:id" element={<PurchaseDetailPage />} />
               <Route path="/admin/low-stock" element={<LowStockReport />} />
               <Route path="/admin/settings" element={<SettingsPage />} />
               <Route path="/admin/receipts" element={<ReceiptSettingsPage />} />

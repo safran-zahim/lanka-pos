@@ -1,12 +1,148 @@
 import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import { z } from 'zod';
+import { Decimal } from 'decimal.js';
 
 // Schema for clock-in
 const clockInSchema = z.object({
-    staff_id: z.string(),
+    staff_id: z.coerce.number().int().positive(),
     cash_drawer_balance: z.number(), // Using number for input, will be converted to Decimal
 });
+
+const staffCreateSchema = z.object({
+    name: z.string().min(1),
+    role: z.enum(['admin', 'manager', 'cashier']),
+    password: z.string().min(4),
+    hourly_rate: z.number().optional()
+});
+
+const staffUpdateSchema = z.object({
+    name: z.string().min(1).optional(),
+    role: z.enum(['admin', 'manager', 'cashier']).optional(),
+    hourly_rate: z.number().optional()
+});
+
+const staffPasswordSchema = z.object({
+    password: z.string().min(4)
+});
+
+export const getStaffList = async (req: Request, res: Response) => {
+    try {
+        const staff = await prisma.staff.findMany({
+            orderBy: { createdAt: 'desc' },
+            select: { id: true, name: true, role: true, hourlyRate: true, createdAt: true }
+        });
+        res.json(staff);
+    } catch (error) {
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+export const createStaff = async (req: Request, res: Response) => {
+    try {
+        const data = staffCreateSchema.parse(req.body);
+
+        const existing = await prisma.staff.findFirst({
+            where: { name: data.name }
+        });
+
+        if (existing) {
+            return res.status(409).json({ error: 'Staff name already exists' });
+        }
+
+        const staff = await prisma.staff.create({
+            data: {
+                name: data.name,
+                role: data.role,
+                password: data.password,
+                hourlyRate: data.hourly_rate !== undefined ? new Decimal(data.hourly_rate) : null
+            },
+            select: { id: true, name: true, role: true, hourlyRate: true, createdAt: true }
+        });
+
+        res.status(201).json(staff);
+    } catch (error: any) {
+        if (error instanceof z.ZodError) {
+            res.status(400).json({ error: error.errors });
+        } else {
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+};
+
+export const updateStaff = async (req: Request, res: Response) => {
+    try {
+        const id = Number(req.params.id);
+        if (!Number.isFinite(id)) {
+            return res.status(400).json({ error: 'Invalid staff id' });
+        }
+        const data = staffUpdateSchema.parse(req.body);
+
+        const updateData: any = { ...data };
+        if (data.hourly_rate !== undefined) {
+            updateData.hourlyRate = new Decimal(data.hourly_rate);
+            delete updateData.hourly_rate;
+        }
+
+        const staff = await prisma.staff.update({
+            where: { id },
+            data: updateData,
+            select: { id: true, name: true, role: true, hourlyRate: true, createdAt: true }
+        });
+
+        res.json(staff);
+    } catch (error: any) {
+        if (error instanceof z.ZodError) {
+            res.status(400).json({ error: error.errors });
+        } else if (error.code === 'P2025') {
+            res.status(404).json({ error: 'Staff not found' });
+        } else {
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+};
+
+export const deleteStaff = async (req: Request, res: Response) => {
+    try {
+        const id = Number(req.params.id);
+        if (!Number.isFinite(id)) {
+            return res.status(400).json({ error: 'Invalid staff id' });
+        }
+        await prisma.staff.delete({ where: { id } });
+        res.json({ message: 'Staff deleted' });
+    } catch (error: any) {
+        if (error.code === 'P2025') {
+            res.status(404).json({ error: 'Staff not found' });
+        } else {
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+};
+
+export const resetStaffPassword = async (req: Request, res: Response) => {
+    try {
+        const id = Number(req.params.id);
+        if (!Number.isFinite(id)) {
+            return res.status(400).json({ error: 'Invalid staff id' });
+        }
+        const data = staffPasswordSchema.parse(req.body);
+
+        await prisma.staff.update({
+            where: { id },
+            data: { password: data.password }
+        });
+
+        res.json({ message: 'Password updated' });
+    } catch (error: any) {
+        if (error instanceof z.ZodError) {
+            res.status(400).json({ error: error.errors });
+        } else if (error.code === 'P2025') {
+            res.status(404).json({ error: 'Staff not found' });
+        } else {
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+};
 
 export const getPerformance = async (req: Request, res: Response) => {
     try {
@@ -17,9 +153,9 @@ export const getPerformance = async (req: Request, res: Response) => {
         // Given "Manager+" auth, it likely allows viewing others. I'll assume query param or body, or maybe specific ID in path?
         // Let's assume ?staff_id=... for now as the endpoint is just /staff/performance
 
-        const staffId = req.query.staff_id as string;
+        const staffId = Number(req.query.staff_id);
 
-        if (!staffId) {
+        if (!Number.isFinite(staffId)) {
             return res.status(400).json({ error: 'Staff ID is required' });
         }
 

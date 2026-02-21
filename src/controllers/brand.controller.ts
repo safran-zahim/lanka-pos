@@ -50,11 +50,14 @@ export const getBrands = async (req: Request, res: Response) => {
 
 export const updateBrand = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
+        const id = Number(req.params.id);
+        if (!Number.isFinite(id)) {
+            return res.status(400).json({ error: 'Invalid brand id' });
+        }
         const data = brandSchema.partial().parse(req.body);
 
         const brand = await prisma.brand.update({
-            where: { id: String(id) },
+            where: { id },
             data
         });
         res.json(brand);
@@ -66,9 +69,12 @@ export const updateBrand = async (req: Request, res: Response) => {
 
 export const deleteBrand = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
+        const id = Number(req.params.id);
+        if (!Number.isFinite(id)) {
+            return res.status(400).json({ error: 'Invalid brand id' });
+        }
         await prisma.brand.delete({
-            where: { id: String(id) },
+            where: { id },
         });
         res.status(204).send();
     } catch (error) {

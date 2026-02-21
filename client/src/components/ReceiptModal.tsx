@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Printer, Check, X, MessageSquare, Loader, MessageCircle } from 'lucide-react';
 import type { Transaction, TransactionItem, Customer, User } from '../db/db';
-import { db } from '../db/db';
 import { useDigitalReceipt } from '../hooks/useDigitalReceipt';
 import { useCurrency } from '../hooks/useCurrency';
 import { useLocale } from '../hooks/useLocale';
+import { getApiUrl } from '../config/api';
+import { useAuthStore } from '../store/useAuthStore';
 
 import { APP_CONFIG } from '../config/appConfig';
 
@@ -13,22 +14,31 @@ interface ReceiptModalProps {
     items: (TransactionItem & { name: string })[];
     customer?: Customer | null;
     user?: User | null;
+    autoPrint?: boolean;
     onClose: () => void;
 }
 
-export const ReceiptModal = ({ transaction, items, customer, user, onClose }: ReceiptModalProps) => {
+export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, onClose }: ReceiptModalProps) => {
     const { sendReceipt, sending } = useDigitalReceipt();
     const { currencySymbol, formatCurrency } = useCurrency();
     const { formatDateTime } = useLocale();
+    const token = useAuthStore((state) => state.token);
     const [settings, setSettings] = useState<Record<string, any>>({});
     const [loadingSettings, setLoadingSettings] = useState(true);
     const [settingsError, setSettingsError] = useState<string | null>(null);
+    const [autoPrinted, setAutoPrinted] = useState(false);
 
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const allSettings = await db.settings.toArray();
-                const settingsMap = allSettings.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {} as Record<string, any>);
+                const response = await fetch(getApiUrl('/settings'), {
+                    headers: token ? { Authorization: `Bearer ${token}` } : undefined
+                });
+                const allSettings = response.ok ? await response.json() : [];
+                const settingsMap = (allSettings || []).reduce((acc: Record<string, any>, curr: any) => ({
+                    ...acc,
+                    [curr.key]: curr.value
+                }), {} as Record<string, any>);
                 setSettings(settingsMap);
             } catch (error) {
                 console.error('Failed to load receipt settings', error);
@@ -38,11 +48,29 @@ export const ReceiptModal = ({ transaction, items, customer, user, onClose }: Re
             }
         };
         fetchSettings();
-    }, []);
+    }, [token]);
 
     const handlePrint = () => {
         window.print();
     };
+
+    useEffect(() => {
+        if (!autoPrint || autoPrinted || loadingSettings) return;
+        if (transaction.transaction_id !== undefined && transaction.transaction_id !== null) {
+            const key = `receiptAutoPrint:${transaction.transaction_id}`;
+            try {
+                const lastPrinted = Number(sessionStorage.getItem(key) || 0);
+                if (Date.now() - lastPrinted < 5000) {
+                    return;
+                }
+                sessionStorage.setItem(key, String(Date.now()));
+            } catch {
+                // Ignore sessionStorage failures and proceed
+            }
+        }
+        setAutoPrinted(true);
+        setTimeout(() => handlePrint(), 0);
+    }, [autoPrint, autoPrinted, loadingSettings]);
 
     const handleSendDigital = async () => {
         if (!customer?.phone) return;
@@ -55,10 +83,13 @@ export const ReceiptModal = ({ transaction, items, customer, user, onClose }: Re
     };
 
     const handleWhatsAppShare = () => {
-        const subtotal = items.reduce((sum, item) => sum + (item.price_at_sale * item.quantity), 0);
-        const taxAmount = taxEnabled ? (subtotal * taxRate) : 0;
+        const itemsTotal = items.reduce((sum, item) => sum + (item.price_at_sale * item.quantity), 0);
+        const discountAmount = transaction.discount || 0;
+        const subtotal = itemsTotal - discountAmount;
+        const taxAmount = transaction.tax_amount || 0;
+        const roundOff = transaction.round_off_discount || 0;
         const total = transaction.total_amount;
-        const taxPercent = (taxRate * 100).toFixed(2).replace(/\.00$/, '');
+        const taxPercent = taxEnabled && taxAmount > 0 ? ((taxAmount / subtotal) * 100).toFixed(2).replace(/\.00$/, '') : '0';
 
         const divider = '────────────────────';
         const lines = [
@@ -79,8 +110,11 @@ export const ReceiptModal = ({ transaction, items, customer, user, onClose }: Re
             }),
             divider,
             'Summary',
+            `Items Total: ${formatCurrency(itemsTotal)}`,
+            ...(discountAmount > 0 ? [`Discount: -${formatCurrency(discountAmount)}`] : []),
             `Subtotal: ${formatCurrency(subtotal)}`,
-            ...(taxEnabled ? [`Tax (${taxPercent}%): ${formatCurrency(taxAmount)}`] : []),
+            ...(taxEnabled && taxAmount > 0 ? [`Tax (${taxPercent}%): ${formatCurrency(taxAmount)}`] : []),
+            ...(roundOffEnabled && roundOff > 0 ? [`Round Off: -${formatCurrency(roundOff)}`] : []),
             `Total: ${formatCurrency(total)}`,
             `Payment: ${transaction.payment_method.toUpperCase()}`,
             divider,
@@ -116,6 +150,7 @@ export const ReceiptModal = ({ transaction, items, customer, user, onClose }: Re
 
     const taxRate = typeof settings['taxRate'] === 'number' ? settings['taxRate'] : 0;
     const taxEnabled = settings['taxEnabled'] !== undefined ? settings['taxEnabled'] : true;
+    const roundOffEnabled = settings['roundOffEnabled'] !== undefined ? settings['roundOffEnabled'] : false;
 
     // Receipt type settings
     const receiptType = settings['receiptType'] || 'thermal';
@@ -221,7 +256,19 @@ export const ReceiptModal = ({ transaction, items, customer, user, onClose }: Re
                             <p className="text-xs">{address}</p>
                             {phone && <p className="text-xs">Tel: {phone}</p>}
                             {email && <p className="text-xs">Email: {email}</p>}
-                            {showTaxID && taxID && <p className="text-xs">VAT: {taxID}</p>}
+                            {taxEnabled && showTaxID && taxID && <p className="text-xs">VAT: {taxID}</p>}
+                        </div>
+                    )}
+
+                    {/* REFUND INDICATOR */}
+                    {transaction.type === 'return' && (
+                        <div className="bg-red-100 border-2 border-red-500 rounded-lg p-3 my-4 text-center">
+                            <div className="text-red-700 font-bold text-lg">⚠️ REFUND RECEIPT ⚠️</div>
+                            {transaction.parent_sale_id && (
+                                <div className="text-red-600 text-xs mt-1">
+                                    Original Sale: #{transaction.parent_sale_id}
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -231,7 +278,7 @@ export const ReceiptModal = ({ transaction, items, customer, user, onClose }: Re
                         <div className="flex justify-between">
                             <span>Date/Time: {formatDateTime(new Date(transaction.timestamp))}</span>
                         </div>
-                        <div>Receipt #: {transaction.transaction_id}</div>
+                        <div>{transaction.type === 'return' ? 'Refund' : 'Receipt'} #: {transaction.transaction_id}</div>
                         <div>Cashier: {user?.username}</div>
                         {customer && <div>Customer: {customer.name}</div>}
                     </div>
@@ -266,21 +313,33 @@ export const ReceiptModal = ({ transaction, items, customer, user, onClose }: Re
 
                     <div className={`space-y-1 text-xs ${(isModern || isElegant || isBold) ? 'bg-gray-50 p-4 rounded-lg border border-gray-200' : ''}`}>
                         <div className="flex justify-between">
-                            <span>Subtotal</span>
-                            <span>{formatCurrency(transaction.total_amount - transaction.tax_amount + (transaction.round_off_discount || 0))}</span>
+                            <span>Items Total</span>
+                            <span>{formatCurrency(items.reduce((sum, item) => sum + (item.price_at_sale * item.quantity), 0))}</span>
                         </div>
-                        <div className="flex justify-between">
-                            <span>Tax {taxEnabled ? `(${(taxRate * 100).toFixed(2)}%)` : '(Disabled)'}</span>
-                            <span>{formatCurrency(transaction.tax_amount)}</span>
-                        </div>
-                        {transaction.round_off_discount && transaction.round_off_discount > 0 && (
+                        {(transaction.discount ?? 0) > 0 && (
                             <div className="flex justify-between text-green-700">
-                                <span>Round off discount</span>
-                                <span>-{currencySymbol}{transaction.round_off_discount.toFixed(2)}</span>
+                                <span>Discount</span>
+                                <span>-{formatCurrency(transaction.discount!)}</span>
                             </div>
                         )}
-                        <div className="flex justify-between font-bold text-base mt-2 pt-2 border-t border-gray-300">
-                            <span>TOTAL</span>
+                        <div className="flex justify-between font-semibold">
+                            <span>Subtotal</span>
+                            <span>{formatCurrency(items.reduce((sum, item) => sum + (item.price_at_sale * item.quantity), 0) - (transaction.discount || 0))}</span>
+                        </div>
+                        {taxEnabled && transaction.tax_amount > 0 && (
+                            <div className="flex justify-between">
+                                <span>Tax ({((transaction.tax_amount / (items.reduce((sum, item) => sum + (item.price_at_sale * item.quantity), 0) - (transaction.discount || 0))) * 100).toFixed(2)}%)</span>
+                                <span>{formatCurrency(transaction.tax_amount)}</span>
+                            </div>
+                        )}
+                        {roundOffEnabled && transaction.round_off_discount && transaction.round_off_discount > 0 && (
+                            <div className="flex justify-between text-green-700">
+                                <span>Round Off</span>
+                                <span>-{formatCurrency(transaction.round_off_discount)}</span>
+                            </div>
+                        )}
+                        <div className={`flex justify-between font-bold text-base mt-2 pt-2 border-t border-gray-300 ${transaction.type === 'return' ? 'text-red-600' : ''}`}>
+                            <span>{transaction.type === 'return' ? 'REFUND TOTAL' : 'TOTAL'}</span>
                             <span>{formatCurrency(transaction.total_amount)}</span>
                         </div>
                     </div>
@@ -289,16 +348,16 @@ export const ReceiptModal = ({ transaction, items, customer, user, onClose }: Re
 
                     <div className="text-xs">
                         <div className="flex justify-between mb-1">
-                            <span>Payment Method:</span>
+                            <span>{transaction.type === 'return' ? 'Refund Method:' : 'Payment Method:'}</span>
                             <span className="capitalize">{transaction.payment_method}</span>
                         </div>
                         {transaction.payment_details?.cashAmount && (
                             <div className="flex justify-between">
-                                <span>Cash Received:</span>
+                                <span>{transaction.type === 'return' ? 'Cash Refunded:' : 'Cash Received:'}</span>
                                 <span>{formatCurrency(transaction.payment_details.cashAmount)}</span>
                             </div>
                         )}
-                        {transaction.payment_details?.cashAmount && transaction.payment_details.cashAmount > transaction.total_amount && (
+                        {transaction.payment_details?.cashAmount && transaction.payment_details.cashAmount > transaction.total_amount && transaction.type !== 'return' && (
                             <div className="flex justify-between">
                                 <span>Change:</span>
                                 <span>{formatCurrency(transaction.payment_details.cashAmount - transaction.total_amount)}</span>
@@ -322,6 +381,20 @@ export const ReceiptModal = ({ transaction, items, customer, user, onClose }: Re
 
                     <p className="whitespace-pre-wrap text-xs">{footer}</p>
 
+                    {/* Refund Notice */}
+                    {transaction.type === 'return' && (
+                        <div className="mt-4 p-3 bg-red-50 border border-red-300 rounded text-center">
+                            <p className="text-xs text-red-700 font-semibold">
+                                This is a REFUND receipt.
+                            </p>
+                            {transaction.parent_sale_id && (
+                                <p className="text-xs text-red-600 mt-1">
+                                    Refund processed for Sale #{transaction.parent_sale_id}
+                                </p>
+                            )}
+                        </div>
+                    )}
+
                     {receiptType === 'a4' && (
                         <div className="mt-8 text-xs text-gray-500">
                             <p>Powered by {APP_CONFIG.appName} - {APP_CONFIG.company.supportPhone}</p>
@@ -337,7 +410,7 @@ export const ReceiptModal = ({ transaction, items, customer, user, onClose }: Re
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded flex items-center justify-center space-x-2"
                     >
                         <Printer size={20} />
-                        <span>Print Receipt</span>
+                        <span>{transaction.type === 'return' ? 'Print Return Receipt' : 'Print Receipt'}</span>
                     </button>
 
                     {/* WhatsApp Share Button - Controlled by Setting */}

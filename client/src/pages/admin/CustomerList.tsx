@@ -239,7 +239,7 @@ export const CustomerList = () => {
                 <CustomerModal
                     customer={modalState.customer}
                     onClose={() => setModalState({ show: false, customer: null })}
-                    onSuccess={() => {
+                    onSuccess={(createdCustomer) => {
                         addToast(modalState.customer ? 'Customer updated' : 'Customer added', 'success');
                         fetchCustomers();
                     }}

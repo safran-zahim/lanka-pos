@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { X, Lock, Eye, EyeOff } from 'lucide-react';
-import { db } from '../../db/db';
 import { useToast } from '../../store/useToast';
+import { useAuthStore } from '../../store/useAuthStore';
+import { getApiUrl } from '../../config/api';
 
 interface ResetPasswordModalProps {
-    user: { user_id?: number, username: string };
+    user: { user_id?: number | string, username: string };
     onClose: () => void;
     onSuccess: () => void;
 }
 
 export const ResetPasswordModal = ({ user, onClose, onSuccess }: ResetPasswordModalProps) => {
     const { addToast } = useToast();
+    const token = useAuthStore((state) => state.token);
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -31,9 +33,21 @@ export const ResetPasswordModal = ({ user, onClose, onSuccess }: ResetPasswordMo
 
         setIsLoading(true);
         try {
-            await db.users.update(user.user_id!, {
-                password_hash: password // In a real app, hash this!
+            if (!token) {
+                throw new Error('Missing auth token');
+            }
+            const response = await fetch(getApiUrl(`/staff/${user.user_id}/password`), {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ password })
             });
+            if (!response.ok) {
+                const errorPayload = await response.json().catch(() => ({}));
+                throw new Error(errorPayload.error || 'Failed to update password');
+            }
             addToast("Password updated successfully", 'success');
             onSuccess();
             onClose();

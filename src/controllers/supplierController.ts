@@ -14,17 +14,20 @@ const supplierSchema = z.object({
 });
 
 const purchaseItemSchema = z.object({
-    productId: z.string(),
+    productId: z.coerce.number().int().positive(),
     quantity: z.number().int().positive(),
     costPrice: z.number().positive(),
+    retailPrice: z.number().nonnegative(),
 });
 
 const purchaseSchema = z.object({
-    supplierId: z.string(),
+    supplierId: z.coerce.number().int().positive(),
     items: z.array(purchaseItemSchema),
     totalAmount: z.number().positive(),
     paidAmount: z.number().nonnegative().optional(),
     status: z.enum(['PENDING', 'COMPLETED', 'PARTIAL']).optional(),
+    paymentMethod: z.string().optional(),
+    paymentDate: z.string().optional(),
     date: z.string().optional(), // ISO string
 });
 
@@ -46,7 +49,10 @@ export const getSuppliers = async (req: Request, res: Response) => {
 
 export const getSupplierById = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params as { id: string };
+        const id = Number(req.params.id);
+        if (!Number.isFinite(id)) {
+            return res.status(400).json({ error: 'Invalid supplier id' });
+        }
         const supplier = await prisma.supplier.findUnique({
             where: { id },
             include: {
@@ -73,8 +79,15 @@ export const getSupplierById = async (req: Request, res: Response) => {
             },
         });
 
+        const payments = await prisma.purchasePayment.findMany({
+            where: { supplierId: id },
+            orderBy: { paidAt: 'desc' },
+            take: 20
+        });
+
         res.json({
             ...supplier,
+            payments,
             stats: {
                 totalPurchased: stats._sum?.totalAmount || 0,
                 totalPaid: stats._sum?.paidAmount || 0,
@@ -103,7 +116,10 @@ export const createSupplier = async (req: Request, res: Response) => {
 
 export const updateSupplier = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params as { id: string };
+        const id = Number(req.params.id);
+        if (!Number.isFinite(id)) {
+            return res.status(400).json({ error: 'Invalid supplier id' });
+        }
         const data = supplierSchema.partial().parse(req.body);
         const supplier = await prisma.supplier.update({
             where: { id },
@@ -117,7 +133,10 @@ export const updateSupplier = async (req: Request, res: Response) => {
 
 export const deleteSupplier = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params as { id: string };
+        const id = Number(req.params.id);
+        if (!Number.isFinite(id)) {
+            return res.status(400).json({ error: 'Invalid supplier id' });
+        }
         await prisma.supplier.delete({ where: { id } });
         res.status(204).send();
     } catch (error) {
@@ -130,12 +149,13 @@ export const createPurchase = async (req: Request, res: Response) => {
         const data = purchaseSchema.parse(req.body);
 
         const result = await prisma.$transaction(async (tx) => {
+            const paidAmountValue = new Decimal(data.paidAmount || 0);
             // 1. Create Purchase
             const purchase = await tx.purchase.create({
                 data: {
                     supplierId: data.supplierId,
                     totalAmount: new Decimal(data.totalAmount),
-                    paidAmount: new Decimal(data.paidAmount || 0),
+                    paidAmount: paidAmountValue,
                     status: data.status || 'PENDING',
                     date: data.date ? new Date(data.date) : new Date(),
                     items: {
@@ -143,19 +163,35 @@ export const createPurchase = async (req: Request, res: Response) => {
                             productId: item.productId,
                             quantity: item.quantity,
                             costPrice: new Decimal(item.costPrice),
+                            retailPrice: new Decimal(item.retailPrice),
                         })),
                     },
                 },
                 include: { items: true },
             });
 
-            // 2. Update Product Stock
-            for (const item of data.items) {
-                await tx.product.update({
-                    where: { id: item.productId },
+            if (paidAmountValue.greaterThan(0) && data.paymentMethod) {
+                const paidAt = data.paymentDate ? new Date(data.paymentDate) : purchase.date;
+                const payment = await tx.purchasePayment.create({
                     data: {
-                        stock: { increment: item.quantity },
-                    },
+                        purchaseId: purchase.id,
+                        supplierId: purchase.supplierId,
+                        amount: paidAmountValue,
+                        method: data.paymentMethod,
+                        paidAt
+                    }
+                });
+
+                await tx.expense.create({
+                    data: {
+                        amount: paidAmountValue,
+                        date: paidAt,
+                        category: 'purchase_payment',
+                        description: `Purchase #${purchase.id} payment`,
+                        supplierId: purchase.supplierId,
+                        purchaseId: purchase.id,
+                        paymentId: payment.id
+                    }
                 });
             }
 

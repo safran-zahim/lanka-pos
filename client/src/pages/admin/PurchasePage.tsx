@@ -1,14 +1,14 @@
-import { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../../db/db';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Plus, Trash2, Search, Calendar, FileText, Truck, DollarSign, UploadCloud, Package, PlusCircle } from 'lucide-react';
 import { useToast } from '../../store/useToast';
 import { AddProductModal } from '../../components/admin/AddProductModal';
 import { useCurrency } from '../../hooks/useCurrency';
+import { useAuthStore } from '../../store/useAuthStore';
+import { getApiUrl } from '../../config/api';
 
 interface PurchaseItem {
-    product_id: number;
+    product_id: number | string;
     name: string;
     sku: string;
     qty: number;
@@ -22,6 +22,7 @@ export const PurchasePage = () => {
     const navigate = useNavigate();
     const { addToast } = useToast();
     const { formatCurrency } = useCurrency();
+    const token = useAuthStore((state) => state.token);
 
     // Section A: Header & Supplier
     const [supplierId, setSupplierId] = useState<string>('');
@@ -47,27 +48,59 @@ export const PurchasePage = () => {
     const [showAddProductModal, setShowAddProductModal] = useState(false);
 
     // Data Fetching
-    const suppliers = useLiveQuery(() => db.suppliers.toArray());
-    const products = useLiveQuery(() => db.products.toArray());
+    const [suppliers, setSuppliers] = useState<any[]>([]);
+    const [products, setProducts] = useState<any[]>([]);
+
+    const loadProducts = async () => {
+        if (!token) return;
+        try {
+            const productsRes = await fetch(getApiUrl('/products'), { 
+                headers: { Authorization: `Bearer ${token}` } 
+            });
+            if (productsRes.ok) {
+                setProducts(await productsRes.json());
+            }
+        } catch (error) {
+            console.error('Failed to load products', error);
+        }
+    };
+
+    useEffect(() => {
+        if (!token) return;
+        const loadData = async () => {
+            try {
+                const [suppliersRes, productsRes] = await Promise.all([
+                    fetch(getApiUrl('/suppliers'), { headers: { Authorization: `Bearer ${token}` } }),
+                    fetch(getApiUrl('/products'), { headers: { Authorization: `Bearer ${token}` } })
+                ]);
+                if (suppliersRes.ok) setSuppliers(await suppliersRes.json());
+                if (productsRes.ok) setProducts(await productsRes.json());
+            } catch (error) {
+                console.error('Failed to load data', error);
+            }
+        };
+        loadData();
+    }, [token]);
 
     const filteredProducts = products?.filter(p =>
         p.name.toLowerCase().includes(itemSearch.toLowerCase()) ||
-        p.sku_code.includes(itemSearch)
+        (p.skuCode || p.sku_code || '').includes(itemSearch)
     );
 
     const addItem = (product: any) => {
-        const existing = items.find(i => i.product_id === product.product_id);
+        const pId = product.id || product.product_id;
+        const existing = items.find(i => i.product_id === pId);
         if (existing) {
             addToast("Item already added", 'info');
             return;
         }
         setItems([...items, {
-            product_id: product.product_id,
+            product_id: pId,
             name: product.name,
-            sku: product.sku_code,
+            sku: product.skuCode || product.sku_code,
             qty: 1,
-            cost: product.cost_price,
-            retail_price: product.retail_price,
+            cost: product.costPrice || product.cost_price || 0,
+            retail_price: product.retailPrice || product.retail_price || 0,
             tax: 0
         }]);
         setItemSearch('');
@@ -93,60 +126,47 @@ export const PurchasePage = () => {
             addToast("Please add at least one item", 'error');
             return;
         }
+        if (!supplierId) {
+            addToast('Please select a supplier', 'error');
+            return;
+        }
+        if (!token) {
+            addToast("Not authenticated", 'error');
+            return;
+        }
+        if (paymentStatus !== 'due' && paidAmount <= 0) {
+            addToast('Please enter a paid amount for paid/partial status', 'error');
+            return;
+        }
 
         try {
-            // Create Purchase Record (Simplified for now - strictly linking to stock updates)
-            // In a real app, we'd have a 'purchase_orders' table. 
-            // For this MVP, we will update stock and log a purchase transaction/history.
+            const purchaseItems = items.map(item => ({
+                product_id: String(item.product_id),
+                quantity: Number(item.qty),
+                cost_price: Number(item.cost),
+                retail_price: Number(item.retail_price)
+            }));
 
-            // 1. Log Purchase Transaction
-            // Note: Our DB schema might need a 'purchase_orders' table for full features.
-            // checking db.ts... we have 'purchases' table but it seems per-item?
-            // "purchases: '++purchase_id, product_id, timestamp'"
-            // This schema is too simple for a full PO.
-            // For now, we will just update Stock Quantity and add to 'purchases' table per item.
-
-            const timestamp = new Date(`${date}T${new Date().toLocaleTimeString('en-GB')}`);
-            const billId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-            for (const item of items) {
-                // Update Product Stock
-                const product = await db.products.get(item.product_id);
-                if (product) {
-                    await db.products.update(item.product_id, {
-                        stock_quantity: product.stock_quantity + Number(item.qty),
-                        cost_price: Number(item.cost) // Update cost price? Usually yes.
-                    });
-                }
-
-                await db.product_batches.add({
-                    product_id: item.product_id,
-                    quantity: Number(item.qty),
-                    cost_price: Number(item.cost),
-                    retail_price: Number(item.retail_price),
-                    created_at: timestamp,
-                    note: refNo ? `PO ${refNo}` : undefined
-                });
-
-                // Log Purchase
-                await db.purchases.add({
-                    product_id: item.product_id,
-                    quantity: Number(item.qty),
-                    cost_price: Number(item.cost),
-                    timestamp: timestamp,
-                    user_id: 1, // Todo: Get actual user
-                    supplier_id: supplierId ? Number(supplierId) : undefined,
-                    ref_number: refNo,
-                    bill_id: billId,
-                    payment_status: paymentStatus as any,
-                    payment_method: paymentMethod as any,
-                    shipping_cost: Number(shipping) || 0,
-                    discount: Number(discount) || 0,
+            const response = await fetch(getApiUrl('/purchases'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    supplier_id: supplierId || undefined,
+                    total_amount: Number(grandTotal) || 0,
+                    paid_amount: Number(paidAmount) || 0,
+                    status: paymentStatus || 'PENDING',
+                    payment_method: paymentStatus === 'due' ? undefined : paymentMethod,
+                    date: date || undefined,
+                    ref_number: refNo || undefined,
                     notes: notes || undefined,
-                    bill_total: Number(grandTotal) || 0,
-                    amount_paid: Number(paidAmount) || 0
-                });
-            }
+                    items: purchaseItems
+                })
+            });
+
+            if (!response.ok) throw new Error('Failed to create purchase');
 
             addToast("Purchase recorded successfully! Stock updated.", 'success');
             navigate('/admin/purchases');
@@ -201,7 +221,7 @@ export const PurchasePage = () => {
                                 >
                                     <option value="">Select Supplier</option>
                                     {suppliers?.map(s => (
-                                        <option key={s.supplier_id} value={s.supplier_id}>{s.name}</option>
+                                        <option key={s.id || s.supplier_id} value={s.id || s.supplier_id}>{s.name}</option>
                                     ))}
                                 </select>
                             </div>
@@ -264,12 +284,12 @@ export const PurchasePage = () => {
                                         <div className="absolute top-full left-0 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 mt-1 rounded-lg shadow-xl z-20 max-h-60 overflow-y-auto">
                                             {filteredProducts?.map(p => (
                                                 <div
-                                                    key={p.product_id}
+                                                    key={p.id || p.product_id}
                                                     onClick={() => addItem(p)}
                                                     className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer flex justify-between"
                                                 >
                                                     <span>{p.name}</span>
-                                                    <span className="text-gray-500 text-sm">{p.sku_code}</span>
+                                                    <span className="text-gray-500 text-sm">{p.skuCode || p.sku_code}</span>
                                                 </div>
                                             ))}
                                             {filteredProducts?.length === 0 && (
@@ -445,19 +465,21 @@ export const PurchasePage = () => {
                                 </div>
                             )}
 
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Payment Method</label>
-                                <select
-                                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
-                                    value={paymentMethod}
-                                    onChange={e => setPaymentMethod(e.target.value)}
-                                >
-                                    <option value="cash">Cash</option>
-                                    <option value="bank">Bank Transfer</option>
-                                    <option value="card">Card</option>
-                                    <option value="cheque">Cheque</option>
-                                </select>
-                            </div>
+                            {paymentStatus !== 'due' && (
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Payment Method</label>
+                                    <select
+                                        className="w-full p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+                                        value={paymentMethod}
+                                        onChange={e => setPaymentMethod(e.target.value)}
+                                    >
+                                        <option value="cash">Cash</option>
+                                        <option value="bank">Bank Transfer</option>
+                                        <option value="card">Card</option>
+                                        <option value="cheque">Cheque</option>
+                                    </select>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -492,6 +514,7 @@ export const PurchasePage = () => {
                     onSuccess={() => {
                         addToast("Product added successfully!", 'success');
                         setShowAddProductModal(false);
+                        loadProducts(); // Refresh products list
                     }}
                 />
             )}

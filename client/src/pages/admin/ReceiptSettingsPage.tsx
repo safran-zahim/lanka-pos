@@ -3,6 +3,8 @@ import { useSettingsStore } from '../../store/useSettingsStore';
 import { Save, Loader, Printer, MessageSquare, FileText, Maximize2 } from 'lucide-react';
 import { useToast } from '../../store/useToast';
 import { useCurrency } from '../../hooks/useCurrency';
+import { useAuthStore } from '../../store/useAuthStore';
+import { getApiUrl } from '../../config/api';
 
 import { APP_CONFIG } from '../../config/appConfig';
 
@@ -10,6 +12,7 @@ export const ReceiptSettingsPage = () => {
     const { loadSettings, updateSetting, loading } = useSettingsStore();
     const { addToast } = useToast();
     const { currencySymbol } = useCurrency();
+    const token = useAuthStore((state) => state.token);
     const [isSaving, setIsSaving] = useState(false);
 
     // Receipt Type & Size Settings
@@ -43,9 +46,15 @@ export const ReceiptSettingsPage = () => {
     // Fetch settings on mount
     useEffect(() => {
         const fetchSettings = async () => {
-            const { db } = await import('../../db/db');
-            const settings = await db.settings.toArray();
-            const settingsMap = settings.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {} as Record<string, any>);
+            if (!token) return;
+            const response = await fetch(getApiUrl('/settings'), {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const settings = response.ok ? await response.json() : [];
+            const settingsMap = (settings || []).reduce((acc: Record<string, any>, curr: any) => ({
+                ...acc,
+                [curr.key]: curr.value
+            }), {} as Record<string, any>);
 
             // Receipt Type & Size
             if (settingsMap['receiptType']) setReceiptType(settingsMap['receiptType']);
@@ -72,7 +81,7 @@ export const ReceiptSettingsPage = () => {
             if (settingsMap['whatsappApiKey']) setWhatsappApiKey(settingsMap['whatsappApiKey']);
         };
         fetchSettings();
-    }, []);
+    }, [token]);
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();

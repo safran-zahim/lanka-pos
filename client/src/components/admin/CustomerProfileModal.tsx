@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { X, User, Phone, Mail, Award, Receipt, Calendar } from 'lucide-react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Customer } from '../../db/db';
+import { type Customer } from '../../db/db';
+import { useAuthStore } from '../../store/useAuthStore';
+import { getApiUrl } from '../../config/api';
 
 interface CustomerProfileModalProps {
     customer: Customer;
@@ -9,26 +10,37 @@ interface CustomerProfileModalProps {
 }
 
 export const CustomerProfileModal = ({ customer, onClose }: CustomerProfileModalProps) => {
-    const transactions = useLiveQuery(() => db.transactions.where('customer_id').equals(customer.customer_id!).reverse().sortBy('timestamp'));
-    const items = useLiveQuery(() => db.transaction_items.toArray());
-    const pointsHistory = useLiveQuery(() => db.customer_points.where('customer_id').equals(customer.customer_id!).reverse().sortBy('timestamp'));
+    const token = useAuthStore((state) => state.token);
+    const [customerData, setCustomerData] = useState<any>(null);
+
+    useEffect(() => {
+        if (!token || !customer.customer_id) return;
+        const loadCustomer = async () => {
+            try {
+                const response = await fetch(getApiUrl(`/customers/${customer.customer_id}`), {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    setCustomerData(await response.json());
+                }
+            } catch (error) {
+                console.error('Failed to load customer data', error);
+            }
+        };
+        loadCustomer();
+    }, [token, customer.customer_id]);
+
+    const transactions = customerData?.sales || [];
+    const pointsHistory = customerData?.pointsLedger || [];
 
     const transactionItemsMap = useMemo(() => {
         const map = new Map<number, { count: number }>();
-        if (!transactions || !items) return map;
-        const itemGroups = items.reduce((acc, item) => {
-            const list = acc.get(item.transaction_id) || [];
-            list.push(item);
-            acc.set(item.transaction_id, list);
-            return acc;
-        }, new Map<number, typeof items>());
-        transactions.forEach(t => {
-            if (t.transaction_id == null) return;
-            const count = itemGroups.get(t.transaction_id)?.length || 0;
-            map.set(t.transaction_id, { count });
+        transactions.forEach((t: any) => {
+            const count = t.items?.length || 0;
+            map.set(t.id, { count });
         });
         return map;
-    }, [transactions, items]);
+    }, [transactions]);
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -77,11 +89,11 @@ export const CustomerProfileModal = ({ customer, onClose }: CustomerProfileModal
                             <Award size={16} /> Points History
                         </h3>
                         <div className="space-y-2 max-h-48 overflow-y-auto text-sm">
-                            {pointsHistory?.map(p => (
+                            {pointsHistory?.map((p: any) => (
                                 <div key={p.id} className="flex justify-between items-center text-gray-700 dark:text-gray-300">
                                     <span className="flex items-center gap-2">
                                         <Calendar size={12} />
-                                        {new Date(p.timestamp).toLocaleString()}
+                                        {new Date(p.timestamp || p.createdAt).toLocaleString()}
                                     </span>
                                     <span className={p.points >= 0 ? 'text-green-600' : 'text-red-600'}>
                                         {p.points >= 0 ? '+' : ''}{p.points}
@@ -111,13 +123,13 @@ export const CustomerProfileModal = ({ customer, onClose }: CustomerProfileModal
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                                {transactions?.map(t => (
-                                    <tr key={t.transaction_id} className="text-gray-700 dark:text-gray-300">
-                                        <td className="py-2">#{t.transaction_id}</td>
-                                        <td className="py-2">{new Date(t.timestamp).toLocaleString()}</td>
-                                        <td className="py-2 text-right">{transactionItemsMap.get(t.transaction_id!)?.count || 0}</td>
-                                        <td className="py-2 text-right">{t.tax_amount.toFixed(2)}</td>
-                                        <td className="py-2 text-right font-semibold text-gray-900 dark:text-white">{t.total_amount.toFixed(2)}</td>
+                                {transactions?.map((t: any) => (
+                                    <tr key={t.id} className="text-gray-700 dark:text-gray-300">
+                                        <td className="py-2">#{t.id}</td>
+                                        <td className="py-2">{new Date(t.createdAt || t.timestamp).toLocaleString()}</td>
+                                        <td className="py-2 text-right">{transactionItemsMap.get(t.id)?.count || 0}</td>
+                                        <td className="py-2 text-right">{(t.tax || t.tax_amount || 0).toFixed(2)}</td>
+                                        <td className="py-2 text-right font-semibold text-gray-900 dark:text-white">{(t.total || t.total_amount || 0).toFixed(2)}</td>
                                     </tr>
                                 ))}
                             </tbody>

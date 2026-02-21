@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { db } from '../db/db';
+import { getApiUrl } from '../config/api';
+import { useAuthStore } from './useAuthStore';
 
 interface SettingsState {
     taxEnabled: boolean;
@@ -20,16 +21,16 @@ interface SettingsState {
 }
 
 export const useSettingsStore = create<SettingsState>((set) => ({
-    taxEnabled: true,
-    taxRate: 0.08, // Default 8%
+    taxEnabled: false,
+    taxRate: 0, // Default 8%
     roundOffEnabled: false,
-    roundOffDecimals: 2,
-    loyaltyEnabled: true,
+    roundOffDecimals: 0,
+    loyaltyEnabled: false,
     loyaltyEarnRate: 0.1, // points per 1 currency unit (1 point per 10 currency units)
     loyaltyPointValue: 0.10, // currency value per point
     toastEnabled: true,
-    currencySymbol: '$',
-    currencyCode: 'USD',
+    currencySymbol: 'Rs.',
+    currencyCode: 'LKR',
     locale: typeof window !== 'undefined' && window.navigator?.language ? window.navigator.language : 'en-US',
     timeZone: typeof window !== 'undefined' && Intl.DateTimeFormat().resolvedOptions().timeZone
         ? Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -38,38 +39,34 @@ export const useSettingsStore = create<SettingsState>((set) => ({
 
     loadSettings: async () => {
         try {
-            const [taxEnabled, taxRate, roundOffEnabled, roundOffDecimals, loyaltyEnabled, loyaltyEarnRate, loyaltyPointValue, toastEnabled, currencySymbol, currencyCode, locale, timeZone] = await Promise.all([
-                db.settings.get('taxEnabled'),
-                db.settings.get('taxRate'),
-                db.settings.get('roundOffEnabled'),
-                db.settings.get('roundOffDecimals'),
-                db.settings.get('loyaltyEnabled'),
-                db.settings.get('loyaltyEarnRate'),
-                db.settings.get('loyaltyPointValue'),
-                db.settings.get('toastEnabled'),
-                db.settings.get('currencySymbol'),
-                db.settings.get('currencyCode'),
-                db.settings.get('locale'),
-                db.settings.get('timeZone')
-            ]);
+            const token = useAuthStore.getState().token;
+            const response = await fetch(getApiUrl('/settings'), {
+                headers: token ? { Authorization: `Bearer ${token}` } : undefined
+            });
+
+            const settingsList = response.ok ? await response.json() : [];
+            const settingsMap = (settingsList || []).reduce((acc: Record<string, any>, setting: any) => {
+                acc[setting.key] = setting.value;
+                return acc;
+            }, {});
 
             const systemTimeZone = typeof window !== 'undefined' && Intl.DateTimeFormat().resolvedOptions().timeZone
                 ? Intl.DateTimeFormat().resolvedOptions().timeZone
                 : 'UTC';
 
             set({
-                taxEnabled: taxEnabled?.value ?? true,
-                taxRate: taxRate?.value ?? 0.08,
-                roundOffEnabled: roundOffEnabled?.value ?? false,
-                roundOffDecimals: roundOffDecimals?.value ?? 2,
-                loyaltyEnabled: loyaltyEnabled?.value ?? true,
-                loyaltyEarnRate: loyaltyEarnRate?.value ?? 0.1,
-                loyaltyPointValue: loyaltyPointValue?.value ?? 0.10,
-                toastEnabled: toastEnabled?.value ?? true,
-                currencySymbol: currencySymbol?.value ?? '$',
-                currencyCode: currencyCode?.value ?? 'USD',
-                locale: locale?.value ?? 'en-US',
-                timeZone: timeZone?.value ?? systemTimeZone
+                taxEnabled: settingsMap.taxEnabled ?? false,
+                taxRate: settingsMap.taxRate ?? 0.08,
+                roundOffEnabled: settingsMap.roundOffEnabled ?? false,
+                roundOffDecimals: settingsMap.roundOffDecimals ?? 2,
+                loyaltyEnabled: settingsMap.loyaltyEnabled ?? true,
+                loyaltyEarnRate: settingsMap.loyaltyEarnRate ?? 0.1,
+                loyaltyPointValue: settingsMap.loyaltyPointValue ?? 0.10,
+                toastEnabled: settingsMap.toastEnabled ?? true,
+                currencySymbol: settingsMap.currencySymbol ?? 'Rs.',
+                currencyCode: settingsMap.currencyCode ?? 'LKR',
+                locale: settingsMap.locale ?? 'en-US',
+                timeZone: settingsMap.timeZone ?? systemTimeZone
             });
             set({ loading: false });
         } catch (error) {
@@ -80,7 +77,20 @@ export const useSettingsStore = create<SettingsState>((set) => ({
 
     updateSetting: async (key: string, value: any) => {
         try {
-            await db.settings.put({ key, value });
+            const token = useAuthStore.getState().token;
+            const response = await fetch(getApiUrl(`/settings/${key}`), {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify({ value })
+            });
+
+            if (!response.ok) {
+                const errorPayload = await response.json().catch(() => ({}));
+                throw new Error(errorPayload.error || 'Failed to update setting');
+            }
             if (key === 'taxRate') set({ taxRate: value });
             if (key === 'taxEnabled') set({ taxEnabled: value });
             if (key === 'roundOffEnabled') set({ roundOffEnabled: value });

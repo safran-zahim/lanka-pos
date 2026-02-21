@@ -3,9 +3,14 @@ import { getAppConfig, setSubscriptionStatus } from '../utils/appConfig';
 import prisma from '../utils/prisma';
 import { z } from 'zod';
 
+const optionalId = z.preprocess(
+    (value) => (value === null || value === '' ? undefined : value),
+    z.coerce.number().int().positive()
+);
+
 const updateSchema = z.object({
     subscriptionStatus: z.enum(['active', 'past_due', 'blocked', 'canceled']).optional(),
-    subscriptionPlanId: z.string().optional()
+    subscriptionPlanId: optionalId.optional()
 });
 
 const createPlanSchema = z.object({
@@ -98,8 +103,8 @@ export const getPlans = async (_req: Request, res: Response) => {
 
 export const updatePlan = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
-        if (!id) {
+        const id = Number(req.params.id);
+        if (!Number.isFinite(id)) {
             return res.status(400).json({ error: 'Subscription plan id is required' });
         }
         const data = updatePlanSchema.parse(req.body);
@@ -110,7 +115,7 @@ export const updatePlan = async (req: Request, res: Response) => {
         }
 
         const plan = await prisma.subscriptionPlan.update({
-            where: { id: String(id) },
+            where: { id },
             data: updateData
         });
 

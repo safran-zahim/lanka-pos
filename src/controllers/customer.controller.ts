@@ -5,9 +5,15 @@ import { Decimal } from 'decimal.js';
 
 
 const customerSchema = z.object({
-    name: z.string(),
-    phone: z.string(),
-    email: z.string().email().optional(),
+    name: z.string().min(1, "Name is required"),
+    phone: z.preprocess(
+        (val) => (typeof val === 'string' ? val.trim() : val),
+        z.string().min(1, "Phone number is required")
+    ),
+    email: z.preprocess(
+        (val) => (typeof val === 'string' && val.trim() === '' ? undefined : val),
+        z.string().email("Invalid email format").optional()
+    ),
     address: z.string().optional(),
 });
 
@@ -65,10 +71,13 @@ export const createCustomer = async (req: Request, res: Response) => {
 
 export const getCustomerHistory = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
+        const id = Number(req.params.id);
+        if (!Number.isFinite(id)) {
+            return res.status(400).json({ error: 'Invalid customer id' });
+        }
 
         const sales = await prisma.sale.findMany({
-            where: { customerId: String(id) },
+            where: { customerId: id },
             include: { items: { include: { product: true } } },
             orderBy: { createdAt: 'desc' },
         });
@@ -81,9 +90,12 @@ export const getCustomerHistory = async (req: Request, res: Response) => {
 
 export const getCustomerDetails = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
+        const id = Number(req.params.id);
+        if (!Number.isFinite(id)) {
+            return res.status(400).json({ error: 'Invalid customer id' });
+        }
         const customer = await prisma.customer.findUnique({
-            where: { id: String(id) },
+            where: { id },
             include: {
                 sales: {
                     include: { items: { include: { product: true } } },
@@ -106,7 +118,7 @@ export const getCustomerDetails = async (req: Request, res: Response) => {
 
         // Calculate aggregates
         const totalSpentAggregate = await prisma.sale.aggregate({
-            where: { customerId: String(id) },
+            where: { customerId: id },
             _sum: { total: true },
             _max: { createdAt: true }
         });
@@ -131,11 +143,14 @@ export const getCustomerDetails = async (req: Request, res: Response) => {
 
 export const updateCustomer = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
+        const id = Number(req.params.id);
+        if (!Number.isFinite(id)) {
+            return res.status(400).json({ error: 'Invalid customer id' });
+        }
         const data = customerUpdateSchema.parse(req.body);
 
         const updated = await prisma.customer.update({
-            where: { id: String(id) },
+            where: { id },
             data,
         });
 
@@ -155,8 +170,11 @@ export const updateCustomer = async (req: Request, res: Response) => {
 
 export const deleteCustomer = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
-        await prisma.customer.delete({ where: { id: String(id) } });
+        const id = Number(req.params.id);
+        if (!Number.isFinite(id)) {
+            return res.status(400).json({ error: 'Invalid customer id' });
+        }
+        await prisma.customer.delete({ where: { id } });
         res.json({ message: 'Customer deleted' });
     } catch (error: any) {
         if (error.code === 'P2025') {
@@ -169,9 +187,12 @@ export const deleteCustomer = async (req: Request, res: Response) => {
 
 export const getCustomerPointsHistory = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
+        const id = Number(req.params.id);
+        if (!Number.isFinite(id)) {
+            return res.status(400).json({ error: 'Invalid customer id' });
+        }
         const points = await prisma.customerPointLedger.findMany({
-            where: { customerId: String(id) },
+            where: { customerId: id },
             orderBy: { createdAt: 'desc' }
         });
         res.json(points);

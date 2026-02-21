@@ -81,3 +81,68 @@ Returns customer details with:
 Returns product details with:
 - \`stats\`: \`totalSold\`, \`totalRevenue\`, \`currentMargin\`.
 - \`recentSales\`: List of recent sale timestamps and quantities.
+
+### Get Product Batches
+\`GET /products/:id/batches\`
+Returns purchase batches for the product with remaining stock per batch.
+
+Response (example):
+\`\`\`json
+[
+  {
+    "batch_id": 15,
+    "product_id": 11,
+    "purchased_quantity": 10,
+    "quantity": 4,
+    "remaining_stock": 4,
+    "remaining_in_stock": 4,
+    "retail_price": 150,
+    "created_at": "2026-02-21T09:30:00Z"
+  }
+]
+\`\`\`
+
+## Sales & Returns
+
+### Checkout (Sale or Return)
+\`POST /sales/checkout\`
+
+For sales, \`quantity\` is positive. For returns, use negative \`quantity\` and include \`parent_sale_id\`.
+
+Request (sale):
+\`\`\`json
+{
+  "staff_id": 2,
+  "customer_id": 5,
+  "payment_method": "cash",
+  "items": [
+    { "product_id": 11, "quantity": 1, "unit_price": 150, "batch_id": 15 }
+  ],
+  "totals": {
+    "subtotal": 150,
+    "tax": 0,
+    "discount": 0,
+    "grand_total": 150,
+    "round_off_discount": 0
+  }
+}
+\`\`\`
+
+Request (return):
+\`\`\`json
+{
+  "staff_id": 2,
+  "parent_sale_id": 123,
+  "payment_method": "cash",
+  "items": [
+    { "product_id": 11, "quantity": -1, "unit_price": 150, "batch_id": 15 }
+  ],
+  "totals": {
+    "subtotal": -150,
+    "tax": 0,
+    "discount": 0,
+    "grand_total": -150,
+    "round_off_discount": 0
+  }
+}
+\`\`\`

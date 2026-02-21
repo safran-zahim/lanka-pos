@@ -8,18 +8,19 @@ datasource db {
 }
 
 model Staff {
-  id        String   @id @default(uuid())
+  id        Int      @id @default(autoincrement())
   name      String
   role      String   // admin, manager, cashier
   password  String
+  hourlyRate Decimal?
   createdAt DateTime @default(now())
   shifts    Shift[]
   sales     Sale[]
 }
 
 model Shift {
-  id         String   @id @default(uuid())
-  staffId    String
+  id         Int      @id @default(autoincrement())
+  staffId    Int
   staff      Staff    @relation(fields: [staffId], references: [id])
   startTime  DateTime @default(now())
   endTime    DateTime?
@@ -28,25 +29,29 @@ model Shift {
 }
 
 model Product {
-  id            String   @id @default(uuid())
+  id            Int      @id @default(autoincrement())
   name          String
   skuCode       String?  @unique
   barcode       String?
+  barcodeType   String?
   description   String?
-  price         Decimal
-  stock         Int      @default(0)
-  reorderLevel  Int      @default(10)
+  price         Decimal? // Current/suggested selling price
+  reorderLevel  Decimal  @default(10)
+  isActive      Boolean  @default(true)
   
   category      String?    // Legacy field
-  categoryId    String?
+  categoryId    Int?
   categoryRel   Category?  @relation(fields: [categoryId], references: [id])
   
-  brandId       String?
+  brandId       Int?
   brand         Brand?     @relation(fields: [brandId], references: [id])
   
-  unitId        String?
+  unitId        Int?
   unit          Unit?      @relation(fields: [unitId], references: [id])
   
+  subCategoryId Int?
+  subCategory   SubCategory? @relation(fields: [subCategoryId], references: [id])
+
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
   saleItems     SaleItem[]
@@ -54,7 +59,7 @@ model Product {
 }
 
 model Brand {
-  id          String    @id @default(uuid())
+  id          Int       @id @default(autoincrement())
   name        String    @unique
   description String?
   products    Product[]
@@ -63,7 +68,7 @@ model Brand {
 }
 
 model Unit {
-  id           String    @id @default(uuid())
+  id           Int       @id @default(autoincrement())
   name         String    @unique
   shortName    String
   allowDecimal Boolean   @default(false)
@@ -73,7 +78,7 @@ model Unit {
 }
 
 model Supplier {
-  id            String   @id @default(uuid())
+  id            Int      @id @default(autoincrement())
   name          String
   contactPerson String?
   email         String?
@@ -84,11 +89,13 @@ model Supplier {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   purchases     Purchase[]
+  payments      PurchasePayment[]
+  expenses      Expense[]
 }
 
 model Purchase {
-  id          String   @id @default(uuid())
-  supplierId  String
+  id          Int      @id @default(autoincrement())
+  supplierId  Int
   supplier    Supplier @relation(fields: [supplierId], references: [id])
   totalAmount Decimal
   paidAmount  Decimal  @default(0)
@@ -97,32 +104,80 @@ model Purchase {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   items       PurchaseItem[]
+  payments    PurchasePayment[]
+  expenses    Expense[]
 }
 
 model PurchaseItem {
-  id         String   @id @default(uuid())
-  purchaseId String
+  id         Int      @id @default(autoincrement())
+  purchaseId Int
   purchase   Purchase @relation(fields: [purchaseId], references: [id])
-  productId  String
+  productId  Int
   product    Product  @relation(fields: [productId], references: [id])
-  quantity   Int
+  quantity   Decimal
   costPrice  Decimal
+  retailPrice Decimal?
+  saleItems  SaleItem[]
+}
+
+model PurchasePayment {
+  id         Int      @id @default(autoincrement())
+  purchaseId Int
+  purchase   Purchase @relation(fields: [purchaseId], references: [id])
+  supplierId Int
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+  amount     Decimal
+  method     String
+  paidAt     DateTime @default(now())
+  createdAt  DateTime @default(now())
+  expense    Expense?
+}
+
+model Expense {
+  id         Int       @id @default(autoincrement())
+  amount     Decimal
+  date       DateTime  @default(now())
+  category   String
+  description String?
+  supplierId Int?
+  supplier   Supplier? @relation(fields: [supplierId], references: [id])
+  purchaseId Int?
+  purchase   Purchase? @relation(fields: [purchaseId], references: [id])
+  paymentId  Int?      @unique
+  payment    PurchasePayment? @relation(fields: [paymentId], references: [id])
+  createdAt  DateTime  @default(now())
 }
 
 model Category {
-  id        String    @id @default(uuid())
-  name      String    @unique
-  products  Product[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id            Int           @id @default(autoincrement())
+  name          String        @unique
+  products      Product[]
+  subCategories SubCategory[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model SubCategory {
+  id         Int      @id @default(autoincrement())
+  name       String
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  products   Product[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([categoryId, name])
 }
 
 model Sale {
-  id          String    @id @default(uuid())
-  staffId     String
+  id          Int       @id @default(autoincrement())
+  staffId     Int
   staff       Staff     @relation(fields: [staffId], references: [id])
-  customerId  String?
+  customerId  Int?
   customer    Customer? @relation(fields: [customerId], references: [id])
+  parentSaleId Int?
+  parentSale  Sale?     @relation("SaleReturns", fields: [parentSaleId], references: [id])
+  returns     Sale[]    @relation("SaleReturns")
   total       Decimal
   subtotal    Decimal?  // optional detailed bill fields
   tax         Decimal?
@@ -133,18 +188,28 @@ model Sale {
   items       SaleItem[]
 }
 
+model HeldSale {
+  id         Int      @id @default(autoincrement())
+  items      Json
+  customerId Int?
+  note       String?
+  createdAt  DateTime @default(now())
+}
+
 model SaleItem {
-  id        String   @id @default(uuid())
-  saleId    String
+  id        Int      @id @default(autoincrement())
+  saleId    Int
   sale      Sale     @relation(fields: [saleId], references: [id])
-  productId String
+  productId Int
   product   Product  @relation(fields: [productId], references: [id])
-  quantity  Int
+  quantity  Decimal
   price     Decimal
+  batchId   Int?
+  batch     PurchaseItem? @relation(fields: [batchId], references: [id])
 }
 
 model Customer {
-  id        String   @id @default(uuid())
+  id        Int      @id @default(autoincrement())
   name      String
   phone     String   @unique
   email     String?
@@ -157,8 +222,8 @@ model Customer {
 }
 
 model CustomerPointLedger {
-  id          String   @id @default(uuid())
-  customerId  String
+  id          Int      @id @default(autoincrement())
+  customerId  Int
   customer    Customer @relation(fields: [customerId], references: [id])
   points      Int
   type        String   // EARN, REDEEM, ADJUST
@@ -170,13 +235,13 @@ model CustomerPointLedger {
 model AppConfig {
   key                String @id
   subscriptionStatus String @default("active")
-  subscriptionPlanId String?
+  subscriptionPlanId Int?
   subscriptionPlan   SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id])
   updatedAt          DateTime @updatedAt
 }
 
 model SubscriptionPlan {
-  id        String   @id @default(uuid())
+  id        Int      @id @default(autoincrement())
   name      String   @unique
   price     Decimal
   duration  Int      @default(30) // in days
@@ -185,4 +250,10 @@ model SubscriptionPlan {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   configs   AppConfig[]
+}
+
+model Setting {
+  key      String @id
+  value    Json
+  updatedAt DateTime @updatedAt
 }

@@ -13,6 +13,7 @@ model Staff {
   name      String
   role      String   // admin, manager, cashier
   password  String
+  hourlyRate Decimal?
   createdAt DateTime @default(now())
   shifts    Shift[]
   sales     Sale[]
@@ -34,8 +35,6 @@ model Product {
   category    String?  // Keep for backward compatibility or migration
   categoryId  String?
   categoryRel Category? @relation(fields: [categoryId], references: [id])
-  price       Decimal
-  stock       Int
   minStock    Int      @default(10)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -56,6 +55,9 @@ model Sale {
   staff       Staff     @relation(fields: [staffId], references: [id])
   customerId  String?
   customer    Customer? @relation(fields: [customerId], references: [id])
+  parentSaleId String?
+  parentSale  Sale?     @relation("SaleReturns", fields: [parentSaleId], references: [id])
+  returns     Sale[]    @relation("SaleReturns")
   total       Decimal
   subtotal    Decimal?  // optional detailed bill fields
   tax         Decimal?
@@ -64,6 +66,14 @@ model Sale {
   paymentMethod String?
   createdAt   DateTime  @default(now())
   items       SaleItem[]
+}
+
+model HeldSale {
+  id         Int      @id @default(autoincrement())
+  items      Json
+  customerId String?
+  note       String?
+  createdAt  DateTime @default(now())
 }
 
 model SaleItem {
@@ -118,4 +128,10 @@ model SubscriptionPlan {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   configs   AppConfig[]
+}
+
+model Setting {
+  key      String @id
+  value    Json
+  updatedAt DateTime @updatedAt
 }

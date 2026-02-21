@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { db } from '../../db/db';
 import { useCurrency } from '../../hooks/useCurrency';
+import { useAuthStore } from '../../store/useAuthStore';
+import { getApiUrl } from '../../config/api';
 
 interface AddUserModalProps {
     onClose: () => void;
@@ -10,6 +11,7 @@ interface AddUserModalProps {
 
 export const AddUserModal = ({ onClose, onSuccess }: AddUserModalProps) => {
     const { currencySymbol } = useCurrency();
+    const token = useAuthStore((state) => state.token);
     const [formData, setFormData] = useState({
         username: '',
         password: '',
@@ -20,19 +22,29 @@ export const AddUserModal = ({ onClose, onSuccess }: AddUserModalProps) => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            // Check if username exists
-            const existing = await db.users.where('username').equals(formData.username).first();
-            if (existing) {
-                alert('Username already exists');
+            if (!token) {
+                alert('Missing auth token');
                 return;
             }
 
-            await db.users.add({
-                username: formData.username,
-                password_hash: formData.password, // In real app, hash this!
-                role: formData.role,
-                hourly_rate: parseFloat(formData.hourly_rate) || 0
+            const response = await fetch(getApiUrl('/staff'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    name: formData.username,
+                    role: formData.role,
+                    password: formData.password,
+                    hourly_rate: parseFloat(formData.hourly_rate) || 0
+                })
             });
+
+            if (!response.ok) {
+                const errorPayload = await response.json().catch(() => ({}));
+                throw new Error(errorPayload.error || 'Failed to add user');
+            }
             onSuccess();
             onClose();
         } catch (error) {

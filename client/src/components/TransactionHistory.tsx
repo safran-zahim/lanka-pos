@@ -1,26 +1,43 @@
-import { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Transaction } from '../db/db';
+import { useEffect, useState } from 'react';
+import type { Transaction } from '../db/db';
 import { Search, RotateCcw, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { ReturnModal } from './ReturnModal';
 import { useNavigate } from 'react-router-dom';
 import { useCurrency } from '../hooks/useCurrency';
 import { useLocale } from '../hooks/useLocale';
+import { getApiUrl } from '../config/api';
+import { useAuthStore } from '../store/useAuthStore';
 
 export const TransactionHistory = () => {
     const navigate = useNavigate();
     const { formatCurrency } = useCurrency();
     const { formatDateTime } = useLocale();
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+    const [transactions, setTransactions] = useState<any[]>([]);
+    const { token } = useAuthStore();
 
-    // Get all transactions sorted by timestamp desc
-    const transactions = useLiveQuery(() =>
-        db.transactions.orderBy('timestamp').reverse().toArray()
-    );
+    useEffect(() => {
+        const fetchSales = async () => {
+            if (!token) return;
+            try {
+                const response = await fetch(getApiUrl('/sales?limit=200'), {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Failed to load sales');
+                const payload = await response.json();
+                setTransactions(Array.isArray(payload) ? payload : payload.data || []);
+            } catch (error) {
+                console.error('Failed to load sales', error);
+            }
+        };
+
+        fetchSales();
+    }, [token]);
 
     const filteredTransactions = transactions?.filter(t =>
-        t.transaction_id?.toString().includes(searchQuery)
+        String(t.id || '').includes(searchQuery)
     );
 
     return (
@@ -53,33 +70,45 @@ export const TransactionHistory = () => {
                     <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                         {filteredTransactions?.map((txn) => (
                             <tr
-                                key={txn.transaction_id}
-                                onClick={() => navigate(`/admin/transactions/${txn.transaction_id}`)}
+                                key={txn.id}
+                                onClick={() => navigate(`/admin/transactions/${txn.id}`)}
                                 className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
                             >
-                                <td className="p-4 text-gray-900 dark:text-white">#{txn.transaction_id}</td>
+                                <td className="p-4 text-gray-900 dark:text-white">#{txn.id}</td>
                                 <td className="p-4 text-gray-500 dark:text-gray-400">
-                                    {formatDateTime(new Date(txn.timestamp))}
+                                    {formatDateTime(new Date(txn.createdAt))}
                                 </td>
                                 <td className="p-4">
                                     <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${txn.type === 'return'
                                         ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300'
                                         : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
                                         }`}>
-                                        {txn.type === 'return' ? <ArrowDownLeft size={12} /> : <ArrowUpRight size={12} />}
-                                        {txn.type === 'return' ? 'Return' : 'Sale'}
+                                        {txn.parentSaleId ? <ArrowDownLeft size={12} /> : <ArrowUpRight size={12} />}
+                                        {txn.parentSaleId ? 'Return' : 'Sale'}
                                     </span>
                                 </td>
-                                <td className={`p-4 text-right font-medium ${txn.type === 'return' ? 'text-orange-600 dark:text-orange-400' : 'text-gray-900 dark:text-white'
+                                <td className={`p-4 text-right font-medium ${txn.parentSaleId ? 'text-orange-600 dark:text-orange-400' : 'text-gray-900 dark:text-white'
                                     }`}>
-                                    {formatCurrency(Math.abs(txn.total_amount))}
+                                    {formatCurrency(Math.abs(Number(txn.total || 0)))}
                                 </td>
                                 <td className="p-4 text-center">
-                                    {txn.type === 'sale' && (
+                                    {!txn.parentSaleId && (
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                setSelectedTransaction(txn);
+                                                setSelectedSaleId(String(txn.id));
+                                                setSelectedTransaction({
+                                                    transaction_id: txn.id,
+                                                    user_id: 'system',
+                                                    customer_id: txn.customerId || undefined,
+                                                    timestamp: new Date(txn.createdAt),
+                                                    total_amount: Number(txn.total || 0),
+                                                    tax_amount: Number(txn.tax || 0),
+                                                    round_off_discount: Number(txn.roundOffDiscount || 0),
+                                                    payment_method: (txn.paymentMethod || 'cash'),
+                                                    status: 'completed',
+                                                    type: 'sale'
+                                                });
                                             }}
                                             className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
                                             title="Return Items"
@@ -94,13 +123,16 @@ export const TransactionHistory = () => {
                 </table>
             </div>
 
-            {selectedTransaction && (
+            {selectedSaleId && (
                 <ReturnModal
-                    transaction={selectedTransaction}
-                    onClose={() => setSelectedTransaction(null)}
-                    onSuccess={() => {
+                    saleId={selectedSaleId}
+                    onClose={() => {
+                        setSelectedSaleId(null);
                         setSelectedTransaction(null);
-                        // Refresh logic if needed, but useLiveQuery handles it
+                    }}
+                    onSuccess={() => {
+                        setSelectedSaleId(null);
+                        setSelectedTransaction(null);
                     }}
                 />
             )}

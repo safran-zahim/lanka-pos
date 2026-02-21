@@ -2,6 +2,26 @@
 
 This project includes both the **backend API** (Node.js, Express, TypeScript, Prisma) and the **POS web client** (Vite + React + Tailwind).
 
+## ⭐ Features
+
+- Product management with category/subcategory and auto-generated SKU
+- Active/inactive product status with audit-safe toggle
+- Inactive products hidden from purchase and sales workflows
+- Decimal quantity support with unit-based validation
+- Product history dashboard with stock, batches, and performance stats
+- Low-stock alerts and reorder thresholds
+- Batch-based inventory with per-batch stock tracking and selection
+- Batch-aware returns with parent sale references
+- Daily sales summary on the dashboard
+- Refund receipts labeled with original sale references
+
+## 🆕 Recent Updates (Feb 21, 2026)
+
+- Batch stock now updates in real time in the cart and during checkout
+- Checkout validates batch stock before submitting payment
+- Return receipts show refund labels and original sale references
+
+
 ## 🚀 Getting Started
 
 > [!IMPORTANT]

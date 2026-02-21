@@ -4,17 +4,22 @@ import { z } from 'zod';
 import { Decimal } from 'decimal.js';
 import { Prisma, Sale } from '@prisma/client';
 
+const optionalId = z.preprocess(
+    (value) => (value === null || value === '' ? undefined : value),
+    z.coerce.number().int().positive()
+);
+
 const checkoutItemSchema = z.object({
-    product_id: z.string(),
-    quantity: z.number().int().positive(),
-    unit_price: z.number().positive(), // Provided by frontend, but should ideally be verified/fetched from DB? 
-    // Trusted frontend for now as per payload example, but generally backend should fetch price. 
-    // Payload example has unit_price. I will use it but could verify.
+    product_id: z.coerce.number().int().positive(),
+    quantity: z.number().refine((value) => value !== 0, { message: 'Quantity cannot be 0' }),
+    unit_price: z.number().positive(),
+    batch_id: optionalId.optional(),
 });
 
 const checkoutSchema = z.object({
-    staff_id: z.string(),
-    customer_id: z.string().optional(),
+    staff_id: z.coerce.number().int().positive(),
+    customer_id: optionalId.optional(),
+    parent_sale_id: optionalId.optional(),
     payment_method: z.string(),
     items: z.array(checkoutItemSchema),
     totals: z.object({
@@ -34,47 +39,224 @@ export const checkout = async (req: Request, res: Response) => {
     try {
         const data = checkoutSchema.parse(req.body);
 
+        const hasPositive = data.items.some((item) => item.quantity > 0);
+        const hasNegative = data.items.some((item) => item.quantity < 0);
+        const isReturn = hasNegative;
+
+        if (hasPositive && hasNegative) {
+            return res.status(400).json({ error: 'Mixed sale and return items are not supported.' });
+        }
+
+        if (isReturn && !data.parent_sale_id) {
+            return res.status(400).json({ error: 'parent_sale_id is required for returns.' });
+        }
+
+        if (!isReturn && data.parent_sale_id) {
+            return res.status(400).json({ error: 'parent_sale_id can only be used for returns.' });
+        }
+
         const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-            // 1. Validate and Update Stock for each item
-            for (const item of data.items) {
-                // Use updateMany to ensure atomicity and concurrency control
-                // Only update if stock is sufficient
-                const updateResult = await tx.product.updateMany({
-                    where: {
-                        id: item.product_id,
-                        stock: {
-                            gte: item.quantity
-                        }
-                    },
-                    data: {
-                        stock: {
-                            decrement: item.quantity
-                        }
-                    }
+            let parentSale: any = null;
+            let saleCustomerId = data.customer_id;
+            let returnSubtotal = new Decimal(0);
+            let refundTax = new Decimal(0);
+            let refundDiscount = new Decimal(0);
+            let refundRoundOff = new Decimal(0);
+            const returnUnitPrices = new Map<string, Decimal>();
+
+            if (isReturn && data.parent_sale_id) {
+                parentSale = await tx.sale.findUnique({
+                    where: { id: data.parent_sale_id },
+                    include: { items: true, returns: { include: { items: true } } }
                 });
 
-                if (updateResult.count === 0) {
-                    throw new Error(`Insufficient stock for product ${item.product_id} or product not found`);
+                if (!parentSale) {
+                    throw new Error('Parent sale not found');
+                }
+
+                saleCustomerId = parentSale.customerId || undefined;
+
+                // Track by product AND batch for accurate return verification
+                const parentQtyByProductBatch = new Map<string, number>();
+                const parentTotalByProductBatch = new Map<string, Decimal>();
+                const parentQtyByProduct = new Map<number, number>();
+                const parentTotalByProduct = new Map<number, Decimal>();
+
+                for (const item of parentSale.items) {
+                    const key = `${item.productId}-${item.batchId || 'null'}`;
+                    const qty = parentQtyByProductBatch.get(key) || 0;
+                    parentQtyByProductBatch.set(key, qty + item.quantity);
+
+                    const total = parentTotalByProductBatch.get(key) || new Decimal(0);
+                    parentTotalByProductBatch.set(key, total.plus(new Decimal(item.price).times(item.quantity)));
+
+                    // Also keep product-level totals for fallback
+                    const prodQty = parentQtyByProduct.get(item.productId) || 0;
+                    parentQtyByProduct.set(item.productId, prodQty + item.quantity);
+
+                    const prodTotal = parentTotalByProduct.get(item.productId) || new Decimal(0);
+                    parentTotalByProduct.set(item.productId, prodTotal.plus(new Decimal(item.price).times(item.quantity)));
+                }
+
+                // Track returned quantities by product AND batch
+                const returnedQtyByProductBatch = new Map<string, number>();
+                const returnedQtyByProduct = new Map<number, number>();
+                for (const returnSale of parentSale.returns || []) {
+                    for (const item of returnSale.items || []) {
+                        const qty = Math.abs(item.quantity);
+                        const key = `${item.productId}-${item.batchId || 'null'}`;
+                        returnedQtyByProductBatch.set(key, (returnedQtyByProductBatch.get(key) || 0) + qty);
+                        returnedQtyByProduct.set(item.productId, (returnedQtyByProduct.get(item.productId) || 0) + qty);
+                    }
+                }
+
+                for (const item of data.items) {
+                    if (item.quantity >= 0) {
+                        throw new Error('Return quantities must be negative');
+                    }
+
+                    const key = `${item.product_id}-${item.batch_id || 'null'}`;
+                    const parentQty = parentQtyByProductBatch.get(key) || 0;
+                    const returnedQty = returnedQtyByProductBatch.get(key) || 0;
+                    const maxReturnable = Math.max(0, parentQty - returnedQty);
+                    const returnQty = Math.abs(item.quantity);
+
+                    if (parentQty === 0) {
+                        throw new Error(`Product ${item.product_id} with batch ${item.batch_id || 'none'} is not part of the original sale`);
+                    }
+
+                    if (returnQty > maxReturnable) {
+                        throw new Error(`Return quantity exceeds original quantity for product ${item.product_id} batch ${item.batch_id || 'none'}`);
+                    }
+
+                    const total = parentTotalByProductBatch.get(key) || new Decimal(item.unit_price);
+                    const unitPrice = parentQty > 0 ? total.div(parentQty) : new Decimal(item.unit_price);
+                    returnUnitPrices.set(key, unitPrice);
+                    returnSubtotal = returnSubtotal.plus(unitPrice.times(returnQty));
+                }
+
+                const fallbackSubtotal = parentSale.items.reduce(
+                    (sum: Decimal, item: any) => sum.plus(new Decimal(item.price).times(item.quantity)),
+                    new Decimal(0)
+                );
+                const parentSubtotal = parentSale.subtotal ? new Decimal(parentSale.subtotal.toString()) : fallbackSubtotal;
+                const parentTax = new Decimal(parentSale.tax?.toString() || 0);
+                const parentDiscount = new Decimal(parentSale.discount?.toString() || 0);
+                const parentRoundOff = new Decimal(parentSale.roundOffDiscount?.toString() || 0);
+
+                if (parentSubtotal.gt(0)) {
+                    const ratio = returnSubtotal.div(parentSubtotal);
+                    refundTax = parentTax.mul(ratio);
+                    refundDiscount = parentDiscount.mul(ratio);
+                    refundRoundOff = parentRoundOff.mul(ratio);
                 }
             }
+
+            // 1. Validate stock against purchase and sale totals and check decimal quantities
+            for (const item of data.items) {
+                if (item.quantity <= 0) {
+                    continue;
+                }
+
+                // Fetch product with unit information
+                const product = await tx.product.findUnique({
+                    where: { id: item.product_id },
+                    include: { unit: true }
+                });
+
+                if (!product) {
+                    throw new Error(`Product ${item.product_id} not found`);
+                }
+
+                // Check if product is inactive
+                if (product.isActive === false) {
+                    throw new Error(`Product "${product.name}" is inactive and cannot be sold. Please activate the product first.`);
+                }
+
+                // Validate decimal quantities
+                if (product.unit && !product.unit.allowDecimal) {
+                    const hasDecimals = !Number.isInteger(item.quantity);
+                    if (hasDecimals) {
+                        throw new Error(`Product "${product.name}" uses unit "${product.unit.name}" which does not accept decimal quantities`);
+                    }
+                }
+
+                const [purchaseAgg, saleAgg] = await Promise.all([
+                    tx.purchaseItem.aggregate({
+                        where: { productId: item.product_id },
+                        _sum: { quantity: true }
+                    }),
+                    tx.saleItem.aggregate({
+                        where: { productId: item.product_id },
+                        _sum: { quantity: true }
+                    })
+                ]);
+
+                const totalPurchased = Number(purchaseAgg._sum.quantity || 0);
+                const totalSold = Number(saleAgg._sum.quantity || 0);
+                const currentStock = totalPurchased - totalSold;
+
+                if (currentStock < item.quantity) {
+                    throw new Error(`Insufficient stock for product ${item.product_id}`);
+                }
+
+                // Validate batch-specific stock if batch_id is provided
+                if (item.batch_id) {
+                    const batch = await tx.purchaseItem.findUnique({
+                        where: { id: item.batch_id }
+                    });
+
+                    if (!batch) {
+                        throw new Error(`Batch ${item.batch_id} not found for product ${item.product_id}`);
+                    }
+
+                    if (batch.productId !== item.product_id) {
+                        throw new Error(`Batch ${item.batch_id} does not belong to product ${item.product_id}`);
+                    }
+
+                    // Calculate batch-specific stock using FIFO
+                    const batchSales = await tx.saleItem.aggregate({
+                        where: {
+                            productId: item.product_id,
+                            batchId: item.batch_id
+                        },
+                        _sum: { quantity: true }
+                    });
+
+                    const batchPurchased = Number(batch.quantity || 0);
+                    const batchSold = Number(batchSales._sum.quantity || 0);
+                    const batchAvailable = batchPurchased - batchSold;
+
+                    if (batchAvailable < item.quantity) {
+                        throw new Error(`Insufficient stock in batch ${item.batch_id}. Available: ${batchAvailable}, Requested: ${item.quantity}`);
+                    }
+                }
+            }
+
+            const refundTotal = returnSubtotal.plus(refundTax).minus(refundDiscount).minus(refundRoundOff);
 
             // 2. Create Sale Record
             const sale = await tx.sale.create({
                 data: {
                     staffId: data.staff_id,
-                    customerId: data.customer_id,
-                    total: new Decimal(data.totals.grand_total),
-                    subtotal: new Decimal(data.totals.subtotal),
-                    tax: new Decimal(data.totals.tax),
-                    discount: new Decimal(data.totals.discount),
-                    roundOffDiscount: new Decimal(data.totals.round_off_discount || 0),
+                    customerId: saleCustomerId,
+                    parentSaleId: isReturn ? data.parent_sale_id : undefined,
+                    total: new Decimal(isReturn ? refundTotal.neg() : data.totals.grand_total),
+                    subtotal: new Decimal(isReturn ? returnSubtotal.neg() : data.totals.subtotal),
+                    tax: new Decimal(isReturn ? refundTax.neg() : data.totals.tax),
+                    discount: new Decimal(isReturn ? refundDiscount.neg() : data.totals.discount),
+                    roundOffDiscount: new Decimal(isReturn ? refundRoundOff.neg() : (data.totals.round_off_discount || 0)),
                     paymentMethod: data.payment_method,
                     items: {
-                        create: data.items.map(item => ({
-                            productId: item.product_id,
-                            quantity: item.quantity,
-                            price: new Decimal(item.unit_price)
-                        }))
+                        create: data.items.map(item => {
+                            const key = `${item.product_id}-${item.batch_id || 'null'}`;
+                            return {
+                                productId: item.product_id,
+                                quantity: item.quantity,
+                                price: isReturn ? (returnUnitPrices.get(key) || new Decimal(item.unit_price)) : new Decimal(item.unit_price),
+                                batchId: item.batch_id
+                            };
+                        })
                     }
                 },
                 include: {
@@ -82,41 +264,80 @@ export const checkout = async (req: Request, res: Response) => {
                 }
             });
 
-            if (data.customer_id) {
-                const pointsEarned = data.loyalty?.points_earned || 0;
-                const pointsRedeemed = data.loyalty?.points_redeemed || 0;
-                const netPoints = pointsEarned - pointsRedeemed;
+            if (saleCustomerId) {
+                if (!isReturn) {
+                    const pointsEarned = data.loyalty?.points_earned || 0;
+                    const pointsRedeemed = data.loyalty?.points_redeemed || 0;
+                    const netPoints = pointsEarned - pointsRedeemed;
 
-                const updatedCustomer = await tx.customer.update({
-                    where: { id: data.customer_id },
-                    data: {
-                        pointsBalance: { increment: netPoints },
-                        totalSpend: { increment: new Decimal(data.totals.grand_total) }
+                    const updatedCustomer = await tx.customer.update({
+                        where: { id: saleCustomerId },
+                        data: {
+                            pointsBalance: { increment: netPoints },
+                            totalSpend: { increment: new Decimal(data.totals.grand_total) }
+                        }
+                    });
+
+                    if (pointsEarned > 0) {
+                        await tx.customerPointLedger.create({
+                            data: {
+                                customerId: saleCustomerId,
+                                points: pointsEarned,
+                                type: 'EARN',
+                                reference: String(sale.id),
+                                balanceAfter: updatedCustomer.pointsBalance
+                            }
+                        });
                     }
-                });
 
-                if (pointsEarned > 0) {
-                    await tx.customerPointLedger.create({
-                        data: {
-                            customerId: data.customer_id,
-                            points: pointsEarned,
+                    if (pointsRedeemed > 0) {
+                        await tx.customerPointLedger.create({
+                            data: {
+                                customerId: saleCustomerId,
+                                points: -pointsRedeemed,
+                                type: 'REDEEM',
+                                reference: String(sale.id),
+                                balanceAfter: updatedCustomer.pointsBalance
+                            }
+                        });
+                    }
+                } else if (parentSale) {
+                    const earnEntries = await tx.customerPointLedger.findMany({
+                        where: {
+                            customerId: saleCustomerId,
                             type: 'EARN',
-                            reference: sale.id,
-                            balanceAfter: updatedCustomer.pointsBalance
+                            reference: parentSale.id
                         }
                     });
-                }
+                    const totalEarnedPoints = earnEntries.reduce((sum, entry) => sum + entry.points, 0);
+                    const parentTotal = new Decimal(parentSale.total?.toString() || 0).abs();
+                    const pointsRatio = parentTotal.gt(0) ? refundTotal.div(parentTotal) : new Decimal(0);
+                    const pointsToDeduct = Math.min(totalEarnedPoints, Math.floor(pointsRatio.mul(totalEarnedPoints).toNumber()));
 
-                if (pointsRedeemed > 0) {
-                    await tx.customerPointLedger.create({
-                        data: {
-                            customerId: data.customer_id,
-                            points: -pointsRedeemed,
-                            type: 'REDEEM',
-                            reference: sale.id,
-                            balanceAfter: updatedCustomer.pointsBalance
-                        }
+                    const customerUpdate: any = {
+                        totalSpend: { increment: refundTotal.neg() }
+                    };
+
+                    if (pointsToDeduct > 0) {
+                        customerUpdate.pointsBalance = { decrement: pointsToDeduct };
+                    }
+
+                    const updatedCustomer = await tx.customer.update({
+                        where: { id: saleCustomerId },
+                        data: customerUpdate
                     });
+
+                    if (pointsToDeduct > 0) {
+                        await tx.customerPointLedger.create({
+                            data: {
+                                customerId: saleCustomerId,
+                                points: -pointsToDeduct,
+                                type: 'ADJUST',
+                                reference: parentSale.id,
+                                balanceAfter: updatedCustomer.pointsBalance
+                            }
+                        });
+                    }
                 }
             }
 
@@ -128,8 +349,14 @@ export const checkout = async (req: Request, res: Response) => {
     } catch (error: any) {
         if (error instanceof z.ZodError) {
             res.status(400).json({ error: error.errors });
+        } else if (error.message && error.message.includes('Parent sale not found')) {
+            res.status(404).json({ error: error.message });
+        } else if (error.message && error.message.includes('Return')) {
+            res.status(400).json({ error: error.message });
         } else if (error.message && error.message.includes('Insufficient stock')) {
             res.status(409).json({ error: error.message }); // Conflict
+        } else if (error.message && error.message.includes('not found')) {
+            res.status(404).json({ error: error.message });
         } else {
             console.error(error);
             res.status(500).json({ error: 'Internal server error' });
@@ -139,10 +366,40 @@ export const checkout = async (req: Request, res: Response) => {
 
 export const getSale = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
+        const id = Number(req.params.id);
+        if (!Number.isFinite(id)) {
+            return res.status(400).json({ error: 'Invalid sale id' });
+        }
         const sale = await prisma.sale.findUnique({
-            where: { id: String(id) },
-            include: { items: { include: { product: true } }, staff: true, customer: true }
+            where: { id },
+            include: {
+                items: {
+                    include: {
+                        product: true,
+                        batch: true
+                    }
+                },
+                staff: true,
+                customer: true,
+                returns: {
+                    include: {
+                        items: {
+                            include: {
+                                batch: true
+                            }
+                        }
+                    }
+                },
+                parentSale: {
+                    include: {
+                        items: {
+                            include: {
+                                batch: true
+                            }
+                        }
+                    }
+                }
+            }
         });
 
         if (!sale) {
@@ -155,9 +412,98 @@ export const getSale = async (req: Request, res: Response) => {
     }
 };
 
+export const getSales = async (req: Request, res: Response) => {
+    try {
+        const limit = Number(req.query.limit || 50);
+        const take = Number.isFinite(limit) ? Math.min(Math.max(limit, 1), 200) : 50;
+        const start = req.query.start ? new Date(String(req.query.start)) : null;
+        const end = req.query.end ? new Date(String(req.query.end)) : null;
+        const includeItems = String(req.query.includeItems || 'false') === 'true';
+
+        const where: any = { parentSaleId: null };
+        if (start || end) {
+            where.createdAt = {};
+            if (start) where.createdAt.gte = start;
+            if (end) where.createdAt.lte = end;
+        }
+
+        const sales = await prisma.sale.findMany({
+            where,
+            orderBy: { createdAt: 'desc' },
+            take,
+            include: includeItems ? { items: { include: { product: true } }, returns: { include: { items: { include: { product: true } } } } } : undefined
+        });
+
+        res.json(sales);
+    } catch (error) {
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+const heldSaleSchema = z.object({
+    customer_id: optionalId.optional(),
+    items: z.array(z.any()),
+    note: z.string().optional()
+});
+
+export const createHeldSale = async (req: Request, res: Response) => {
+    try {
+        const data = heldSaleSchema.parse(req.body);
+
+        const heldSale = await prisma.heldSale.create({
+            data: {
+                customerId: data.customer_id,
+                items: data.items,
+                note: data.note
+            }
+        });
+
+        res.status(201).json(heldSale);
+    } catch (error: any) {
+        if (error instanceof z.ZodError) {
+            res.status(400).json({ error: error.errors });
+        } else {
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+};
+
+export const getHeldSales = async (req: Request, res: Response) => {
+    try {
+        const heldSales = await prisma.heldSale.findMany({
+            orderBy: { createdAt: 'desc' }
+        });
+
+        res.json(heldSales);
+    } catch (error) {
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+export const deleteHeldSale = async (req: Request, res: Response) => {
+    try {
+        const id = Number(req.params.id);
+        if (!Number.isFinite(id)) {
+            return res.status(400).json({ error: 'Invalid held sale id' });
+        }
+
+        await prisma.heldSale.delete({ where: { id } });
+        res.json({ message: 'Held sale deleted' });
+    } catch (error: any) {
+        if (error.code === 'P2025') {
+            res.status(404).json({ error: 'Held sale not found' });
+        } else {
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+};
+
 export const refundSale = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
+        const id = Number(req.params.id);
+        if (!Number.isFinite(id)) {
+            return res.status(400).json({ error: 'Invalid sale id' });
+        }
 
         // Transaction to restore stock and maybe mark sale as refunded?
         // Schema doesn't have "status" field on Sale. Assuming we keep the Sale but maybe negative entry or just delete?
@@ -175,18 +521,11 @@ export const refundSale = async (req: Request, res: Response) => {
         // Safest is to Delete Sale to prevent double refund if no status field.
 
         await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-            const sale = await tx.sale.findUnique({ where: { id: String(id) }, include: { items: true } });
+            const sale = await tx.sale.findUnique({ where: { id }, include: { items: true } });
             if (!sale) throw new Error("Sale not found");
 
-            for (const item of (sale as any).items) {
-                await tx.product.update({
-                    where: { id: item.productId },
-                    data: { stock: { increment: item.quantity } }
-                });
-            }
-
             // Delete the sale to "Void" it since we lack status field
-            await tx.sale.delete({ where: { id: String(id) } });
+            await tx.sale.delete({ where: { id } });
         });
 
         res.json({ message: 'Sale voided successfully' });

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { db } from '../db/db';
+import { getApiUrl } from '../config/api';
+import { useAuthStore } from '../store/useAuthStore';
 
 interface SendReceiptResult {
     success: boolean;
@@ -8,13 +9,20 @@ interface SendReceiptResult {
 
 export const useDigitalReceipt = () => {
     const [sending, setSending] = useState(false);
+    const token = useAuthStore((state) => state.token);
 
-    const sendReceipt = async (transactionId: number, customerPhone: string, receiptData: any): Promise<SendReceiptResult> => {
+    const sendReceipt = async (transactionId: string | number, customerPhone: string, receiptData: any): Promise<SendReceiptResult> => {
         setSending(true);
         try {
             // Fetch settings
-            const settings = await db.settings.toArray();
-            const settingsMap = settings.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {} as Record<string, any>);
+            const response = await fetch(getApiUrl('/settings'), {
+                headers: token ? { Authorization: `Bearer ${token}` } : undefined
+            });
+            const settingsList = response.ok ? await response.json() : [];
+            const settingsMap = (settingsList || []).reduce((acc: Record<string, any>, curr: any) => ({
+                ...acc,
+                [curr.key]: curr.value
+            }), {} as Record<string, any>);
 
             const enabled = settingsMap['enableDigitalReceipts'];
             const apiUrl = settingsMap['whatsappApiUrl'];

@@ -89,10 +89,18 @@ const runVerification = async () => {
         if (checkoutRes.status !== 201) throw new Error(`Checkout failed: ${JSON.stringify(checkoutRes.body)}`);
         console.log('Checkout successful.');
 
-        // 6. Verify Stock
-        console.log('Verifying Stock...');
-        const product = await prisma.product.findUnique({ where: { id: productId } });
-        if (product?.stock !== 98) throw new Error(`Stock mismatch: expected 98, got ${product?.stock}`);
+        // 6. Verify Stock (Stock is calculated, not stored directly)
+        console.log('Verifying Stock via purchase items...');
+        const purchaseAgg = await prisma.purchaseItem.aggregate({
+            where: { productId },
+            _sum: { quantity: true }
+        });
+        const saleAgg = await prisma.saleItem.aggregate({
+            where: { productId },
+            _sum: { quantity: true }
+        });
+        const expectedStock = Number(purchaseAgg._sum.quantity || 0) - Number(saleAgg._sum.quantity || 0);
+        if (expectedStock !== 98) throw new Error(`Stock mismatch: expected 98, got ${expectedStock}`);
         console.log('Stock verified.');
 
         // 7. Daily Summary

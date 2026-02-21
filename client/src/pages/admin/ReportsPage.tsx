@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../../db/db';
-import { BarChart3, Calendar, Package, Users, Truck, TrendingDown, Download } from 'lucide-react';
+import { useMemo, useState, useEffect } from 'react';
+import { BarChart3, Calendar, Package, Users, Truck, TrendingDown, Download, ArrowLeft, PieChart, ShoppingBag, DollarSign } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useCurrency } from '../../hooks/useCurrency';
 import { useLocale } from '../../hooks/useLocale';
+import { useAuthStore } from '../../store/useAuthStore';
+import { useSettingsStore } from '../../store/useSettingsStore';
+import { getApiUrl } from '../../config/api';
 
 const formatDateInput = (d: Date) => d.toISOString().split('T')[0];
 
@@ -52,24 +54,94 @@ const downloadCsv = (filename: string, headers: string[], rows: (string | number
 };
 
 export const ReportsPage = () => {
+    const navigate = useNavigate();
     const { formatCurrency } = useCurrency();
     const { formatDateTime } = useLocale();
-    const transactions = useLiveQuery(() => db.transactions.orderBy('timestamp').reverse().toArray());
-    const transactionItems = useLiveQuery(() => db.transaction_items.toArray());
-    const products = useLiveQuery(() => db.products.toArray());
-    const customers = useLiveQuery(() => db.customers.toArray());
-    const suppliers = useLiveQuery(() => db.suppliers.toArray());
-    const purchases = useLiveQuery(() => db.purchases.toArray());
+    const token = useAuthStore((state) => state.token);
+    const { taxEnabled } = useSettingsStore();
+
+    // API-fetched data instead of Dexie
+    const [transactions, setTransactions] = useState<any[]>([]);
+    const [products, setProducts] = useState<any[]>([]);
+    const [customers, setCustomers] = useState<any[]>([]);
+    const [purchases, setPurchases] = useState<any[]>([]);
+    const [suppliers, setSuppliers] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
     const [salesMode, setSalesMode] = useState<'daily' | 'weekly' | 'monthly' | 'custom'>('daily');
     const [customFrom, setCustomFrom] = useState(formatDateInput(new Date()));
     const [customTo, setCustomTo] = useState(formatDateInput(new Date()));
     const [profitThreshold, setProfitThreshold] = useState(-1);
     const [supplierFilter, setSupplierFilter] = useState<number | ''>('');
+    const [activeTab, setActiveTab] = useState<'overview' | 'sales' | 'inventory' | 'customers' | 'suppliers'>('overview');
 
-    const productMap = useMemo(() => new Map((products || []).map(p => [p.product_id!, p])), [products]);
-    const customerMap = useMemo(() => new Map((customers || []).map(c => [c.customer_id!, c])), [customers]);
-    const supplierMap = useMemo(() => new Map((suppliers || []).map(s => [s.supplier_id!, s])), [suppliers]);
+    // Fetch all report data from API
+    useEffect(() => {
+        if (!token) return;
+        const loadData = async () => {
+            setLoading(true);
+            try {
+                const [salesRes, productsRes, customersRes, purchasesRes, suppliersRes] = await Promise.all([
+                    fetch(getApiUrl('/sales?includeItems=true&limit=200'), { headers: { Authorization: `Bearer ${token}` } }),
+                    fetch(getApiUrl('/products'), { headers: { Authorization: `Bearer ${token}` } }),
+                    fetch(getApiUrl('/customers'), { headers: { Authorization: `Bearer ${token}` } }),
+                    fetch(getApiUrl('/purchases'), { headers: { Authorization: `Bearer ${token}` } }),
+                    fetch(getApiUrl('/suppliers'), { headers: { Authorization: `Bearer ${token}` } })
+                ]);
+
+                if (salesRes.ok) {
+                    const rawSales = await salesRes.json();
+                    setTransactions(rawSales.map((t: any) => ({
+                        ...t,
+                        transaction_id: t.id,
+                        timestamp: t.createdAt,
+                        customer_id: t.customerId,
+                        total_amount: Number(t.total || 0),
+                        tax_amount: Number(t.tax || 0),
+                        items: (t.items || []).map((i: any) => ({
+                            ...i,
+                            product_id: i.productId,
+                            price_at_sale: Number(i.price || 0),
+                            quantity: Number(i.quantity || 0)
+                        }))
+                    })));
+                }
+                if (productsRes.ok) {
+                    const rawProducts = await productsRes.json();
+                    setProducts(rawProducts.map((p: any) => ({
+                        ...p,
+                        product_id: p.id,
+                        stock_quantity: Number(p.stock || 0),
+                        reorder_level: Number(p.reorderLevel || 0)
+                    })));
+                }
+                if (customersRes.ok) setCustomers(await customersRes.json());
+                if (purchasesRes.ok) {
+                    const rawPurchases = await purchasesRes.json();
+                    setPurchases(rawPurchases.map((p: any) => ({
+                        ...p,
+                        supplier_id: p.supplierId,
+                        items: (p.items || []).map((i: any) => ({
+                            ...i,
+                            product_id: i.productId,
+                            cost_price: Number(i.costPrice || 0),
+                            quantity: Number(i.quantity || 0)
+                        }))
+                    })));
+                }
+                if (suppliersRes.ok) setSuppliers(await suppliersRes.json());
+            } catch (error) {
+                console.error('Failed to load report data', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadData();
+    }, [token]);
+
+    const productMap = useMemo(() => new Map((products || []).map(p => [p.id || p.product_id, p])), [products]);
+    const customerMap = useMemo(() => new Map((customers || []).map(c => [c.id || c.customer_id, c])), [customers]);
+    const supplierMap = useMemo(() => new Map((suppliers || []).map(s => [s.id || s.supplier_id, s])), [suppliers]);
 
     const [fromDate, toDate] = useMemo(() => {
         const now = new Date();
@@ -89,7 +161,7 @@ export const ReportsPage = () => {
         return [new Date(customFrom), new Date(customTo + 'T23:59:59')];
     }, [salesMode, customFrom, customTo]);
 
-    const salesTransactions = (transactions || []).filter(t => t.type === 'sale');
+    const salesTransactions = (transactions || []).filter(t => t.type === 'sale' || t.type === 'return' || !t.type);
 
     const filteredSales = salesTransactions.filter(t => {
         const ts = new Date(t.timestamp).getTime();
@@ -111,18 +183,32 @@ export const ReportsPage = () => {
     }, [products]);
 
     const lowProfitItems = useMemo(() => {
-        if (!transactionItems || !products) return [];
-        const salesLineItems = transactionItems.filter(i => i.quantity > 0);
-        const profitByProduct = new Map<number, { name: string; qty: number; profit: number }>();
-        for (const item of salesLineItems) {
-            const product = productMap.get(item.product_id);
-            if (!product) continue;
-            const profit = (item.price_at_sale - product.cost_price) * item.quantity;
-            const current = profitByProduct.get(item.product_id) || { name: product.name, qty: 0, profit: 0 };
-            current.qty += item.quantity;
-            current.profit += profit;
-            profitByProduct.set(item.product_id, current);
+        // Calculate profit from sales and products
+        // Since we get sales data, we estimate profit as (retail_price - cost_price) * quantity from products
+        const profitByProduct = new Map<string | number, { name: string; qty: number; profit: number }>();
+
+        for (const sale of filteredSales) {
+            // If sale has items, use them; otherwise skip
+            if (sale.items && Array.isArray(sale.items)) {
+                for (const item of sale.items) {
+                    const product = productMap.get(item.product_id);
+                    if (!product) continue;
+                    const costPrice = Number(product.costPrice || product.cost_price || 0);
+                    const salePrice = Number(item.price_at_sale || 0);
+                    const profit = (salePrice - costPrice) * Number(item.quantity || 0);
+
+                    const current = profitByProduct.get(item.product_id) || {
+                        name: product.name,
+                        qty: 0,
+                        profit: 0
+                    };
+                    current.qty += Number(item.quantity || 0);
+                    current.profit += profit;
+                    profitByProduct.set(item.product_id, current);
+                }
+            }
         }
+
         const result = Array.from(profitByProduct.entries()).map(([product_id, data]) => ({
             product_id,
             ...data
@@ -130,10 +216,10 @@ export const ReportsPage = () => {
         return result
             .filter(r => r.profit <= profitThreshold)
             .sort((a, b) => a.profit - b.profit);
-    }, [transactionItems, productMap, profitThreshold, products]);
+    }, [filteredSales, productMap, profitThreshold]);
 
     const customerReport = useMemo(() => {
-        const data = new Map<number, { name: string; total: number; count: number }>();
+        const data = new Map<string | number, { name: string; total: number; count: number }>();
         for (const txn of salesTransactions) {
             if (!txn.customer_id) continue;
             const customer = customerMap.get(txn.customer_id);
@@ -149,26 +235,41 @@ export const ReportsPage = () => {
     }, [salesTransactions, customerMap]);
 
     const supplierReport = useMemo(() => {
-        const filteredPurchases = (purchases || []).filter(p => (supplierFilter ? p.supplier_id === supplierFilter : true));
-        const bySupplier = new Map<number, { name: string; total: number; items: number }>();
-        const byProduct = new Map<number, { name: string; qty: number; total: number }>();
+        const filteredPurchases = (purchases || []).filter(p => (supplierFilter ? p.supplierId === supplierFilter || p.supplier_id === supplierFilter : true));
+        const bySupplier = new Map<string | number, { name: string; total: number; items: number }>();
+        const byProduct = new Map<string | number, { name: string; qty: number; total: number }>();
 
         for (const purchase of filteredPurchases) {
-            if (!purchase.supplier_id) continue;
-            const supplier = supplierMap.get(purchase.supplier_id);
-            if (supplier) {
-                const current = bySupplier.get(purchase.supplier_id) || { name: supplier.name, total: 0, items: 0 };
-                current.total += purchase.cost_price * purchase.quantity;
-                current.items += purchase.quantity;
-                bySupplier.set(purchase.supplier_id, current);
-            }
+            const supplierId = purchase.supplierId || purchase.supplier_id;
+            if (!supplierId) continue;
 
-            const product = productMap.get(purchase.product_id);
-            if (product) {
-                const current = byProduct.get(purchase.product_id) || { name: product.name, qty: 0, total: 0 };
-                current.qty += purchase.quantity;
-                current.total += purchase.cost_price * purchase.quantity;
-                byProduct.set(purchase.product_id, current);
+            const supplier = supplierMap.get(supplierId);
+            const supplierName = supplier?.name || (typeof supplier === 'string' ? supplier : 'Unknown');
+
+            // Get items array (handle both nested items and flat structure)
+            const items = purchase.items || (purchase.product_id ? [purchase] : []);
+
+            for (const item of items) {
+                const productId = item.productId || item.product_id;
+                const quantity = Number(item.quantity || 0);
+                const costPrice = Number(item.costPrice || item.cost_price || 0);
+                const itemTotal = quantity * costPrice;
+
+                // Aggregate by supplier
+                const supplierCurrent = bySupplier.get(supplierId) || { name: supplierName, total: 0, items: 0 };
+                supplierCurrent.total += itemTotal;
+                supplierCurrent.items += quantity;
+                bySupplier.set(supplierId, supplierCurrent);
+
+                // Aggregate by product
+                if (productId) {
+                    const product = productMap.get(productId);
+                    const productName = product?.name || (typeof product === 'string' ? product : 'Unknown');
+                    const productCurrent = byProduct.get(productId) || { name: productName, qty: 0, total: 0 };
+                    productCurrent.qty += quantity;
+                    productCurrent.total += itemTotal;
+                    byProduct.set(productId, productCurrent);
+                }
             }
         }
 
@@ -178,345 +279,524 @@ export const ReportsPage = () => {
         };
     }, [purchases, supplierFilter, supplierMap, productMap]);
 
+    const TabButton = ({ id, label, icon: Icon }: { id: typeof activeTab, label: string, icon: any }) => (
+        <button
+            onClick={() => setActiveTab(id)}
+            className={`flex items-center gap-2 px-4 py-2 border-b-2 transition-all font-medium text-sm ${activeTab === id
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                }`}
+        >
+            <Icon size={18} />
+            {label}
+        </button>
+    );
+
     return (
-        <div className="p-6 max-w-7xl mx-auto space-y-6">
-            <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-300">
-                    <BarChart3 size={20} />
-                </div>
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Reports</h1>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Centralized reporting dashboard</p>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-                    <div className="text-xs text-gray-500">Sales Total</div>
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(salesSummary.total)}</div>
-                    <div className="text-xs text-gray-500">Transactions: {salesSummary.count}</div>
-                </div>
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-                    <div className="text-xs text-gray-500">Tax Collected</div>
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(salesSummary.tax)}</div>
-                    <div className="text-xs text-gray-500">Period: {fromDate.toLocaleDateString()} - {toDate.toLocaleDateString()}</div>
-                </div>
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-                    <div className="text-xs text-gray-500">Low Stock Items</div>
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">{lowStockItems.length}</div>
-                    <div className="text-xs text-gray-500">Needs attention</div>
-                </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 space-y-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-gray-900 dark:text-white font-semibold">
-                        <Calendar size={18} /> Sales Report
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => downloadCsv(
-                                `sales-report-${formatDateInput(fromDate)}-to-${formatDateInput(toDate)}.csv`,
-                                ['Transaction ID', 'Date', 'Customer', 'Total'],
-                                filteredSales.map(txn => [
-                                    `#${txn.transaction_id}`,
-                                    formatDateTime(new Date(txn.timestamp)),
-                                    txn.customer_id ? (customerMap.get(txn.customer_id)?.name || 'Unknown') : 'Walk-in',
-                                    txn.total_amount.toFixed(2)
-                                ])
-                            )}
-                            className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-2 rounded-lg"
-                        >
-                            <Download size={16} /> Export CSV
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-6 transition-colors font-sans">
+            <div className="max-w-7xl mx-auto">
+                {/* Header */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                    <div className="flex items-center space-x-4">
+                        <button onClick={() => navigate('/pos')} className="p-2 bg-white dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
+                            <ArrowLeft size={24} className="text-gray-600 dark:text-white" />
                         </button>
-                        <select
-                            value={salesMode}
-                            onChange={(e) => setSalesMode(e.target.value as any)}
-                            className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2"
-                        >
-                            <option value="daily">Daily</option>
-                            <option value="weekly">Weekly</option>
-                            <option value="monthly">Monthly</option>
-                            <option value="custom">Custom</option>
-                        </select>
-                        {salesMode === 'custom' && (
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="date"
-                                    value={customFrom}
-                                    onChange={(e) => setCustomFrom(e.target.value)}
-                                    className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2"
-                                />
-                                <input
-                                    type="date"
-                                    value={customTo}
-                                    onChange={(e) => setCustomTo(e.target.value)}
-                                    className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2"
-                                />
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                        <thead className="text-xs text-gray-500 border-b border-gray-200 dark:border-gray-700">
-                            <tr>
-                                <th className="py-2 text-left">ID</th>
-                                <th className="py-2 text-left">Date</th>
-                                <th className="py-2 text-left">Customer</th>
-                                <th className="py-2 text-right">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                            {filteredSales.map(txn => (
-                                <tr key={txn.transaction_id} className="text-gray-700 dark:text-gray-300">
-                                    <td className="py-2">#{txn.transaction_id}</td>
-                                    <td className="py-2">{formatDateTime(new Date(txn.timestamp))}</td>
-                                    <td className="py-2">{txn.customer_id ? (customerMap.get(txn.customer_id)?.name || 'Unknown') : 'Walk-in'}</td>
-                                    <td className="py-2 text-right font-medium">{formatCurrency(txn.total_amount)}</td>
-                                </tr>
-                            ))}
-                            {filteredSales.length === 0 && (
-                                <tr>
-                                    <td colSpan={4} className="py-6 text-center text-gray-500">No sales in this period.</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 space-y-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-gray-900 dark:text-white font-semibold">
-                            <Package size={18} /> Low Stock Report
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Reports Dashboard</h1>
+                            <p className="text-gray-500 dark:text-gray-400 text-sm">Analyze your business performance</p>
                         </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
                         <button
-                            onClick={() => downloadCsv(
-                                `low-stock-report-${formatDateInput(new Date())}.csv`,
-                                ['Product', 'Stock', 'Alert Level'],
-                                lowStockItems.map(item => [
-                                    item.name,
-                                    item.stock_quantity,
-                                    typeof item.alert_quantity === 'number' ? item.alert_quantity : (item.reorder_level ?? 0)
-                                ])
-                            )}
-                            className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-2 rounded-lg"
+                            onClick={() => window.location.reload()}
+                            className="bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center gap-2 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-all font-medium text-sm"
                         >
-                            <Download size={16} /> Export CSV
+                            <Calendar size={18} />
+                            Today: {new Date().toLocaleDateString()}
                         </button>
                     </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead className="text-xs text-gray-500 border-b border-gray-200 dark:border-gray-700">
-                                <tr>
-                                    <th className="py-2 text-left">Product</th>
-                                    <th className="py-2 text-center">Stock</th>
-                                    <th className="py-2 text-center">Alert</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                                {lowStockItems.map(item => (
-                                    <tr key={item.product_id} className="text-gray-700 dark:text-gray-300">
-                                        <td className="py-2">{item.name}</td>
-                                        <td className="py-2 text-center">{item.stock_quantity}</td>
-                                        <td className="py-2 text-center">{typeof item.alert_quantity === 'number' ? item.alert_quantity : (item.reorder_level ?? 0)}</td>
-                                    </tr>
-                                ))}
-                                {lowStockItems.length === 0 && (
-                                    <tr>
-                                        <td colSpan={3} className="py-6 text-center text-gray-500">No low stock items.</td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+                </div>
+
+                {/* Tab Navigation */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm mb-8 sticky top-0 z-20 overflow-x-auto no-scrollbar">
+                    <div className="flex px-4">
+                        <TabButton id="overview" label="Overview" icon={BarChart3} />
+                        <TabButton id="sales" label="Sales History" icon={DollarSign} />
+                        <TabButton id="inventory" label="Inventory/Stock" icon={Package} />
+                        <TabButton id="customers" label="Customers" icon={Users} />
+                        <TabButton id="suppliers" label="Purchases" icon={Truck} />
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 space-y-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-gray-900 dark:text-white font-semibold">
-                            <TrendingDown size={18} /> Low Profit Report
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-2 text-xs text-gray-500">
-                                Profit ≤
-                                <input
-                                    type="number"
-                                    className="w-24 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded px-2 py-1"
-                                    value={profitThreshold}
-                                    onChange={(e) => setProfitThreshold(Number(e.target.value))}
-                                />
-                            </div>
-                            <button
-                                onClick={() => downloadCsv(
-                                    `low-profit-report-${formatDateInput(new Date())}.csv`,
-                                    ['Product', 'Qty', 'Profit'],
-                                    lowProfitItems.map(item => [
-                                        item.name,
-                                        item.qty,
-                                        item.profit.toFixed(2)
-                                    ])
-                                )}
-                                className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-2 rounded-lg"
-                            >
-                                <Download size={16} /> Export CSV
-                            </button>
-                        </div>
+                {loading && (
+                    <div className="bg-white/50 backdrop-blur-sm dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 p-8 flex flex-col items-center justify-center text-center mb-8">
+                        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+                        <p className="text-gray-600 dark:text-gray-300 font-medium">Loading report metrics...</p>
                     </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead className="text-xs text-gray-500 border-b border-gray-200 dark:border-gray-700">
-                                <tr>
-                                    <th className="py-2 text-left">Product</th>
-                                    <th className="py-2 text-center">Qty</th>
-                                    <th className="py-2 text-right">Profit</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                                {lowProfitItems.map(item => (
-                                    <tr key={item.product_id} className="text-gray-700 dark:text-gray-300">
-                                        <td className="py-2">{item.name}</td>
-                                        <td className="py-2 text-center">{item.qty}</td>
-                                        <td className="py-2 text-right font-medium">{formatCurrency(item.profit)}</td>
-                                    </tr>
-                                ))}
-                                {lowProfitItems.length === 0 && (
-                                    <tr>
-                                        <td colSpan={3} className="py-6 text-center text-gray-500">No low-profit items.</td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+                )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 space-y-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-gray-900 dark:text-white font-semibold">
-                            <Truck size={18} /> Supplier Report
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <select
-                                value={supplierFilter}
-                                onChange={(e) => setSupplierFilter(e.target.value ? Number(e.target.value) : '')}
-                                className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2"
-                            >
-                                <option value="">All Suppliers</option>
-                                {suppliers?.map(s => (
-                                    <option key={s.supplier_id} value={s.supplier_id}>{s.name}</option>
-                                ))}
-                            </select>
-                            <button
-                                onClick={() => downloadCsv(
-                                    `supplier-report-${formatDateInput(new Date())}.csv`,
-                                    ['Supplier', 'Total', 'Items'],
-                                    supplierReport.suppliers.map(s => [
-                                        s.name,
-                                        s.total.toFixed(2),
-                                        s.items
-                                    ])
-                                )}
-                                className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-2 rounded-lg"
-                            >
-                                <Download size={16} /> Export CSV
-                            </button>
-                        </div>
-                    </div>
-                    <div className="space-y-3">
-                        {supplierReport.suppliers.map(s => (
-                            <div key={s.supplier_id} className="flex justify-between text-sm text-gray-700 dark:text-gray-300">
-                                <span>{s.name}</span>
-                                <span>{formatCurrency(s.total)} • {s.items} items</span>
-                            </div>
-                        ))}
-                        {supplierReport.suppliers.length === 0 && (
-                            <div className="text-sm text-gray-500">No supplier purchases.</div>
-                        )}
-                    </div>
-                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
-                            <span>Product-wise</span>
-                            <button
-                                onClick={() => downloadCsv(
-                                    `supplier-product-report-${formatDateInput(new Date())}.csv`,
-                                    ['Product', 'Qty', 'Total'],
-                                    supplierReport.products.map(p => [
-                                        p.name,
-                                        p.qty,
-                                        p.total.toFixed(2)
-                                    ])
-                                )}
-                                className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-300"
-                            >
-                                <Download size={12} /> Export
-                            </button>
-                        </div>
-                        <div className="space-y-2 text-sm">
-                            {supplierReport.products.map(p => (
-                                <div key={p.product_id} className="flex justify-between text-gray-700 dark:text-gray-300">
-                                    <span>{p.name}</span>
-                                    <span>{p.qty} • {formatCurrency(p.total)}</span>
+                {activeTab === 'overview' && (
+                    <div className="space-y-8 animate-in fade-in duration-500">
+                        {/* Summary Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-800 p-6 rounded-xl border border-blue-100 dark:border-blue-900/30 shadow-sm relative overflow-hidden group">
+                                <div className="absolute right-0 top-0 w-24 h-24 bg-blue-100 dark:bg-blue-800/20 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                                <div className="relative z-10">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-gray-600 dark:text-blue-300 font-bold">Total Sales</h3>
+                                        <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg text-blue-600 dark:text-blue-400">
+                                            <DollarSign size={24} />
+                                        </div>
+                                    </div>
+                                    <p className="text-3xl font-bold text-gray-900 dark:text-white">{formatCurrency(salesSummary.total)}</p>
+                                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">{salesSummary.count} Transactions in period</p>
                                 </div>
-                            ))}
-                            {supplierReport.products.length === 0 && (
-                                <div className="text-sm text-gray-500">No product purchases.</div>
-                            )}
-                        </div>
-                    </div>
-                </div>
+                            </div>
 
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 space-y-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-gray-900 dark:text-white font-semibold">
-                            <Users size={18} /> Customer Report
-                        </div>
-                        <button
-                            onClick={() => downloadCsv(
-                                `customer-report-${formatDateInput(new Date())}.csv`,
-                                ['Customer', 'Orders', 'Total Spend'],
-                                customerReport.map(c => [
-                                    c.name,
-                                    c.count,
-                                        c.total.toFixed(2)
-                                ])
+                            {taxEnabled && (
+                                <div className="bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/20 dark:to-gray-800 p-6 rounded-xl border border-indigo-100 dark:border-indigo-900/30 shadow-sm relative overflow-hidden group">
+                                    <div className="absolute right-0 top-0 w-24 h-24 bg-indigo-100 dark:bg-indigo-800/20 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                                    <div className="relative z-10">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h3 className="text-gray-600 dark:text-indigo-300 font-bold">Tax Collected</h3>
+                                            <div className="p-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg text-indigo-600 dark:text-indigo-400">
+                                                <ShoppingBag size={24} />
+                                            </div>
+                                        </div>
+                                        <p className="text-3xl font-bold text-gray-900 dark:text-white">{formatCurrency(salesSummary.tax)}</p>
+                                        <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-2">Period: {fromDate.toLocaleDateString()}</p>
+                                    </div>
+                                </div>
                             )}
-                            className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-2 rounded-lg"
-                        >
-                            <Download size={16} /> Export CSV
-                        </button>
+
+                            <div className="bg-gradient-to-br from-orange-50 to-white dark:from-orange-900/20 dark:to-gray-800 p-6 rounded-xl border border-orange-100 dark:border-orange-900/30 shadow-sm relative overflow-hidden group">
+                                <div className="absolute right-0 top-0 w-24 h-24 bg-orange-100 dark:bg-orange-800/20 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                                <div className="relative z-10">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-gray-600 dark:text-orange-300 font-bold">Low Stock Items</h3>
+                                        <div className="p-2 bg-orange-100 dark:bg-orange-900/50 rounded-lg text-orange-600 dark:text-orange-400">
+                                            <Package size={24} />
+                                        </div>
+                                    </div>
+                                    <p className="text-3xl font-bold text-gray-900 dark:text-white">{lowStockItems.length}</p>
+                                    <p className="text-xs text-orange-600 dark:text-orange-400 mt-2">Inventory needs attention</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Recent Activity Mini-table */}
+                        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+                            <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                                <h2 className="text-xl font-bold flex items-center space-x-2 text-gray-900 dark:text-white">
+                                    <Calendar size={20} className="text-blue-500" />
+                                    <span>Recent Sales</span>
+                                </h2>
+                                <button
+                                    onClick={() => setActiveTab('sales')}
+                                    className="text-blue-600 dark:text-blue-400 text-sm font-medium hover:underline"
+                                >
+                                    View All
+                                </button>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left">
+                                    <thead className="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 uppercase text-xs">
+                                        <tr>
+                                            <th className="p-4">ID</th>
+                                            <th className="p-4">Time</th>
+                                            <th className="p-4">Customer</th>
+                                            <th className="p-4 text-right">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                                        {filteredSales.slice(0, 5).map(txn => {
+                                            const isReturn = txn.type === 'return';
+                                            return (
+                                                <tr key={txn.transaction_id} className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${isReturn ? 'bg-red-50/20 dark:bg-red-900/10' : ''}`}>
+                                                    <td className="p-4 text-gray-900 dark:text-white font-medium">#{txn.transaction_id} {isReturn && <span className="text-[10px] text-red-600 dark:text-red-400 font-bold uppercase ml-1">Return</span>}</td>
+                                                    <td className="p-4 text-gray-500 dark:text-gray-400">{formatDateTime(new Date(txn.timestamp))}</td>
+                                                    <td className="p-4 text-gray-500 dark:text-gray-400">{txn.customer_id ? (customerMap.get(txn.customer_id)?.name || 'Unknown') : 'Walk-in'}</td>
+                                                    <td className={`p-4 text-right font-bold ${isReturn ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>{formatCurrency(txn.total_amount)}</td>
+                                                </tr>
+                                            )
+                                        })}
+                                        {filteredSales.length === 0 && (
+                                            <tr>
+                                                <td colSpan={4} className="p-8 text-center text-gray-500 dark:text-gray-400">
+                                                    No sales activity recorded in this period.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead className="text-xs text-gray-500 border-b border-gray-200 dark:border-gray-700">
-                                <tr>
-                                    <th className="py-2 text-left">Customer</th>
-                                    <th className="py-2 text-center">Orders</th>
-                                    <th className="py-2 text-right">Total Spend</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                                {customerReport.map(c => (
-                                    <tr key={c.customer_id} className="text-gray-700 dark:text-gray-300">
-                                        <td className="py-2">{c.name}</td>
-                                        <td className="py-2 text-center">{c.count}</td>
-                                        <td className="py-2 text-right font-medium">{formatCurrency(c.total)}</td>
-                                    </tr>
-                                ))}
-                                {customerReport.length === 0 && (
-                                    <tr>
-                                        <td colSpan={3} className="py-6 text-center text-gray-500">No customer sales.</td>
-                                    </tr>
+                )}
+
+                {activeTab === 'sales' && (
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden animate-in slide-in-from-bottom-4 duration-500">
+                        <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-50/50 dark:bg-gray-900/20">
+                            <div className="flex items-center gap-2 text-gray-900 dark:text-white font-bold text-lg">
+                                <DollarSign size={20} className="text-green-500" />
+                                <span>Sales History</span>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-3">
+                                <div className="flex items-center bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 p-1">
+                                    {(['daily', 'weekly', 'monthly', 'custom'] as const).map((mode) => (
+                                        <button
+                                            key={mode}
+                                            onClick={() => setSalesMode(mode)}
+                                            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${salesMode === mode
+                                                ? 'bg-blue-600 text-white shadow-sm'
+                                                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                                                }`}
+                                        >
+                                            {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {salesMode === 'custom' && (
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="date"
+                                            value={customFrom}
+                                            onChange={(e) => setCustomFrom(e.target.value)}
+                                            className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg px-3 py-1.5 text-sm"
+                                        />
+                                        <span className="text-gray-400">to</span>
+                                        <input
+                                            type="date"
+                                            value={customTo}
+                                            onChange={(e) => setCustomTo(e.target.value)}
+                                            className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg px-3 py-1.5 text-sm"
+                                        />
+                                    </div>
                                 )}
-                            </tbody>
-                        </table>
+
+                                <button
+                                    onClick={() => {
+                                        const headers = ['Transaction ID', 'Date', 'Customer', 'Total'];
+                                        const rows = filteredSales.map(txn => [
+                                            `#${txn.transaction_id}`,
+                                            formatDateTime(new Date(txn.timestamp)),
+                                            txn.customer_id ? (customerMap.get(txn.customer_id)?.name || 'Unknown') : 'Walk-in',
+                                            txn.total_amount.toFixed(2)
+                                        ]);
+                                        if (taxEnabled) {
+                                            headers.push('Tax');
+                                            rows.forEach((row, idx) => {
+                                                row.push((filteredSales[idx].tax_amount || 0).toFixed(2));
+                                            });
+                                        }
+                                        downloadCsv(`sales-report-${formatDateInput(fromDate)}-to-${formatDateInput(toDate)}.csv`, headers, rows);
+                                    }}
+                                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm text-sm font-medium"
+                                >
+                                    <Download size={16} /> Export CSV
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead className="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 uppercase text-xs font-semibold">
+                                    <tr>
+                                        <th className="p-4 text-left">Transaction ID</th>
+                                        <th className="p-4 text-left">Date & Time</th>
+                                        <th className="p-4 text-left">Customer</th>
+                                        <th className="p-4 text-right">Total Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                    {filteredSales.map(txn => {
+                                        const isReturn = txn.type === 'return';
+                                        return (
+                                            <tr key={txn.transaction_id} className={`hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors ${isReturn ? 'bg-red-50/20 dark:bg-red-900/10' : ''}`}>
+                                                <td className="p-4">
+                                                    <div className="flex flex-col gap-1 items-start">
+                                                        <span className={`px-2 py-1 rounded text-xs font-mono font-bold ${isReturn ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}`}>
+                                                            #{txn.transaction_id}
+                                                        </span>
+                                                        {isReturn && <span className="text-[10px] text-red-600 dark:text-red-400 font-bold uppercase tracking-wider">Return</span>}
+                                                    </div>
+                                                </td>
+                                                <td className="p-4 text-gray-600 dark:text-gray-400">{formatDateTime(new Date(txn.timestamp))}</td>
+                                                <td className="p-4 text-gray-700 dark:text-gray-300">
+                                                    {txn.customer_id ? (
+                                                        <div className="flex items-center gap-2">
+                                                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${isReturn ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400' : 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400'}`}>
+                                                                {(customerMap.get(txn.customer_id)?.name || 'U').charAt(0).toUpperCase()}
+                                                            </div>
+                                                            {customerMap.get(txn.customer_id)?.name || 'Unknown User'}
+                                                        </div>
+                                                    ) : <span className="text-gray-400">Walk-in Customer</span>}
+                                                </td>
+                                                <td className={`p-4 text-right font-bold ${isReturn ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
+                                                    {formatCurrency(txn.total_amount)}
+                                                </td>
+                                            </tr>
+                                        )
+                                    })}
+                                    {filteredSales.length === 0 && (
+                                        <tr>
+                                            <td colSpan={4} className="p-12 text-center text-gray-400 italic">No transactions found for the selected period.</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
+                )}
+
+                {activeTab === 'inventory' && (
+                    <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* Low Stock Card */}
+                            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+                                <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-orange-50/30 dark:bg-orange-900/10">
+                                    <div className="flex items-center gap-2 text-gray-900 dark:text-white font-bold">
+                                        <Package size={18} className="text-orange-500" />
+                                        <span>Low Stock Items</span>
+                                    </div>
+                                    <button
+                                        onClick={() => downloadCsv(
+                                            `low-stock-report-${formatDateInput(new Date())}.csv`,
+                                            ['Product', 'Stock', 'Alert Level'],
+                                            lowStockItems.map(item => [
+                                                item.name,
+                                                item.stock_quantity,
+                                                item.alert_quantity ?? item.reorder_level ?? 0
+                                            ])
+                                        )}
+                                        className="p-2 text-gray-500 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                                        title="Export Low Stock"
+                                    >
+                                        <Download size={18} />
+                                    </button>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead className="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 text-xs uppercase font-semibold">
+                                            <tr>
+                                                <th className="p-4 text-left">Product Name</th>
+                                                <th className="p-4 text-center">In Stock</th>
+                                                <th className="p-4 text-center">Min Level</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                            {lowStockItems.map(item => (
+                                                <tr key={item.product_id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                                                    <td className="p-4 text-gray-900 dark:text-white font-medium">{item.name}</td>
+                                                    <td className="p-4 text-center">
+                                                        <span className="px-2 py-1 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 rounded-full text-xs font-bold">
+                                                            {item.stock_quantity}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-4 text-center text-gray-500 dark:text-gray-400">{item.alert_quantity ?? item.reorder_level ?? 0}</td>
+                                                </tr>
+                                            ))}
+                                            {lowStockItems.length === 0 && (
+                                                <tr>
+                                                    <td colSpan={3} className="p-12 text-center text-gray-400 italic">No low stock items detected.</td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {/* Low Profit Card */}
+                            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+                                <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-red-50/30 dark:bg-red-900/10">
+                                    <div className="flex items-center gap-2 text-gray-900 dark:text-white font-bold">
+                                        <TrendingDown size={18} className="text-red-500" />
+                                        <span>Low Profit Estimate</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-1 text-[10px] text-gray-400 uppercase font-bold mr-2">
+                                            Threshold:
+                                            <input
+                                                type="number"
+                                                className="w-16 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded px-1 py-0.5 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-red-500"
+                                                value={profitThreshold}
+                                                onChange={(e) => setProfitThreshold(Number(e.target.value))}
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={() => downloadCsv(
+                                                `low-profit-report-${formatDateInput(new Date())}.csv`,
+                                                ['Product', 'Qty Sold', 'Profit'],
+                                                lowProfitItems.map(item => [
+                                                    item.name,
+                                                    item.qty,
+                                                    item.profit.toFixed(2)
+                                                ])
+                                            )}
+                                            className="p-2 text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                                            title="Export Low Profit"
+                                        >
+                                            <Download size={18} />
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead className="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 text-xs uppercase font-semibold">
+                                            <tr>
+                                                <th className="p-4 text-left">Product</th>
+                                                <th className="p-4 text-center">Qty Sold</th>
+                                                <th className="p-4 text-right">Est. Profit</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                            {lowProfitItems.map(item => (
+                                                <tr key={item.product_id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                                                    <td className="p-4 text-gray-900 dark:text-white font-medium">{item.name}</td>
+                                                    <td className="p-4 text-center text-gray-600 dark:text-gray-400">{item.qty}</td>
+                                                    <td className="p-4 text-right font-bold text-red-600 dark:text-red-400">{formatCurrency(item.profit)}</td>
+                                                </tr>
+                                            ))}
+                                            {lowProfitItems.length === 0 && (
+                                                <tr>
+                                                    <td colSpan={3} className="p-12 text-center text-gray-400 italic">No low-profit items for current threshold.</td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'customers' && (
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden animate-in slide-in-from-bottom-4 duration-500">
+                        <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-blue-50/30 dark:bg-blue-900/10">
+                            <div className="flex items-center gap-2 text-gray-900 dark:text-white font-bold">
+                                <Users size={18} className="text-blue-500" />
+                                <span>Customer Spending Analysis</span>
+                            </div>
+                            <button
+                                onClick={() => downloadCsv(
+                                    `customer-report-${formatDateInput(new Date())}.csv`,
+                                    ['Customer', 'Orders', 'Total Spend'],
+                                    customerReport.map(c => [c.name, c.count, c.total.toFixed(2)])
+                                )}
+                                className="p-2 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                            >
+                                <Download size={18} />
+                            </button>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead className="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 text-xs uppercase font-semibold">
+                                    <tr>
+                                        <th className="p-4 text-left">Customer</th>
+                                        <th className="p-4 text-center">Orders</th>
+                                        <th className="p-4 text-right">Total Spend</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                    {customerReport.map(c => (
+                                        <tr key={c.customer_id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                                            <td className="p-4 text-gray-900 dark:text-white font-medium">{c.name}</td>
+                                            <td className="p-4 text-center text-gray-600 dark:text-gray-400">{c.count}</td>
+                                            <td className="p-4 text-right font-bold text-gray-900 dark:text-white">{formatCurrency(c.total)}</td>
+                                        </tr>
+                                    ))}
+                                    {customerReport.length === 0 && (
+                                        <tr>
+                                            <td colSpan={3} className="p-12 text-center text-gray-400 italic">No customer data available.</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'suppliers' && (
+                    <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+                            <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-purple-50/30 dark:bg-purple-900/10">
+                                <div className="flex items-center gap-2 text-gray-900 dark:text-white font-bold">
+                                    <Truck size={18} className="text-purple-500" />
+                                    <span>Supplier Purchases</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <select
+                                        value={supplierFilter}
+                                        onChange={(e) => setSupplierFilter(e.target.value ? Number(e.target.value) : '')}
+                                        className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm"
+                                    >
+                                        <option value="">All Suppliers</option>
+                                        {suppliers?.map(s => (
+                                            <option key={s.supplier_id} value={s.supplier_id}>{s.name}</option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        onClick={() => downloadCsv(
+                                            `supplier-report-${formatDateInput(new Date())}.csv`,
+                                            ['Supplier', 'Total', 'Items'],
+                                            supplierReport.suppliers.map(s => [s.name, s.total.toFixed(2), s.items])
+                                        )}
+                                        className="p-2 text-gray-500 hover:text-purple-600 transition-colors"
+                                    >
+                                        <Download size={18} />
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="p-6 space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {supplierReport.suppliers.map(s => (
+                                        <div key={s.supplier_id} className="p-4 bg-gray-50 dark:bg-gray-900/40 rounded-lg border border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                                            <div>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">{s.name}</p>
+                                                <p className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(s.total)}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-xs text-gray-400">{s.items} units</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {supplierReport.suppliers.length === 0 && (
+                                        <div className="col-span-full p-8 text-center text-gray-400 italic">No supplier purchases recorded.</div>
+                                    )}
+                                </div>
+
+                                <div className="pt-6 border-t border-gray-100 dark:border-gray-800">
+                                    <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4">Product-wise Breakdown</h3>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                            <thead className="text-gray-400 text-[10px] uppercase font-bold border-b border-gray-100 dark:border-gray-800">
+                                                <tr>
+                                                    <th className="pb-2 text-left">Product</th>
+                                                    <th className="pb-2 text-center">Qty</th>
+                                                    <th className="pb-2 text-right">Total Cost</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                                                {supplierReport.products.map(p => (
+                                                    <tr key={p.product_id}>
+                                                        <td className="py-3 text-gray-700 dark:text-gray-300">{p.name}</td>
+                                                        <td className="py-3 text-center text-gray-600 dark:text-gray-400">{p.qty}</td>
+                                                        <td className="py-3 text-right font-medium text-gray-900 dark:text-white">{formatCurrency(p.total)}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
 };
+
+export default ReportsPage;

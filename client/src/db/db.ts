@@ -11,33 +11,34 @@ export interface User {
 }
 
 export interface Brand {
-    brand_id?: number;
+    brand_id?: number | string;
     name: string;
     description?: string;
 }
 
 export interface Unit {
-    unit_id?: number;
+    unit_id?: number | string;
     name: string; // e.g. Pieces
     short_name: string; // e.g. pc
     allow_decimal: boolean;
 }
 
 export interface BusinessLocation {
-    location_id?: number;
+    location_id?: number | string;
     name: string;
     address?: string;
 }
 
 export interface Product {
-    product_id?: number;
+    product_id?: number | string;
     sku_code: string;
     name: string;
+    barcode?: string;
     description?: string; // Rich text
-    category_id: string; // ID or name
-    brand_id?: string; // ID or name
-    unit_id?: string; // ID or short_name
-    sub_category_id?: string;
+    category_id: number | string; // ID or name
+    brand_id?: number | string; // ID or name
+    unit_id?: number | string; // ID or short_name
+    sub_category_id?: number | string;
 
     cost_price: number;
     retail_price: number;
@@ -55,10 +56,16 @@ export interface Product {
 
     business_locations?: number[]; // IDs of locations
     reorder_level: number; // Deprecated in favor of alert_quantity, keeping for backward compat
+
+    has_purchase?: boolean;
+    isActive?: boolean;
+    categoryRel?: { id: number; name: string };
+    subCategory?: { id: number; name: string };
+    unit?: { id: number; name: string; shortName: string; allowDecimal: boolean };
 }
 
 export interface Customer {
-    customer_id?: number;
+    customer_id?: number | string;
     name: string;
     phone: string;
     email?: string;
@@ -68,26 +75,28 @@ export interface Customer {
 
 export interface CustomerPointHistory {
     id?: number;
-    customer_id: number;
+    customer_id: number | string;
     timestamp: Date;
     type: 'earn' | 'redeem' | 'adjust';
     points: number;
     note?: string;
-    transaction_id?: number;
+    transaction_id?: number | string;
 }
 
 
 export interface Transaction {
-    transaction_id?: number;
-    user_id: number;
-    customer_id?: number;
+    transaction_id?: number | string;
+    user_id: number | string;
+    customer_id?: number | string;
     timestamp: Date;
     total_amount: number;
     tax_amount: number;
+    discount?: number;
     round_off_discount?: number;
     payment_method: 'cash' | 'card' | 'split' | 'other';
     status: 'completed' | 'voided' | 'parked';
     type: 'sale' | 'return';
+    parent_sale_id?: number | string;  // Reference to original sale for returns
     payment_details?: {
         cashAmount?: number;
         cardAmount?: number;
@@ -98,9 +107,9 @@ export interface Transaction {
 
 export interface TransactionItem {
     line_id?: number;
-    transaction_id: number;
-    product_id: number;
-    batch_id?: number;
+    transaction_id: number | string;
+    product_id: number | string;
+    batch_id?: number | string;
     quantity: number;
     price_at_sale: number;
     note?: string;
@@ -108,7 +117,7 @@ export interface TransactionItem {
 
 export interface ProductBatch {
     batch_id?: number;
-    product_id: number;
+    product_id: number | string;
     quantity: number;
     cost_price: number;
     retail_price: number;
@@ -117,18 +126,18 @@ export interface ProductBatch {
 }
 
 export interface Category {
-    category_id?: number;
+    category_id?: number | string;
     name: string;
 }
 
 export interface Purchase {
     purchase_id?: number;
-    product_id: number;
+    product_id: number | string;
     quantity: number;
     cost_price: number;
     timestamp: Date;
-    user_id: number; // Who added the stock
-    supplier_id?: number;
+    user_id: number | string; // Who added the stock
+    supplier_id?: number | string;
     ref_number?: string;
     bill_id?: string; // For grouping unique bills
     payment_status?: 'paid' | 'partial' | 'due';
@@ -141,7 +150,7 @@ export interface Purchase {
 }
 
 export interface Supplier {
-    supplier_id?: number;
+    supplier_id?: number | string;
     name: string;
     contact_person?: string;
     phone?: string;
@@ -156,7 +165,7 @@ export interface Setting {
 
 export interface HeldSale {
     id?: number;
-    customer_id?: number;
+    customer_id?: number | string;
     items: {
         product: Product;
         quantity: number;
@@ -253,8 +262,8 @@ export class POSDatabase extends Dexie {
 }
 
 export interface SubCategory {
-    sub_category_id?: number;
-    category_id: number;
+    sub_category_id?: number | string;
+    category_id: number | string;
     name: string;
 }
 

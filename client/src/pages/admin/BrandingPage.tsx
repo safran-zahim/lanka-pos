@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Image as ImageIcon, Save, Loader } from 'lucide-react';
 import { useSettingsStore } from '../../store/useSettingsStore';
-import { db } from '../../db/db';
+import { useAuthStore } from '../../store/useAuthStore';
+import { getApiUrl } from '../../config/api';
 
 import { APP_CONFIG } from '../../config/appConfig';
 
@@ -13,6 +14,7 @@ interface BrandingPageProps {
 
 export const BrandingPage = ({ hideSave, onSaveReady, onSavingChange }: BrandingPageProps) => {
     const { updateSetting, loadSettings, loading } = useSettingsStore();
+    const token = useAuthStore((state) => state.token);
     const [isSaving, setIsSaving] = useState(false);
 
     const [companyName, setCompanyName] = useState(APP_CONFIG.appName);
@@ -28,8 +30,15 @@ export const BrandingPage = ({ hideSave, onSaveReady, onSavingChange }: Branding
 
     useEffect(() => {
         const fetchBranding = async () => {
-            const settings = await db.settings.toArray();
-            const map = settings.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {} as Record<string, any>);
+            if (!token) return;
+            const response = await fetch(getApiUrl('/settings'), {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const settings = response.ok ? await response.json() : [];
+            const map = (settings || []).reduce((acc: Record<string, any>, curr: any) => ({
+                ...acc,
+                [curr.key]: curr.value
+            }), {} as Record<string, any>);
             setCompanyName(map.companyName || APP_CONFIG.appName);
             setLogo(map.companyLogo || '');
             setAddress(map.companyAddress || '');
@@ -38,7 +47,7 @@ export const BrandingPage = ({ hideSave, onSaveReady, onSavingChange }: Branding
             setWebsite(map.companyWebsite || '');
         };
         fetchBranding();
-    }, []);
+    }, [token]);
 
     const handleLogoUpload = (file: File) => {
         if (file.size > 5 * 1024 * 1024) {

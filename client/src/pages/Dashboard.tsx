@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
-import { db } from '../db/db';
-import { ArrowLeft, TrendingUp, AlertTriangle, Package, DollarSign } from 'lucide-react';
+import { ArrowLeft, TrendingUp, AlertTriangle, Package, DollarSign, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCurrency } from '../hooks/useCurrency';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuthStore } from '../store/useAuthStore';
 import { getApiUrl } from '../config/api';
 
@@ -14,77 +12,104 @@ export const Dashboard = () => {
     const [totalSales, setTotalSales] = useState(0);
     const [transactionCount, setTransactionCount] = useState(0);
     const [topSellers, setTopSellers] = useState<{ name: string, count: number }[]>([]);
+    const [dailySummary, setDailySummary] = useState<null | {
+        date?: string;
+        total_sales: number;
+        transaction_count: number;
+    }>(null);
     const [monthlySummary, setMonthlySummary] = useState<null | {
         current: { total_sales: number; transaction_count: number };
         previous: { total_sales: number; transaction_count: number };
         percent_change: { total_sales: number | null; transaction_count: number | null };
     }>(null);
 
-    const transactions = useLiveQuery(() => db.transactions.filter(t => t.status === 'completed').toArray());
-    const transactionItems = useLiveQuery(() => db.transaction_items.toArray());
-    const products = useLiveQuery(() => db.products.toArray());
-
-    // Fetch Low Stock Items
-    const lowStockItems = useLiveQuery(
-        () => db.products.filter(p => {
-            const alertLevel = typeof p.alert_quantity === 'number' && p.alert_quantity > 0
-                ? p.alert_quantity
-                : (p.reorder_level ?? 0);
-            return p.stock_quantity <= alertLevel;
-        }).toArray()
-    );
+    const [sales, setSales] = useState<any[]>([]);
+    const [products, setProducts] = useState<any[]>([]);
+    const [lowStockItems, setLowStockItems] = useState<any[]>([]);
 
     useEffect(() => {
         if (!token) return;
 
-        const loadMonthlySummary = async () => {
+        const loadSummaries = async () => {
             try {
-                const res = await fetch(getApiUrl('/sales/monthly-summary'), {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
+                const [monthlyRes, dailyRes] = await Promise.all([
+                    fetch(getApiUrl('/sales/monthly-summary'), { headers: { Authorization: `Bearer ${token}` } }),
+                    fetch(getApiUrl('/sales/daily-summary'), { headers: { Authorization: `Bearer ${token}` } })
+                ]);
 
-                if (!res.ok) {
-                    return;
+                if (monthlyRes.ok) {
+                    const data = await monthlyRes.json();
+                    setMonthlySummary(data);
                 }
 
-                const data = await res.json();
-                setMonthlySummary(data);
+                if (dailyRes.ok) {
+                    const data = await dailyRes.json();
+                    setDailySummary(data);
+                }
             } catch (error) {
-                console.error('Failed to load monthly summary', error);
+                console.error('Failed to load sales summaries', error);
             }
         };
 
-        loadMonthlySummary();
+        loadSummaries();
     }, [token]);
 
     useEffect(() => {
-        if (!transactions || !transactionItems) return;
+        if (!token) return;
 
-        const total = transactions.reduce((sum, t) => sum + t.total_amount, 0);
+        const loadOverview = async () => {
+            try {
+                const [salesRes, productsRes, lowStockRes] = await Promise.all([
+                    fetch(getApiUrl('/sales?limit=200&includeItems=true'), { headers: { Authorization: `Bearer ${token}` } }),
+                    fetch(getApiUrl('/products'), { headers: { Authorization: `Bearer ${token}` } }),
+                    fetch(getApiUrl('/products/low-stock'), { headers: { Authorization: `Bearer ${token}` } })
+                ]);
+
+                if (salesRes.ok) setSales(await salesRes.json());
+                if (productsRes.ok) setProducts(await productsRes.json());
+                if (lowStockRes.ok) setLowStockItems(await lowStockRes.json());
+            } catch (error) {
+                console.error('Failed to load dashboard overview', error);
+            }
+        };
+
+        loadOverview();
+    }, [token]);
+
+    useEffect(() => {
+        if (!sales) return;
+
+        const total = sales.reduce((sum, t) => sum + Number(t.total || 0), 0);
         setTotalSales(total);
-        setTransactionCount(transactions.length);
+        setTransactionCount(sales.length);
 
-        const productCounts: Record<number, number> = {};
-        transactionItems.forEach(item => {
-            productCounts[item.product_id] = (productCounts[item.product_id] || 0) + item.quantity;
+        const productCounts: Record<string, number> = {};
+        sales.forEach((sale) => {
+            (sale.items || []).forEach((item: any) => {
+                const key = String(item.productId);
+                productCounts[key] = (productCounts[key] || 0) + Number(item.quantity || 0);
+            });
         });
 
         const sortedIds = Object.keys(productCounts)
-            .sort((a, b) => productCounts[Number(b)] - productCounts[Number(a)])
+            .sort((a, b) => productCounts[b] - productCounts[a])
             .slice(0, 5);
 
-        const productMap = new Map(products?.map(p => [p.product_id!, p.name]) || []);
+        const productMap = new Map((products || []).map(p => [String(p.id), p.name]));
         const topProducts = sortedIds.map(id => ({
-            name: productMap.get(Number(id)) || 'Unknown',
-            count: productCounts[Number(id)]
+            name: productMap.get(id) || 'Unknown',
+            count: productCounts[id]
         }));
 
         setTopSellers(topProducts);
-    }, [transactions, transactionItems, products]);
+    }, [sales, products]);
 
-    const displayedTotalSales = monthlySummary?.current.total_sales ?? totalSales;
+    // Filter low stock items to show only active products
+    const activeLowStockItems = (lowStockItems || []).filter(item => item.isActive !== false);
+
+    const displayedDailySales = dailySummary?.total_sales ?? 0;
+    const displayedDailyTransactions = dailySummary?.transaction_count ?? 0;
+    const displayedMonthlySales = monthlySummary?.current.total_sales ?? totalSales;
     const displayedTransactionCount = monthlySummary?.current.transaction_count ?? transactionCount;
     const salesChange = monthlySummary?.percent_change.total_sales ?? null;
     const salesChangeLabel = salesChange === null
@@ -125,7 +150,26 @@ export const Dashboard = () => {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div
+                    onClick={() => navigate('/admin/transactions')}
+                    className="bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/20 dark:to-gray-800 p-6 rounded-xl border border-indigo-100 dark:border-indigo-900/30 shadow-sm transition-colors relative overflow-hidden group cursor-pointer hover:shadow-md"
+                >
+                    <div className="absolute right-0 top-0 w-24 h-24 bg-indigo-100 dark:bg-indigo-800/20 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-gray-600 dark:text-indigo-300 font-bold">Today's Sales</h3>
+                            <div className="p-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg text-indigo-600 dark:text-indigo-400">
+                                <Calendar size={24} />
+                            </div>
+                        </div>
+                        <p className="text-3xl font-bold text-gray-900 dark:text-white">{formatCurrency(dailySummary?.total_sales ?? 0)}</p>
+                        <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-2 flex items-center gap-1">
+                            {dailySummary?.transaction_count ?? 0} transactions today
+                        </p>
+                    </div>
+                </div>
+
                 <div
                     onClick={() => navigate('/admin/transactions')}
                     className="bg-gradient-to-br from-green-50 to-white dark:from-green-900/20 dark:to-gray-800 p-6 rounded-xl border border-green-100 dark:border-green-900/30 shadow-sm transition-colors relative overflow-hidden group cursor-pointer hover:shadow-md"
@@ -133,14 +177,17 @@ export const Dashboard = () => {
                     <div className="absolute right-0 top-0 w-24 h-24 bg-green-100 dark:bg-green-800/20 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
                     <div className="relative z-10">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-gray-600 dark:text-green-300 font-medium font-bold">Total Sales</h3>
+                            <h3 className="text-gray-600 dark:text-green-300 font-medium font-bold">Today's Sales</h3>
                             <div className="p-2 bg-green-100 dark:bg-green-900/50 rounded-lg text-green-600 dark:text-green-400">
                                 <DollarSign size={24} />
                             </div>
                         </div>
-                        <p className="text-3xl font-bold text-gray-900 dark:text-white">{formatCurrency(displayedTotalSales)}</p>
-                        <p className="text-xs text-green-600 dark:text-green-400 mt-2 flex items-center gap-1">
-                            <TrendingUp size={12} /> {salesChangeLabel}
+                        <p className="text-3xl font-bold text-gray-900 dark:text-white">{formatCurrency(displayedDailySales)}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                            {displayedDailyTransactions} transactions today
+                        </p>
+                        <p className="text-xs text-green-600 dark:text-green-400 mt-1 flex items-center gap-1">
+                            <TrendingUp size={12} /> Month: {formatCurrency(displayedMonthlySales)}
                         </p>
                     </div>
                 </div>
@@ -174,7 +221,7 @@ export const Dashboard = () => {
                                 <AlertTriangle size={24} />
                             </div>
                         </div>
-                        <p className="text-3xl font-bold text-gray-900 dark:text-white">{lowStockItems?.length || 0}</p>
+                        <p className="text-3xl font-bold text-gray-900 dark:text-white">{activeLowStockItems?.length || 0}</p>
                         <p className="text-xs text-red-600 dark:text-red-400 mt-2">Items require attention</p>
                     </div>
                 </div>
@@ -202,15 +249,15 @@ export const Dashboard = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                {lowStockItems?.map(item => (
-                                    <tr key={item.product_id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                {activeLowStockItems?.map(item => (
+                                    <tr key={item.id || item.product_id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                                         <td className="p-4 font-medium text-gray-900 dark:text-white">{item.name}</td>
-                                        <td className="p-4 text-gray-500 dark:text-gray-400">{item.sku_code}</td>
-                                        <td className="p-4 text-red-600 dark:text-red-400 font-bold">{item.stock_quantity}</td>
-                                        <td className="p-4 text-gray-500 dark:text-gray-500">{item.reorder_level}</td>
+                                        <td className="p-4 text-gray-500 dark:text-gray-400">{item.skuCode || item.sku_code}</td>
+                                        <td className="p-4 text-red-600 dark:text-red-400 font-bold">{item.stock ?? item.stock_quantity ?? 0}</td>
+                                        <td className="p-4 text-gray-500 dark:text-gray-500">{item.reorderLevel ?? item.reorder_level ?? 0}</td>
                                     </tr>
                                 ))}
-                                {lowStockItems?.length === 0 && (
+                                {activeLowStockItems?.length === 0 && (
                                     <tr>
                                         <td colSpan={4} className="p-8 text-center text-gray-500 dark:text-gray-400">
                                             All inventory levels are healthy.

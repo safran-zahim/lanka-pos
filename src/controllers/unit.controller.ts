@@ -52,11 +52,14 @@ export const getUnits = async (req: Request, res: Response) => {
 
 export const updateUnit = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
+        const id = Number(req.params.id);
+        if (!Number.isFinite(id)) {
+            return res.status(400).json({ error: 'Invalid unit id' });
+        }
         const data = unitSchema.partial().parse(req.body);
 
         const unit = await prisma.unit.update({
-            where: { id: String(id) },
+            where: { id },
             data
         });
         res.json(unit);
@@ -68,9 +71,12 @@ export const updateUnit = async (req: Request, res: Response) => {
 
 export const deleteUnit = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
+        const id = Number(req.params.id);
+        if (!Number.isFinite(id)) {
+            return res.status(400).json({ error: 'Invalid unit id' });
+        }
         await prisma.unit.delete({
-            where: { id: String(id) },
+            where: { id },
         });
         res.status(204).send();
     } catch (error) {

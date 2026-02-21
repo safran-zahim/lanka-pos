@@ -2,9 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Search, User, Trash2, CreditCard, UserPlus, X, Award, Plus, Minus, Edit2, AlertCircle, StickyNote, Percent, Clock, PauseCircle, Calculator, Tag, RotateCcw } from 'lucide-react';
 import { useCartStore, type CartItem } from '../store/useCartStore';
 import { useAuthStore } from '../store/useAuthStore';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../db/db';
-import type { Transaction, TransactionItem, ProductBatch, Product } from '../db/db';
+import type { Transaction, TransactionItem, Product, Customer } from '../db/db';
 import { useToast } from '../store/useToast';
 import { CustomerModal } from '../components/admin/CustomerModal';
 import { ReceiptModal } from '../components/ReceiptModal';
@@ -18,10 +16,11 @@ import { ReturnModal } from '../components/ReturnModal';
 import { SelectBatchModal } from '../components/SelectBatchModal';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useCurrency } from '../hooks/useCurrency';
+import { getApiUrl } from '../config/api';
 
 export const POS = () => {
-    const { items, addItem, removeItem, updateQuantity, subtotal, total, tax, discount, roundOffDiscount, pointsRedeemed, toggleRedeemPoints, clearCart, customer, setCustomer, setManualDiscount, updateItem } = useCartStore();
-    const { user } = useAuthStore();
+    const { items, addItem, removeItem, updateQuantity, subtotal, total, tax, discount, roundOffDiscount, pointsRedeemed, manualDiscountMode, manualDiscountValue, toggleRedeemPoints, clearCart, customer, setCustomer, setManualDiscount, updateItem } = useCartStore();
+    const { user, token } = useAuthStore();
     const { addToast } = useToast();
     const { taxRate, taxEnabled, loyaltyEnabled, loyaltyEarnRate, loadSettings, updateSetting } = useSettingsStore();
     const { currencySymbol, formatCurrency } = useCurrency();
@@ -54,51 +53,188 @@ export const POS = () => {
     const [showReturnLookup, setShowReturnLookup] = useState(false);
     const [returnSearch, setReturnSearch] = useState('');
     const [selectedReturnTransaction, setSelectedReturnTransaction] = useState<Transaction | null>(null);
+    const [selectedReturnSaleId, setSelectedReturnSaleId] = useState<string | null>(null);
 
     // Batch Selection State
-    const [batchProduct, setBatchProduct] = useState<null | { productId: number; product: Product }>(null);
-    const [batchOptions, setBatchOptions] = useState<ProductBatch[]>([]);
+    const [batchProduct, setBatchProduct] = useState<null | { productId: number | string; product: Product }>(null);
+    const [batchOptions, setBatchOptions] = useState<any[]>([]);
+
+    const [products, setProducts] = useState<Product[]>([]);
+    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [brands, setBrands] = useState<{ id: string; name: string }[]>([]);
+    const [categoriesList, setCategoriesList] = useState<{ id: string; name: string }[]>([]);
+    const [recentSales, setRecentSales] = useState<any[]>([]);
 
     useEffect(() => {
         loadSettings();
     }, [loadSettings]);
 
-    // Fetch products
-    const products = useLiveQuery(
-        () => db.products.toArray()
-    );
-
-    // Fetch customers
-    const customers = useLiveQuery(
-        () => db.customers.toArray()
-    );
-
     const [selectedBrand, setSelectedBrand] = useState<string>('All');
 
-    // Fetch brands
-    const brands = useLiveQuery(
-        () => db.brands.toArray()
-    );
+    const [productBatches, setProductBatches] = useState<Record<string, any[]>>({});
 
-    // Fetch categories
-    const categoriesList = useLiveQuery(
-        () => db.categories.toArray()
-    );
+    useEffect(() => {
+        const loadReferenceData = async () => {
+            if (!token) return;
+            try {
+                const headers = { Authorization: `Bearer ${token}` };
+                const [productsRes, customersRes, brandsRes, categoriesRes, salesRes] = await Promise.all([
+                    fetch(getApiUrl('/products'), { headers }),
+                    fetch(getApiUrl('/customers'), { headers }),
+                    fetch(getApiUrl('/brands'), { headers }),
+                    fetch(getApiUrl('/categories'), { headers }),
+                    fetch(getApiUrl('/sales?limit=50'), { headers })
+                ]);
 
-    const productBatches = useLiveQuery(
-        () => db.product_batches.toArray()
-    );
+                if (productsRes.ok) {
+                    const productPayload = await productsRes.json();
+                    const mappedProducts = (productPayload || []).map((product: any): Product => ({
+                        product_id: product.id,
+                        sku_code: product.skuCode || '',
+                        name: product.name,
+                        description: product.description || '',
+                        category_id: product.categoryId || '',
+                        brand_id: product.brandId || '',
+                        unit_id: product.unitId || '',
+                        sub_category_id: '',
+                        cost_price: Number(product.costPrice || 0),
+                        retail_price: Number(product.retailPrice ?? product.price ?? 0),
+                        stock_quantity: Number(product.stock || 0),
+                        alert_quantity: Number(product.reorderLevel || 0),
+                        manage_stock: true,
+                        barcode: product.barcode || '',
+                        barcode_type: product.barcodeType || 'EAN13',
+                        image: undefined,
+                        tax_type: undefined,
+                        tax_amount: undefined,
+                        business_locations: [],
+                        reorder_level: Number(product.reorderLevel || 0)
+                    }));
+                    setProducts(mappedProducts);
+                }
 
-    // Recent sales for return lookup
-    const recentSales = useLiveQuery(
-        () => db.transactions.orderBy('timestamp').reverse().toArray()
-    );
+                if (customersRes.ok) {
+                    const customerPayload = await customersRes.json();
+                    const mappedCustomers = (customerPayload || []).map((c: any): Customer => ({
+                        customer_id: c.id,
+                        name: c.name,
+                        phone: c.phone,
+                        email: c.email || undefined,
+                        loyalty_points_balance: c.pointsBalance ?? 0,
+                        total_spend_to_date: Number(c.totalSpend || 0)
+                    }));
+                    setCustomers(mappedCustomers);
+                }
+
+                if (brandsRes.ok) {
+                    const brandsPayload = await brandsRes.json();
+                    setBrands((brandsPayload || []).map((b: any) => ({ id: b.id, name: b.name })));
+                }
+
+                if (categoriesRes.ok) {
+                    const categoriesPayload = await categoriesRes.json();
+                    setCategoriesList((categoriesPayload || []).map((c: any) => ({ id: c.id, name: c.name })));
+                }
+
+                if (salesRes.ok) {
+                    const salesPayload = await salesRes.json();
+                    setRecentSales(Array.isArray(salesPayload) ? salesPayload : salesPayload.data || []);
+                }
+            } catch (error) {
+                console.error('Failed to load POS reference data', error);
+            }
+        };
+
+        loadReferenceData();
+    }, [token]);
+
+    const refetchCustomers = async () => {
+        if (!token) return;
+        try {
+            const headers = { Authorization: `Bearer ${token}` };
+            const customersRes = await fetch(getApiUrl('/customers'), { headers });
+            if (customersRes.ok) {
+                const customerPayload = await customersRes.json();
+                const mappedCustomers = (customerPayload || []).map((c: any): Customer => ({
+                    customer_id: c.id,
+                    name: c.name,
+                    phone: c.phone,
+                    email: c.email || undefined,
+                    loyalty_points_balance: c.pointsBalance ?? 0,
+                    total_spend_to_date: Number(c.totalSpend || 0)
+                }));
+                setCustomers(mappedCustomers);
+            }
+        } catch (error) {
+            console.error('Failed to refetch customers', error);
+        }
+    };
+
+    const refetchSales = async () => {
+        if (!token) return;
+        try {
+            const headers = { Authorization: `Bearer ${token}` };
+            const salesRes = await fetch(getApiUrl('/sales?limit=50'), { headers });
+            if (salesRes.ok) {
+                const salesPayload = await salesRes.json();
+                setRecentSales(Array.isArray(salesPayload) ? salesPayload : salesPayload.data || []);
+            }
+        } catch (error) {
+            console.error('Failed to refetch sales', error);
+        }
+    };
+
+    const refetchProducts = async () => {
+        if (!token) return;
+        try {
+            const headers = { Authorization: `Bearer ${token}` };
+            const productsRes = await fetch(getApiUrl('/products'), { headers });
+            if (productsRes.ok) {
+                const productPayload = await productsRes.json();
+                const mappedProducts = (productPayload || []).map((product: any): Product => ({
+                    product_id: product.id,
+                    sku_code: product.skuCode || '',
+                    name: product.name,
+                    description: product.description || '',
+                    category_id: product.categoryId || '',
+                    brand_id: product.brandId || '',
+                    unit_id: product.unitId || '',
+                    sub_category_id: '',
+                    cost_price: Number(product.costPrice || 0),
+                    retail_price: Number(product.retailPrice ?? product.price ?? 0),
+                    stock_quantity: Number(product.stock || 0),
+                    alert_quantity: Number(product.reorderLevel || 0),
+                    manage_stock: true,
+                    barcode: product.barcode || '',
+                    barcode_type: product.barcodeType || 'EAN13',
+                    image: undefined,
+                    tax_type: undefined,
+                    tax_amount: undefined,
+                    business_locations: [],
+                    reorder_level: Number(product.reorderLevel || 0)
+                }));
+                setProducts(mappedProducts);
+            }
+        } catch (error) {
+            console.error('Failed to refetch products', error);
+        }
+    };
 
     const cartQtyByProduct = useMemo(() => {
-        const map = new Map<number, number>();
+        const map = new Map<number | string, number>();
         items.forEach(item => {
             if (!item.product_id) return;
             map.set(item.product_id, (map.get(item.product_id) || 0) + item.quantity);
+        });
+        return map;
+    }, [items]);
+
+    const cartQtyByBatch = useMemo(() => {
+        const map = new Map<string, number>();
+        items.forEach(item => {
+            if (!item.product_id || !item.batch_id) return;
+            const key = `${item.product_id}-${item.batch_id}`;
+            map.set(key, (map.get(key) || 0) + item.quantity);
         });
         return map;
     }, [items]);
@@ -129,34 +265,152 @@ export const POS = () => {
     const mergedCategories = Array.from(new Set([...categoryNames, ...productCategoryNames]));
     const categories = ['All', ...mergedCategories];
 
-    const handleAddProduct = (product: Product) => {
-        if (!product.product_id) return;
-        const batches = (productBatches || [])
-            .filter(b => b.product_id === product.product_id && b.quantity > 0)
-            .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    const loadProductBatches = async (productId: number | string) => {
+        if (!token) return [];
+        const key = String(productId);
+        // Always fetch fresh data from endpoint (no caching)
 
-        if (batches.length === 0) {
-            addItem(product);
+        try {
+            const response = await fetch(getApiUrl(`/products/${key}/batches`), {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!response.ok) return [];
+            const payload = await response.json();
+            // No caching - always fetch fresh data
+            return payload || [];
+        } catch (error) {
+            console.error('Failed to load product batches', error);
+            return [];
+        }
+    };
+
+    const getMaxBatchQuantity = async (item: CartItem) => {
+        if (!item.product_id || !item.batch_id) return null;
+        const batches = await loadProductBatches(item.product_id);
+        const batch = batches.find((b: any) => b.batch_id === item.batch_id);
+        if (!batch) return 0;
+        const dbStock = batch.quantity ?? batch.remaining_in_stock ?? batch.remaining_stock ?? 0;
+        const key = `${item.product_id}-${item.batch_id}`;
+        const cartQty = cartQtyByBatch.get(key) || 0;
+        const currentQty = item.quantity || 0;
+        return Math.max(0, dbStock - (cartQty - currentQty));
+    };
+
+    const [batchRemainingByKey, setBatchRemainingByKey] = useState<Record<string, number>>({});
+
+    useEffect(() => {
+        const loadBatchRemaining = async () => {
+            if (!token) return;
+            const batchItems = items.filter(item => item.product_id && item.batch_id);
+            if (batchItems.length === 0) {
+                setBatchRemainingByKey({});
+                return;
+            }
+
+            const uniqueProductIds = Array.from(new Set(batchItems.map(item => String(item.product_id))));
+
+            try {
+                const results = await Promise.all(
+                    uniqueProductIds.map((productId) => loadProductBatches(productId))
+                );
+
+                const nextRemaining: Record<string, number> = {};
+                results.forEach((batches) => {
+                    (batches || []).forEach((batch: any) => {
+                        const key = `${batch.product_id}-${batch.batch_id}`;
+                        const dbStock = batch.quantity ?? batch.remaining_in_stock ?? batch.remaining_stock ?? 0;
+                        const cartQty = cartQtyByBatch.get(key) || 0;
+                        nextRemaining[key] = Math.max(0, dbStock - cartQty);
+                    });
+                });
+
+                setBatchRemainingByKey(nextRemaining);
+            } catch (error) {
+                console.error('Failed to load batch stock for cart items', error);
+            }
+        };
+
+        loadBatchRemaining();
+    }, [items, token, cartQtyByBatch]);
+
+    const handleAddProduct = async (product: Product) => {
+        if (!product.product_id) return;
+
+        // 1. Check total available stock first
+        const currentCartQty = cartQtyByProduct.get(product.product_id) || 0;
+        const totalStockAvailable = Number(product.stock_quantity || 0) - currentCartQty;
+
+        if (totalStockAvailable <= 0) {
+            addToast('Product out of stock', 'error');
             return;
         }
 
-        if (batches.length === 1) {
-            const batch = batches[0];
+        const allBatches = (await loadProductBatches(product.product_id))
+            .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+        // Calculate how much of this product is already in cart per batch
+        const cartQtyByBatch = new Map<number, number>();
+        items.forEach(item => {
+            if (item.product_id === product.product_id && item.batch_id) {
+                const current = cartQtyByBatch.get(item.batch_id) || 0;
+                cartQtyByBatch.set(item.batch_id, current + item.quantity);
+            }
+        });
+
+        // Adjust batch quantities based on what's in cart (real-time stock)
+        const batchesWithRealTimeStock = allBatches.map((b: any) => {
+            const cartQty = cartQtyByBatch.get(b.batch_id) || 0;
+            // Use the database remaining stock (from API) and subtract cart qty
+            const dbStock = b.quantity ?? b.remaining_in_stock ?? b.remaining_stock ?? 0;
+
+            // Limit the available stock in this batch to the total available stock
+            // This handles cases where sum(positive_batches) > total_stock (due to negative batches)
+            const absoluteAvailableInBatch = Math.max(0, dbStock - cartQty);
+            const limitedBatchStock = Math.min(absoluteAvailableInBatch, totalStockAvailable);
+
+            return {
+                ...b,
+                remaining_in_stock: limitedBatchStock,
+                original_quantity: dbStock,
+                purchased_quantity: b.purchased_quantity
+            };
+        });
+
+        // Filter: ONLY keep batches with remaining stock > 0
+        const availableBatches = batchesWithRealTimeStock.filter((b: any) =>
+            b.remaining_in_stock > 0
+        );
+
+        if (availableBatches.length === 0) {
+            addToast('Product out of stock', 'error');
+            return;
+        }
+
+        // If all available batches have the same price, auto-select the oldest one
+        const uniquePrices = new Set(availableBatches.map((b: any) => b.retail_price));
+        if (uniquePrices.size === 1) {
+            const batch = availableBatches[0];
             addItem({ ...product, retail_price: batch.retail_price, batch_id: batch.batch_id });
             return;
         }
 
+        // Multiple prices - show selection modal
         setBatchProduct({ productId: product.product_id, product });
-        setBatchOptions(batches);
+        setBatchOptions(availableBatches);
     };
 
     const filteredSales = recentSales
-        ?.filter(t => t.type === 'sale')
-        .filter(t =>
-            !returnSearch
-                ? true
-                : t.transaction_id?.toString().includes(returnSearch) || t.customer_id?.toString().includes(returnSearch)
+        ?.filter((t) => !returnSearch
+            ? true
+            : String(t.id || t.transaction_id || '').includes(returnSearch) || String(t.customerId || t.customer_id || '').includes(returnSearch)
         ) || [];
+
+    // Refetch sales when return lookup opens
+    useEffect(() => {
+        if (showReturnLookup) {
+            refetchSales();
+        }
+    }, [showReturnLookup]);
 
     const handlePayment = async (paymentDetails?: { cash: number, card: number }) => {
         if (items.length === 0) return;
@@ -164,102 +418,160 @@ export const POS = () => {
             addToast("No user logged in!", 'error');
             return;
         }
+        if (!token) {
+            addToast("Missing auth token", 'error');
+            return;
+        }
 
         setIsProcessing(true);
         try {
-            // 1. Create Transaction
+            const batchItems = items.filter(item => item.product_id && item.batch_id);
+            if (batchItems.length > 0) {
+                const qtyByBatch = new Map<string, number>();
+                batchItems.forEach(item => {
+                    const key = `${item.product_id}-${item.batch_id}`;
+                    qtyByBatch.set(key, (qtyByBatch.get(key) || 0) + item.quantity);
+                });
+
+                const uniqueProductIds = Array.from(new Set(batchItems.map(item => String(item.product_id))));
+                const batchResults = await Promise.all(
+                    uniqueProductIds.map((productId) => loadProductBatches(productId))
+                );
+
+                const remainingByBatch = new Map<string, number>();
+                batchResults.forEach((batches) => {
+                    (batches || []).forEach((batch: any) => {
+                        const key = `${batch.product_id}-${batch.batch_id}`;
+                        const dbStock = batch.quantity ?? batch.remaining_in_stock ?? batch.remaining_stock ?? 0;
+                        remainingByBatch.set(key, dbStock);
+                    });
+                });
+
+                for (const [key, qty] of qtyByBatch.entries()) {
+                    const remaining = remainingByBatch.get(key) ?? 0;
+                    if (qty > remaining) {
+                        addToast('Batch stock is not enough for this item', 'error');
+                        return;
+                    }
+                }
+            }
+
             const finalTotal = total + tax - roundOffDiscount;
-            const transactionData: Transaction = {
-                user_id: user.user_id!,
-                customer_id: customer?.customer_id,
-                timestamp: new Date(),
-                total_amount: finalTotal, // Store final total paid
-                tax_amount: tax,
-                round_off_discount: roundOffDiscount,
-                payment_method: paymentDetails ? 'split' : 'cash', // Default for now
+            const pointsEarned = customer && loyaltyEnabled ? Math.floor(finalTotal * loyaltyEarnRate) : 0;
+            const pointsRedeemedValue = customer && loyaltyEnabled ? pointsRedeemed : 0;
+
+            const response = await fetch(getApiUrl('/sales/checkout'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    staff_id: user.user_id,
+                    customer_id: customer?.customer_id,
+                    payment_method: paymentDetails ? 'split' : 'cash',
+                    items: items.map(item => ({
+                        product_id: item.product_id,
+                        quantity: item.quantity,
+                        unit_price: item.retail_price,
+                        batch_id: item.batch_id
+                    })),
+                    totals: {
+                        subtotal,
+                        tax,
+                        discount,
+                        grand_total: finalTotal,
+                        round_off_discount: roundOffDiscount
+                    },
+                    loyalty: customer ? {
+                        points_earned: pointsEarned,
+                        points_redeemed: pointsRedeemedValue
+                    } : undefined
+                })
+            });
+
+            if (!response.ok) {
+                const errorPayload = await response.json().catch(() => ({}));
+                throw new Error(errorPayload.error || 'Checkout failed');
+            }
+
+            const sale = await response.json();
+
+            setLastTransaction({
+                transaction_id: sale.id,
+                user_id: user.user_id || user.username || 'system',
+                customer_id: sale.customerId || customer?.customer_id,
+                timestamp: new Date(sale.createdAt || new Date()),
+                total_amount: Number(sale.total || 0),
+                tax_amount: Number(sale.tax || 0),
+                discount: Number(sale.discount || 0),
+                round_off_discount: Number(sale.roundOffDiscount || 0),
+                payment_method: (sale.paymentMethod || (paymentDetails ? 'split' : 'cash')),
                 status: 'completed',
                 type: 'sale',
                 payment_details: paymentDetails ? {
                     cashAmount: paymentDetails.cash,
                     cardAmount: paymentDetails.card
                 } : undefined
-            };
+            });
 
-            const transactionId = await db.transactions.add(transactionData);
-
-            // 2. Create Transaction Items & Update Stock
-            const transactionItems = items.map(item => ({
-                transaction_id: transactionId as number,
-                product_id: item.product_id!,
-                batch_id: item.batch_id,
+            setLastItems((sale.items || []).map((item: any) => ({
+                transaction_id: sale.id,
+                product_id: item.productId,
                 quantity: item.quantity,
-                price_at_sale: item.retail_price,
-                note: item.note
-            }));
-            await db.transaction_items.bulkAdd(transactionItems);
-
-            // Update Stock
-            for (const item of items) {
-                const product = await db.products.get(item.product_id!);
-                if (product) {
-                    await db.products.update(item.product_id!, {
-                        stock_quantity: product.stock_quantity - item.quantity
-                    });
-                }
-                if (item.batch_id) {
-                    const batch = await db.product_batches.get(item.batch_id);
-                    if (batch) {
-                        await db.product_batches.update(item.batch_id, {
-                            quantity: Math.max(0, batch.quantity - item.quantity)
-                        });
-                    }
-                }
-            }
-
-            // 3. Update Customer Loyalty
-            if (customer) {
-                const pointsEarned = loyaltyEnabled ? Math.floor(finalTotal * loyaltyEarnRate) : 0;
-                const newBalance = customer.loyalty_points_balance - pointsRedeemed + pointsEarned;
-                const newTotalSpend = customer.total_spend_to_date + finalTotal;
-
-                await db.customers.update(customer.customer_id!, {
-                    loyalty_points_balance: newBalance,
-                    total_spend_to_date: newTotalSpend
-                });
-
-                if (pointsEarned > 0) {
-                    await db.customer_points.add({
-                        customer_id: customer.customer_id!,
-                        timestamp: new Date(),
-                        type: 'earn',
-                        points: pointsEarned,
-                        transaction_id: transactionId as number
-                    });
-                }
-                if (pointsRedeemed > 0) {
-                    await db.customer_points.add({
-                        customer_id: customer.customer_id!,
-                        timestamp: new Date(),
-                        type: 'redeem',
-                        points: -pointsRedeemed,
-                        transaction_id: transactionId as number
-                    });
-                }
-            }
-
-            // Prepare Receipt Data
-            setLastTransaction({ ...transactionData, transaction_id: transactionId as number });
-            setLastItems(items.map(i => ({
-                ...i,
-                transaction_id: transactionId as number,
-                price_at_sale: i.retail_price,
-                product_id: i.product_id!,
-                note: i.note
+                price_at_sale: Number(item.price || 0),
+                note: '',
+                name: productMap.get(item.productId)?.name || 'Unknown Product'
             })));
+
+            if (token) {
+                try {
+                    const productsResponse = await fetch(getApiUrl('/products'), {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    if (productsResponse.ok) {
+                        const productPayload = await productsResponse.json();
+                        const mappedProducts = (productPayload || []).map((product: any): Product => ({
+                            product_id: product.id,
+                            sku_code: product.skuCode || '',
+                            name: product.name,
+                            description: product.description || '',
+                            category_id: product.categoryId || '',
+                            brand_id: product.brandId || '',
+                            unit_id: product.unitId || '',
+                            sub_category_id: '',
+                            cost_price: Number(product.costPrice || 0),
+                            retail_price: Number(product.retailPrice ?? product.price ?? 0),
+                            stock_quantity: Number(product.stock || 0),
+                            alert_quantity: Number(product.reorderLevel || 0),
+                            manage_stock: true,
+                            barcode: product.barcode || '',
+                            barcode_type: product.barcodeType || 'EAN13',
+                            image: undefined,
+                            tax_type: undefined,
+                            tax_amount: undefined,
+                            business_locations: [],
+                            reorder_level: Number(product.reorderLevel || 0)
+                        }));
+                        setProducts(mappedProducts);
+                    }
+                } catch (error) {
+                    console.error('Failed to refresh products after checkout', error);
+                }
+            }
+
+            // Clear cart and customer immediately after successful payment
+            clearCart();
+            setCustomer(null);
+            setProductBatches({}); // Clear batch cache to ensure fresh data on next sale
+            addToast("Payment successful!", 'success');
 
         } catch (error) {
             console.error("Payment failed", error);
-            addToast("Payment failed. Please try again.", 'error');
+            const message = error instanceof Error && error.message
+                ? error.message
+                : "Payment failed. Please try again.";
+            addToast(message, 'error');
         } finally {
             setIsProcessing(false);
         }
@@ -268,23 +580,38 @@ export const POS = () => {
     const handleReceiptClose = () => {
         setLastTransaction(null);
         setLastItems([]);
-        clearCart();
     };
 
     const handleConfirmHold = async (note: string) => {
         if (items.length === 0) return;
 
         try {
-            await db.held_sales.add({
-                customer_id: customer?.customer_id,
-                items: items.map(i => ({
-                    product: { ...i }, // Store copy of product state
-                    quantity: i.quantity,
-                    note: i.note
-                })),
-                timestamp: new Date(),
-                note
+            if (!token) {
+                addToast("Missing auth token", 'error');
+                return;
+            }
+
+            const response = await fetch(getApiUrl('/sales/held'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    customer_id: customer?.customer_id,
+                    items: items.map(i => ({
+                        product: { ...i },
+                        quantity: i.quantity,
+                        note: i.note
+                    })),
+                    note
+                })
             });
+
+            if (!response.ok) {
+                const errorPayload = await response.json().catch(() => ({}));
+                throw new Error(errorPayload.error || 'Failed to hold sale');
+            }
             clearCart();
             setCustomer(null);
             setShowHoldModal(false);
@@ -301,28 +628,28 @@ export const POS = () => {
             if (!confirm("Current cart will be replaced. Continue?")) return;
         }
 
-        // Restore Items
-        // We need to fetch customer if it exists
-        let restoredCustomer = null;
-        if (sale.customer_id) {
-            restoredCustomer = await db.customers.get(sale.customer_id);
-        }
-
-        // The items in HeldSale are { product: Product, quantity: number }
-        // CartItem extends Product and has quantity.
-        // So we can map them directly.
-        const cartItems = sale.items.map((i: any) => ({
+        const cartItems = (sale.items || []).map((i: any) => ({
             ...i.product,
             quantity: i.quantity,
             note: i.note
         }));
 
+        const restoredCustomer = sale.customerId
+            ? customers.find(c => String(c.customer_id) === String(sale.customerId))
+            : null;
+
         // Use the new setCart function
         // @ts-ignore - store types might not update immediately in IDE but runtime works
         useCartStore.getState().setCart(cartItems, restoredCustomer || null, 0);
 
-        // Delete from held sales
-        await db.held_sales.delete(sale.id);
+        if (token) {
+            await fetch(getApiUrl(`/sales/held/${sale.id}`), {
+                method: 'DELETE',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+        }
 
         setShowHeldSalesList(false);
         addToast("Sale restored!", 'success');
@@ -366,7 +693,7 @@ export const POS = () => {
                         {categories.map(cat => (
                             <button
                                 key={cat}
-                                onClick={() => setSelectedCategory(cat)}
+                                onClick={() => setSelectedCategory(String(cat))}
                                 className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-semibold transition-all ${selectedCategory === cat
                                     ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
                                     : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-600 border-2 border-gray-200 dark:border-gray-600'
@@ -440,10 +767,10 @@ export const POS = () => {
                         <button
                             onClick={() => setShowReturnLookup(true)}
                             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-300 rounded-lg border border-orange-200 dark:border-orange-800 hover:bg-orange-100 dark:hover:bg-orange-900/50 transition-colors"
-                            title="Process Return"
+                            title="History"
                         >
                             <RotateCcw size={14} />
-                            Return
+                            History
                         </button>
                     </div>
                 </div>
@@ -528,11 +855,16 @@ export const POS = () => {
                         const manageStock = product?.manage_stock ?? item.manage_stock;
                         const baseStock = product?.stock_quantity ?? item.stock_quantity;
                         const cartQty = item.product_id ? (cartQtyByProduct.get(item.product_id) || 0) : 0;
+                        const batchKey = item.batch_id ? `${item.product_id}-${item.batch_id}` : null;
+                        const batchRemaining = batchKey ? batchRemainingByKey[batchKey] : undefined;
                         const remainingStock = manageStock ? baseStock - cartQty : null;
+                        const effectiveRemaining = typeof batchRemaining === 'number' ? batchRemaining : remainingStock;
                         const remainingLabel = manageStock
-                            ? (remainingStock !== null && remainingStock <= 0 ? 'Remaining: 0' : `Remaining: ${remainingStock}`)
+                            ? (typeof batchRemaining === 'number'
+                                ? `Batch Remaining: ${batchRemaining}`
+                                : (remainingStock !== null && remainingStock <= 0 ? 'Remaining: 0' : `Remaining: ${remainingStock}`))
                             : 'Remaining: Unlimited';
-                        const remainingClass = remainingStock !== null && remainingStock <= 0
+                        const remainingClass = effectiveRemaining !== null && effectiveRemaining !== undefined && effectiveRemaining <= 0
                             ? 'text-red-600 dark:text-red-400'
                             : 'text-emerald-600 dark:text-emerald-400';
                         return (
@@ -564,7 +896,7 @@ export const POS = () => {
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                updateQuantity(item.product_id!, item.quantity - 1, item.batch_id);
+                                                updateQuantity(Number(item.product_id!), item.quantity - 1, item.batch_id);
                                             }}
                                             className="p-1 hover:text-red-500 hover:bg-white dark:hover:bg-gray-600 rounded-md transition-all"
                                         >
@@ -572,9 +904,16 @@ export const POS = () => {
                                         </button>
                                         <span className="w-8 text-center font-bold text-sm text-gray-800 dark:text-gray-200">{item.quantity}</span>
                                         <button
-                                            onClick={(e) => {
+                                            onClick={async (e) => {
                                                 e.stopPropagation();
-                                                updateQuantity(item.product_id!, item.quantity + 1, item.batch_id);
+                                                if (item.batch_id) {
+                                                    const maxQty = await getMaxBatchQuantity(item);
+                                                    if (maxQty !== null && item.quantity + 1 > maxQty) {
+                                                        addToast('Batch stock is not enough for this item', 'error');
+                                                        return;
+                                                    }
+                                                }
+                                                updateQuantity(Number(item.product_id!), item.quantity + 1, item.batch_id);
                                             }}
                                             className="p-1 hover:text-green-500 hover:bg-white dark:hover:bg-gray-600 rounded-md transition-all"
                                         >
@@ -597,7 +936,7 @@ export const POS = () => {
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                removeItem(item.product_id!, item.batch_id);
+                                                removeItem(Number(item.product_id!), item.batch_id);
                                             }}
                                             className="text-gray-400 hover:text-red-500 transition-colors"
                                         >
@@ -625,7 +964,11 @@ export const POS = () => {
                         </div>
                         {discount > 0 && (
                             <div className="flex justify-between text-green-600 dark:text-green-400 text-sm font-medium">
-                                <span>Discount ({pointsRedeemed} pts)</span>
+                                <span>
+                                    {manualDiscountMode === 'percent' && manualDiscountValue > 0
+                                        ? `Discount (${manualDiscountValue}%)`
+                                        : 'Discount'}
+                                </span>
                                 <span>-{currencySymbol}{discount.toFixed(2)}</span>
                             </div>
                         )}
@@ -635,19 +978,21 @@ export const POS = () => {
                                 <span>-{currencySymbol}{roundOffDiscount.toFixed(2)}</span>
                             </div>
                         )}
-                        <div className="flex justify-between text-gray-600 dark:text-gray-400 text-sm">
-                            <div className="flex items-center gap-2">
-                                <span>Tax {taxEnabled ? `(${(taxRate * 100).toFixed(2)}%)` : '(Disabled)'}</span>
-                                <button
-                                    onClick={() => setShowTaxModal(true)}
-                                    className="text-blue-600 dark:text-blue-400 hover:underline text-xs flex items-center gap-1"
-                                >
-                                    <Percent size={12} />
-                                    Edit
-                                </button>
+                        {taxEnabled && (
+                            <div className="flex justify-between text-gray-600 dark:text-gray-400 text-sm">
+                                <div className="flex items-center gap-2">
+                                    <span>Tax ({(taxRate * 100).toFixed(2)}%)</span>
+                                    <button
+                                        onClick={() => setShowTaxModal(true)}
+                                        className="text-blue-600 dark:text-blue-400 hover:underline text-xs flex items-center gap-1"
+                                    >
+                                        <Percent size={12} />
+                                        Edit
+                                    </button>
+                                </div>
+                                <span>{formatCurrency(tax)}</span>
                             </div>
-                            <span>{formatCurrency(tax)}</span>
-                        </div>
+                        )}
                         <div className="flex justify-between items-end border-t border-gray-100 dark:border-gray-700 pt-2 mt-2">
                             <span className="text-lg font-bold text-gray-800 dark:text-white">Total</span>
                             <span className="text-3xl font-bold text-blue-600 dark:text-blue-400">{formatCurrency(total + tax - roundOffDiscount)}</span>
@@ -727,8 +1072,21 @@ export const POS = () => {
             {showCustomerModal && (
                 <CustomerModal
                     onClose={() => setShowCustomerModal(false)}
-                    onSuccess={() => {
+                    onSuccess={(createdCustomer) => {
+                        refetchCustomers();
+                        if (createdCustomer) {
+                            // Auto-select the newly created customer
+                            setCustomer({
+                                customer_id: createdCustomer.id,
+                                name: createdCustomer.name,
+                                phone: createdCustomer.phone,
+                                email: createdCustomer.email || undefined,
+                                loyalty_points_balance: createdCustomer.pointsBalance ?? 0,
+                                total_spend_to_date: Number(createdCustomer.totalSpend || 0)
+                            });
+                        }
                         addToast("Customer Added!", 'success');
+                        setShowCustomerModal(false);
                     }}
                 />
             )}
@@ -776,8 +1134,8 @@ export const POS = () => {
             {showDiscountModal && (
                 <DiscountModal
                     subtotal={subtotal}
-                    onConfirm={(amount) => {
-                        setManualDiscount(amount);
+                    onConfirm={(discount) => {
+                        setManualDiscount(discount);
                         setShowDiscountModal(false);
                     }}
                     onClose={() => setShowDiscountModal(false)}
@@ -788,8 +1146,15 @@ export const POS = () => {
             {editingItem && (
                 <EditCartItemModal
                     item={editingItem}
-                    onConfirm={(updates) => {
-                        updateItem(editingItem.product_id!, {
+                    onConfirm={async (updates) => {
+                        if (editingItem.batch_id && typeof updates.quantity === 'number') {
+                            const maxQty = await getMaxBatchQuantity(editingItem);
+                            if (maxQty !== null && updates.quantity > maxQty) {
+                                addToast('Batch stock is not enough for this item', 'error');
+                                return;
+                            }
+                        }
+                        updateItem(Number(editingItem.product_id!), {
                             price: updates.price,
                             quantity: updates.quantity,
                             note: updates.note
@@ -813,12 +1178,24 @@ export const POS = () => {
                 />
             )}
 
-            {batchProduct && (
+            {batchProduct && batchOptions.length > 0 && (
                 <SelectBatchModal
+                    key={`${batchProduct.product.product_id}-${Date.now()}`}
                     product={batchProduct.product}
                     batches={batchOptions}
-                    onSelect={(batch) => {
-                        addItem({ ...batchProduct.product, retail_price: batch.retail_price, batch_id: batch.batch_id });
+                    onSelect={(batch, quantity) => {
+                        // Add items with the selected quantity
+                        const productWithBatch = {
+                            ...batchProduct.product,
+                            retail_price: batch.retail_price,
+                            batch_id: batch.batch_id
+                        };
+
+                        // Add the specified quantity
+                        for (let i = 0; i < quantity; i++) {
+                            addItem(productWithBatch);
+                        }
+
                         setBatchProduct(null);
                         setBatchOptions([]);
                     }}
@@ -834,8 +1211,8 @@ export const POS = () => {
                     <div className="bg-white dark:bg-gray-800 w-[560px] max-h-[80vh] rounded-xl border border-gray-200 dark:border-gray-700 shadow-xl flex flex-col">
                         <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                             <div>
-                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Find Sale for Return</h3>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">Search by transaction or customer ID</p>
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Sales History</h3>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Search history by transaction or customer ID</p>
                             </div>
                             <button
                                 onClick={() => setShowReturnLookup(false)}
@@ -849,7 +1226,7 @@ export const POS = () => {
                                 <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
                                 <input
                                     type="text"
-                                    placeholder="Search by sale ID or customer ID..."
+                                    placeholder="Search history by sale ID or customer ID..."
                                     className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white rounded-lg pl-9 pr-3 py-2 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     value={returnSearch}
                                     onChange={(e) => setReturnSearch(e.target.value)}
@@ -862,11 +1239,13 @@ export const POS = () => {
                                     <div className="text-center text-sm text-gray-500 py-8">No sales found.</div>
                                 )}
                                 {filteredSales.slice(0, 20).map((txn) => {
-                                    const customerName = customers?.find(c => c.customer_id === txn.customer_id)?.name;
+                                    const saleId = String(txn.id || txn.transaction_id || '');
+                                    const customerName = customers?.find(c => String(c.customer_id) === String(txn.customerId || txn.customer_id))?.name;
                                     return (
                                         <button
-                                            key={txn.transaction_id}
+                                            key={saleId}
                                             onClick={() => {
+                                                setSelectedReturnSaleId(saleId);
                                                 setSelectedReturnTransaction(txn);
                                                 setShowReturnLookup(false);
                                                 setReturnSearch('');
@@ -874,10 +1253,10 @@ export const POS = () => {
                                             className="w-full text-left p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center justify-between"
                                         >
                                             <div>
-                                                <div className="font-semibold text-gray-900 dark:text-white">#{txn.transaction_id} • {customerName || 'Walk-in'}</div>
-                                                <div className="text-xs text-gray-500 dark:text-gray-400">{new Date(txn.timestamp).toLocaleString()}</div>
+                                                <div className="font-semibold text-gray-900 dark:text-white">#{saleId} • {customerName || 'Walk-in'}</div>
+                                                <div className="text-xs text-gray-500 dark:text-gray-400">{new Date(txn.createdAt || txn.timestamp).toLocaleString()}</div>
                                             </div>
-                                            <div className="font-bold text-gray-900 dark:text-white">{formatCurrency(txn.total_amount)}</div>
+                                            <div className="font-bold text-gray-900 dark:text-white">{formatCurrency(Number(txn.total || txn.total_amount || 0))}</div>
                                         </button>
                                     );
                                 })}
@@ -887,12 +1266,18 @@ export const POS = () => {
                 </div>
             )}
 
-            {selectedReturnTransaction && (
+            {selectedReturnSaleId && (
                 <ReturnModal
-                    transaction={selectedReturnTransaction}
-                    onClose={() => setSelectedReturnTransaction(null)}
-                    onSuccess={() => {
+                    saleId={selectedReturnSaleId}
+                    onClose={() => {
+                        setSelectedReturnSaleId(null);
                         setSelectedReturnTransaction(null);
+                    }}
+                    onSuccess={() => {
+                        refetchSales();
+                        refetchProducts();
+                        setProductBatches({});
+                        setBatchRemainingByKey({});
                         addToast('Return processed', 'success');
                     }}
                 />

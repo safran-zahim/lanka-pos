@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { X, Save, Settings, Trash2, RefreshCw } from 'lucide-react';
-import { db } from '../../db/db';
-import { useLiveQuery } from 'dexie-react-hooks';
 import type { Product } from '../../db/db';
 import { CategoryManager } from '../CategoryManager';
 import { useToast } from '../../store/useToast';
+import { useAuthStore } from '../../store/useAuthStore';
+import { getApiUrl } from '../../config/api';
 
 interface EditProductModalProps {
     product: Product;
@@ -22,23 +22,34 @@ export const EditProductModal = ({ product, onClose, onSuccess }: EditProductMod
     });
 
     const [showCategoryManager, setShowCategoryManager] = useState(false);
-    const categories = useLiveQuery(() => db.categories.toArray());
-
-    const selectedCategoryObj = categories?.find(c => c.name === formData.category_id);
-    const subCategories = useLiveQuery(
-        () => selectedCategoryObj ? db.sub_categories.where('category_id').equals(selectedCategoryObj.category_id!).toArray() : [],
-        [selectedCategoryObj]
-    );
-
-    const products = useLiveQuery(() => db.products.toArray());
     const { addToast } = useToast();
+    const token = useAuthStore((state) => state.token);
+    const [categories, setCategories] = useState<any[]>([]);
+    const [products, setProducts] = useState<any[]>([]);
+    const [subCategories, setSubCategories] = useState<any[]>([]);
+
+    useEffect(() => {
+        const loadLookups = async () => {
+            if (!token) return;
+            try {
+                const [categoriesRes, productsRes] = await Promise.all([
+                    fetch(getApiUrl('/categories'), { headers: { Authorization: `Bearer ${token}` } }),
+                    fetch(getApiUrl('/products'), { headers: { Authorization: `Bearer ${token}` } })
+                ]);
+                if (categoriesRes.ok) setCategories(await categoriesRes.json());
+                if (productsRes.ok) setProducts(await productsRes.json());
+            } catch (error) {
+                console.error('Failed to load lookups', error);
+            }
+        };
+
+        loadLookups();
+    }, [token]);
 
     const handleGenerateSKU = () => {
-        if (!products) return;
-
         // Find highest numeric SKU
-        const numericSKUs = products
-            .map(p => parseInt(p.sku_code))
+        const numericSKUs = (products || [])
+            .map(p => parseInt(p.skuCode || p.sku_code))
             .filter(n => !isNaN(n));
 
         const nextSKU = numericSKUs.length > 0
@@ -54,24 +65,46 @@ export const EditProductModal = ({ product, onClose, onSuccess }: EditProductMod
             setFormData({
                 sku_code: product.sku_code,
                 name: product.name,
-                category_id: product.category_id,
-                sub_category_id: product.sub_category_id || '',
+                category_id: String(product.category_id || ''),
+                sub_category_id: String(product.sub_category_id || ''),
                 reorder_level: product.reorder_level.toString()
             });
         }
     }, [product]);
 
+    useEffect(() => {
+        if (!formData.category_id) {
+            setSubCategories([]);
+            return;
+        }
+        const selected = categories.find((category) => category.id === formData.category_id);
+        setSubCategories(selected?.subCategories || []);
+    }, [categories, formData.category_id]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await db.products.update(product.product_id!, {
-                sku_code: formData.sku_code,
-                name: formData.name,
-                category_id: formData.category_id,
-                sub_category_id: formData.sub_category_id,
-                reorder_level: parseInt(formData.reorder_level) || 0
-                // Note: stock_quantity is explicitly excluded here
+            if (!token) {
+                addToast('Missing auth token', 'error');
+                return;
+            }
+            const response = await fetch(getApiUrl(`/products/${product.product_id}`), {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    skuCode: formData.sku_code,
+                    name: formData.name,
+                    categoryId: formData.category_id || undefined,
+                    reorderLevel: parseFloat(formData.reorder_level) || 0
+                })
             });
+            if (!response.ok) {
+                const errorPayload = await response.json().catch(() => ({}));
+                throw new Error(errorPayload.error || 'Failed to update product');
+            }
             onSuccess();
             onClose();
         } catch (error) {
@@ -83,7 +116,18 @@ export const EditProductModal = ({ product, onClose, onSuccess }: EditProductMod
     const handleDelete = async () => {
         if (confirm(`Are you sure you want to delete "${product.name}"? This action cannot be undone.`)) {
             try {
-                await db.products.delete(product.product_id!);
+                if (!token) {
+                    addToast('Missing auth token', 'error');
+                    return;
+                }
+                const response = await fetch(getApiUrl(`/products/${product.product_id}`), {
+                    method: 'DELETE',
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!response.ok) {
+                    const errorPayload = await response.json().catch(() => ({}));
+                    throw new Error(errorPayload.error || 'Failed to delete product');
+                }
                 onSuccess();
                 onClose();
             } catch (error) {
@@ -142,7 +186,7 @@ export const EditProductModal = ({ product, onClose, onSuccess }: EditProductMod
                                         })}
                                     >
                                         <option value="">Select Category</option>
-                                        {categories?.map(c => <option key={c.category_id} value={c.name}>{c.name}</option>)}
+                                        {categories?.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                     </select>
                                     <button
                                         type="button"
@@ -154,7 +198,6 @@ export const EditProductModal = ({ product, onClose, onSuccess }: EditProductMod
                                     </button>
                                 </div>
                             </div>
-                            {/* SubCategory Selection */}
                             {formData.category_id && (
                                 <div className="col-span-2">
                                     <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Sub Category</label>
@@ -164,9 +207,10 @@ export const EditProductModal = ({ product, onClose, onSuccess }: EditProductMod
                                         onChange={e => setFormData({ ...formData, sub_category_id: e.target.value })}
                                     >
                                         <option value="">Select Sub Category</option>
-                                        {subCategories?.map(sub => (
-                                            <option key={sub.sub_category_id} value={sub.name}>{sub.name}</option>
+                                        {subCategories?.map((sub) => (
+                                            <option key={sub.id} value={sub.id}>{sub.name}</option>
                                         ))}
+                                        {subCategories?.length === 0 && <option disabled>No subcategories available</option>}
                                     </select>
                                 </div>
                             )}
@@ -189,6 +233,7 @@ export const EditProductModal = ({ product, onClose, onSuccess }: EditProductMod
                                 <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Reorder Level</label>
                                 <input
                                     type="number"
+                                    step="any"
                                     className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none border border-gray-300 dark:border-transparent"
                                     value={formData.reorder_level}
                                     onChange={e => setFormData({ ...formData, reorder_level: e.target.value })}

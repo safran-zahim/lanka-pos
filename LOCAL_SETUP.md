@@ -192,6 +192,8 @@ Create a folder with:
 - Add your staff members
 - Configure receipt settings
 - Test the POS workflow
+- Verify batch remaining stock in checkout for batch items
+- Test a return to confirm refund receipt labels and parent sale reference
 
 ---
 
