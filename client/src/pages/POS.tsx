@@ -280,7 +280,7 @@ export const POS = () => {
         // Always fetch fresh data from endpoint (no caching)
 
         try {
-            const response = await fetch(getApiUrl(`/ products / ${key}/batches`), {
+            const response = await fetch(getApiUrl(`/products/${key}/batches`), {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!response.ok) return [];
@@ -733,40 +733,12 @@ export const POS = () => {
                                 ? 'text-red-600 dark:text-red-400'
                                 : 'text-emerald-600 dark:text-emerald-400';
                             return (
-                                <div
+                                <button
                                     key={product.product_id}
-                                    className={`bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 p-3 rounded-xl flex flex-col justify-between h-28 transition-all shadow-sm border relative group ${isLowStock ? 'border-red-300 dark:border-red-800 ring-1 ring-red-100 dark:ring-red-900/30' : 'border-gray-200 dark:border-gray-700'}`}
+                                    onClick={() => handleAddProduct(product)}
+                                    className={`bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 p-3 rounded-xl flex flex-col justify-between h-28 transition-all active:scale-95 shadow-sm border ${isLowStock ? 'border-red-300 dark:border-red-800 ring-1 ring-red-100 dark:ring-red-900/30' : 'border-gray-200 dark:border-gray-700'}`}
                                 >
-                                    {/* Action Buttons Overlay */}
-                                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                const loadInfo = async () => {
-                                                    const batches = await loadProductBatches(product.product_id!);
-                                                    setBatchProduct({ productId: product.product_id!, product });
-                                                    setBatchOptions(batches);
-                                                };
-                                                loadInfo();
-                                            }}
-                                            className="p-1.5 bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors shadow-sm"
-                                            title="View Batches & Stock"
-                                        >
-                                            <Layers size={14} />
-                                        </button>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleAddProduct(product);
-                                            }}
-                                            className="p-1.5 bg-green-50 dark:bg-green-900/50 text-green-600 dark:text-green-400 rounded-lg hover:bg-green-100 dark:hover:bg-green-900 transition-colors shadow-sm"
-                                            title="Add to Cart"
-                                        >
-                                            <Plus size={14} />
-                                        </button>
-                                    </div>
-
-                                    <div className="w-full text-left cursor-pointer" onClick={() => handleAddProduct(product)}>
+                                    <div className="w-full text-left">
                                         <div className="font-medium text-sm leading-tight line-clamp-2 text-gray-900 dark:text-white mb-1">
                                             {product.name} <span className="text-xs text-gray-500">({product.sku_code})</span>
                                         </div>
@@ -780,11 +752,11 @@ export const POS = () => {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="w-full flex justify-between items-end mt-1 cursor-pointer" onClick={() => handleAddProduct(product)}>
+                                    <div className="w-full flex justify-between items-end mt-1">
                                         <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[50%]">{product.brand_id}</div>
                                         <div className="text-blue-600 dark:text-blue-400 font-bold text-sm">{formatCurrency(product.retail_price)}</div>
                                     </div>
-                                </div>
+                                </button>
                             );
                         })}
 
@@ -1090,9 +1062,18 @@ export const POS = () => {
                         </button>
 
                         <button
+                            onClick={() => setShowSplitPaymentModal(true)}
+                            disabled={isProcessing || items.length === 0}
+                            className="flex flex-col items-center justify-center py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95"
+                        >
+                            <CardIcon size={20} />
+                            <span className="text-[10px] uppercase font-bold mt-1">Split</span>
+                        </button>
+
+                        <button
                             onClick={() => handlePayment()}
                             disabled={isProcessing || items.length === 0}
-                            className="flex flex-col items-center justify-center py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-green-600/30 transition-all active:scale-95"
+                            className="col-span-2 flex flex-col items-center justify-center py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-green-600/30 transition-all active:scale-95"
                         >
                             <CreditCard size={24} className="mb-0.5" />
                             <span className="text-xs uppercase font-extrabold">{isProcessing ? 'Processing...' : 'Pay Now'}</span>

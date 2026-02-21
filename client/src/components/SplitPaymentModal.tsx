@@ -81,7 +81,17 @@ export const SplitPaymentModal = ({ total, onConfirm, onClose }: SplitPaymentMod
                                 step="0.01"
                                 className="w-full pl-10 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none border border-gray-300 dark:border-gray-600"
                                 value={cashAmount}
-                                onChange={(e) => setCashAmount(e.target.value)}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setCashAmount(val);
+                                    if (val === '') {
+                                        setCardAmount('');
+                                    } else {
+                                        const cashVal = parseFloat(val) || 0;
+                                        const remaining = Math.max(0, total - cashVal);
+                                        setCardAmount(remaining > 0 ? remaining.toFixed(2) : '0.00');
+                                    }
+                                }}
                                 placeholder="0.00"
                             />
                         </div>
@@ -99,7 +109,17 @@ export const SplitPaymentModal = ({ total, onConfirm, onClose }: SplitPaymentMod
                                 step="0.01"
                                 className="w-full pl-10 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none border border-gray-300 dark:border-gray-600"
                                 value={cardAmount}
-                                onChange={(e) => setCardAmount(e.target.value)}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setCardAmount(val);
+                                    if (val === '') {
+                                        setCashAmount('');
+                                    } else {
+                                        const cardVal = parseFloat(val) || 0;
+                                        const remaining = Math.max(0, total - cardVal);
+                                        setCashAmount(remaining > 0 ? remaining.toFixed(2) : '0.00');
+                                    }
+                                }}
                                 placeholder="0.00"
                             />
                         </div>
