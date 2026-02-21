@@ -200,3 +200,65 @@ export const getCustomerPointsHistory = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+const paymentSchema = z.object({
+    amount: z.number().positive(),
+    paymentMethod: z.string(),
+    note: z.string().optional()
+});
+
+export const processPayment = async (req: Request, res: Response) => {
+    try {
+        const id = Number(req.params.id);
+        const data = paymentSchema.parse(req.body);
+
+        const customer = await prisma.customer.findUnique({ where: { id } });
+        if (!customer) return res.status(404).json({ error: 'Customer not found' });
+
+        const result = await prisma.$transaction(async (tx) => {
+            // Update customer debt
+            const updatedCustomer = await tx.customer.update({
+                where: { id },
+                data: {
+                    totalDue: { decrement: new Decimal(data.amount) }
+                }
+            });
+
+            // Create payment record
+            const payment = await tx.customerPayment.create({
+                data: {
+                    customerId: id,
+                    amount: new Decimal(data.amount),
+                    paymentMethod: data.paymentMethod,
+                    note: data.note
+                }
+            });
+
+            return { updatedCustomer, payment };
+        });
+
+        res.json(result);
+    } catch (error: any) {
+        if (error instanceof z.ZodError) {
+            res.status(400).json({ error: error.errors });
+        } else {
+            console.error(error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+};
+
+export const getCustomerPaymentsHistory = async (req: Request, res: Response) => {
+    try {
+        const id = Number(req.params.id);
+        if (!Number.isFinite(id)) {
+            return res.status(400).json({ error: 'Invalid customer id' });
+        }
+        const payments = await prisma.customerPayment.findMany({
+            where: { customerId: id },
+            orderBy: { createdAt: 'desc' }
+        });
+        res.json(payments);
+    } catch (error) {
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};

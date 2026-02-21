@@ -1,13 +1,12 @@
-import prisma from './src/utils/prisma';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 async function main() {
+    console.log("Fetching low stock...");
     const products = await prisma.product.findMany({
         where: { isActive: true },
-        select: {
-            id: true,
-            name: true,
-            reorderLevel: true,
-        }
+        select: { id: true, name: true, reorderLevel: true }
     });
 
     const enriched = await Promise.all(products.map(async (product) => {
@@ -26,18 +25,17 @@ async function main() {
         return {
             id: product.id,
             name: product.name,
-            reorderLevel: product.reorderLevel,
-            parsedAlertLevel: alertLevel,
-            stock: stock
+            stock,
+            alertLevel
         };
     }));
 
-    console.log("ALL ACTIVE PRODUCTS:");
-    console.log(JSON.stringify(enriched, null, 2));
+    const lowStock = enriched.filter(p => p.stock <= p.alertLevel);
+    console.log("All products stock:");
+    console.table(enriched);
 
-    const lowStock = enriched.filter(p => p.stock < p.parsedAlertLevel);
-    console.log("\nLOW STOCK PRODUCTS:");
-    console.log(JSON.stringify(lowStock, null, 2));
+    console.log("\nLow stock items:");
+    console.table(lowStock);
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect());

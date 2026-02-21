@@ -32,6 +32,8 @@ interface SaleResponse {
     tax?: number | null;
     discount?: number | null;
     roundOffDiscount?: number | null;
+    paymentMethod?: string | null;
+    paymentDetails?: any | null;
     items: SaleItem[];
     customer?: {
         id: string;
@@ -63,6 +65,15 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
     const [customer, setCustomer] = useState<Customer | null>(null);
     const [receiptTransaction, setReceiptTransaction] = useState<Transaction | null>(null);
     const [receiptItems, setReceiptItems] = useState<(TransactionItem & { name: string })[]>([]);
+    const [refundMethod, setRefundMethod] = useState<'cash' | 'card' | 'credit'>('cash');
+
+    useEffect(() => {
+        if (sale?.paymentMethod === 'credit') {
+            setRefundMethod('credit');
+        } else {
+            setRefundMethod('cash');
+        }
+    }, [sale?.paymentMethod]);
 
     useEffect(() => {
         const loadSale = async () => {
@@ -208,7 +219,7 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                     staff_id: user.user_id,
                     parent_sale_id: sale.id,
                     customer_id: sale.customerId || undefined,
-                    payment_method: 'cash',
+                    payment_method: refundMethod,
                     items: selectedItems.map(item => ({
                         product_id: item.productId,
                         quantity: -Math.abs(item.return_qty),
@@ -318,6 +329,32 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                         <div className="text-xs text-orange-600 dark:text-orange-300">Total Refund</div>
                         <div className="text-xl font-bold text-orange-600 dark:text-orange-300">{formatCurrency(refundTotal)}</div>
                     </div>
+                </div>
+
+                <div className="px-6 py-2 bg-gray-50 dark:bg-gray-800/50 border-y border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Refund Method:</span>
+                        <div className="flex gap-2">
+                            {(['cash', 'card', 'credit'] as const).map((method) => (
+                                <button
+                                    key={method}
+                                    onClick={() => setRefundMethod(method)}
+                                    disabled={method === 'credit' && !sale?.customerId}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${refundMethod === method
+                                            ? 'bg-orange-600 text-white shadow-md scale-105'
+                                            : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:bg-gray-50'
+                                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                >
+                                    {method}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    {refundMethod === 'credit' && (
+                        <div className="text-xs text-orange-600 dark:text-orange-400 font-medium">
+                            * This will reduce the customer's outstanding balance
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-6 pb-6">

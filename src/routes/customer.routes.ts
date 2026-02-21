@@ -6,7 +6,9 @@ import {
 	getCustomerDetails,
 	updateCustomer,
 	deleteCustomer,
-	getCustomerPointsHistory
+	getCustomerPointsHistory,
+	processPayment,
+	getCustomerPaymentsHistory
 } from '../controllers/customer.controller';
 import { authenticate, requireActiveSubscription } from '../middleware/auth.middleware';
 
@@ -20,5 +22,7 @@ router.patch('/:id', authenticate, requireActiveSubscription, updateCustomer);
 router.delete('/:id', authenticate, requireActiveSubscription, deleteCustomer);
 router.get('/:id/points', authenticate, requireActiveSubscription, getCustomerPointsHistory);
 router.get('/:id/history', authenticate, requireActiveSubscription, getCustomerHistory);
+router.post('/:id/payments', authenticate, requireActiveSubscription, processPayment);
+router.get('/:id/payments', authenticate, requireActiveSubscription, getCustomerPaymentsHistory);
 
 export default router;

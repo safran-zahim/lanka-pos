@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Search, User, Trash2, CreditCard, UserPlus, X, Award, Plus, Minus, Edit2, AlertCircle, StickyNote, Percent, Clock, PauseCircle, Calculator, Tag, RotateCcw } from 'lucide-react';
+import {
+    Search, Trash2, Plus, Minus, Calculator, Tag, CreditCard,
+    User, Settings, LogOut, Package, RefreshCw, Layers,
+    ShoppingCart, X, Check, Save, Clock, ArrowLeft, ArrowRight,
+    PauseCircle, LayoutDashboard, History, Menu, Award, Users,
+    AlertCircle, RotateCcw, UserPlus, StickyNote, Edit2, Percent,
+    CreditCard as CardIcon
+} from 'lucide-react';
 import { useCartStore, type CartItem } from '../store/useCartStore';
 import { useAuthStore } from '../store/useAuthStore';
 import type { Transaction, TransactionItem, Product, Customer } from '../db/db';
@@ -77,7 +84,7 @@ export const POS = () => {
         const loadReferenceData = async () => {
             if (!token) return;
             try {
-                const headers = { Authorization: `Bearer ${token}` };
+                const headers = { Authorization: `Bearer ${token} ` };
                 const [productsRes, customersRes, brandsRes, categoriesRes, salesRes] = await Promise.all([
                     fetch(getApiUrl('/products'), { headers }),
                     fetch(getApiUrl('/customers'), { headers }),
@@ -151,7 +158,7 @@ export const POS = () => {
     const refetchCustomers = async () => {
         if (!token) return;
         try {
-            const headers = { Authorization: `Bearer ${token}` };
+            const headers = { Authorization: `Bearer ${token} ` };
             const customersRes = await fetch(getApiUrl('/customers'), { headers });
             if (customersRes.ok) {
                 const customerPayload = await customersRes.json();
@@ -173,7 +180,7 @@ export const POS = () => {
     const refetchSales = async () => {
         if (!token) return;
         try {
-            const headers = { Authorization: `Bearer ${token}` };
+            const headers = { Authorization: `Bearer ${token} ` };
             const salesRes = await fetch(getApiUrl('/sales?limit=50'), { headers });
             if (salesRes.ok) {
                 const salesPayload = await salesRes.json();
@@ -187,7 +194,7 @@ export const POS = () => {
     const refetchProducts = async () => {
         if (!token) return;
         try {
-            const headers = { Authorization: `Bearer ${token}` };
+            const headers = { Authorization: `Bearer ${token} ` };
             const productsRes = await fetch(getApiUrl('/products'), { headers });
             if (productsRes.ok) {
                 const productPayload = await productsRes.json();
@@ -233,7 +240,7 @@ export const POS = () => {
         const map = new Map<string, number>();
         items.forEach(item => {
             if (!item.product_id || !item.batch_id) return;
-            const key = `${item.product_id}-${item.batch_id}`;
+            const key = `${item.product_id} -${item.batch_id} `;
             map.set(key, (map.get(key) || 0) + item.quantity);
         });
         return map;
@@ -246,7 +253,9 @@ export const POS = () => {
 
     // Filter products
     const filteredProducts = products?.filter(p => {
-        const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.sku_code.includes(searchQuery);
+        const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.sku_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (p.barcode && p.barcode.includes(searchQuery));
         const matchesCategory = selectedCategory === 'All' || p.category_id === selectedCategory;
         const matchesBrand = selectedBrand === 'All' || p.brand_id === selectedBrand;
 
@@ -271,7 +280,7 @@ export const POS = () => {
         // Always fetch fresh data from endpoint (no caching)
 
         try {
-            const response = await fetch(getApiUrl(`/products/${key}/batches`), {
+            const response = await fetch(getApiUrl(`/ products / ${key}/batches`), {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!response.ok) return [];
@@ -412,7 +421,7 @@ export const POS = () => {
         }
     }, [showReturnLookup]);
 
-    const handlePayment = async (paymentDetails?: { cash: number, card: number }) => {
+    const handlePayment = async (paymentDetails?: { cash: number, card: number }, method: string = 'cash') => {
         if (items.length === 0) return;
         if (!user) {
             addToast("No user logged in!", 'error');
@@ -469,7 +478,11 @@ export const POS = () => {
                 body: JSON.stringify({
                     staff_id: user.user_id,
                     customer_id: customer?.customer_id,
-                    payment_method: paymentDetails ? 'split' : 'cash',
+                    payment_method: paymentDetails ? 'split' : method,
+                    payment_details: paymentDetails ? {
+                        cashAmount: paymentDetails.cash,
+                        cardAmount: paymentDetails.card
+                    } : undefined,
                     items: items.map(item => ({
                         product_id: item.product_id,
                         quantity: item.quantity,
@@ -720,12 +733,40 @@ export const POS = () => {
                                 ? 'text-red-600 dark:text-red-400'
                                 : 'text-emerald-600 dark:text-emerald-400';
                             return (
-                                <button
+                                <div
                                     key={product.product_id}
-                                    onClick={() => handleAddProduct(product)}
-                                    className={`bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 p-3 rounded-xl flex flex-col justify-between h-28 transition-all active:scale-95 shadow-sm border ${isLowStock ? 'border-red-300 dark:border-red-800 ring-1 ring-red-100 dark:ring-red-900/30' : 'border-gray-200 dark:border-gray-700'}`}
+                                    className={`bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 p-3 rounded-xl flex flex-col justify-between h-28 transition-all shadow-sm border relative group ${isLowStock ? 'border-red-300 dark:border-red-800 ring-1 ring-red-100 dark:ring-red-900/30' : 'border-gray-200 dark:border-gray-700'}`}
                                 >
-                                    <div className="w-full text-left">
+                                    {/* Action Buttons Overlay */}
+                                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                const loadInfo = async () => {
+                                                    const batches = await loadProductBatches(product.product_id!);
+                                                    setBatchProduct({ productId: product.product_id!, product });
+                                                    setBatchOptions(batches);
+                                                };
+                                                loadInfo();
+                                            }}
+                                            className="p-1.5 bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors shadow-sm"
+                                            title="View Batches & Stock"
+                                        >
+                                            <Layers size={14} />
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleAddProduct(product);
+                                            }}
+                                            className="p-1.5 bg-green-50 dark:bg-green-900/50 text-green-600 dark:text-green-400 rounded-lg hover:bg-green-100 dark:hover:bg-green-900 transition-colors shadow-sm"
+                                            title="Add to Cart"
+                                        >
+                                            <Plus size={14} />
+                                        </button>
+                                    </div>
+
+                                    <div className="w-full text-left cursor-pointer" onClick={() => handleAddProduct(product)}>
                                         <div className="font-medium text-sm leading-tight line-clamp-2 text-gray-900 dark:text-white mb-1">
                                             {product.name} <span className="text-xs text-gray-500">({product.sku_code})</span>
                                         </div>
@@ -739,11 +780,11 @@ export const POS = () => {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="w-full flex justify-between items-end mt-1">
+                                    <div className="w-full flex justify-between items-end mt-1 cursor-pointer" onClick={() => handleAddProduct(product)}>
                                         <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[50%]">{product.brand_id}</div>
                                         <div className="text-blue-600 dark:text-blue-400 font-bold text-sm">{formatCurrency(product.retail_price)}</div>
                                     </div>
-                                </button>
+                                </div>
                             );
                         })}
 
@@ -1039,26 +1080,19 @@ export const POS = () => {
                         </button>
 
                         <button
-                            onClick={() => setShowDiscountModal(true)}
-                            className="flex flex-col items-center justify-center py-2 bg-purple-500 dark:bg-purple-600 text-white rounded-lg hover:bg-purple-600 dark:hover:bg-purple-700 transition-all shadow-md active:scale-95"
+                            onClick={() => handlePayment(undefined, 'credit')}
+                            disabled={isProcessing || items.length === 0 || !customer}
+                            className="flex flex-col items-center justify-center py-2 bg-amber-600 dark:bg-amber-700 text-white rounded-lg hover:bg-amber-700 dark:hover:bg-amber-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95"
+                            title={!customer ? "Register customer for credit sales" : "Payment on credit"}
                         >
-                            <Tag size={20} />
-                            <span className="text-[10px] uppercase font-bold mt-1">Discount</span>
-                        </button>
-
-                        <button
-                            onClick={() => setShowSplitPaymentModal(true)}
-                            disabled={items.length === 0}
-                            className="flex flex-col items-center justify-center py-2 bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95"
-                        >
-                            <Calculator size={20} />
-                            <span className="text-[10px] uppercase font-bold mt-1">Split</span>
+                            <Users size={20} />
+                            <span className="text-[10px] uppercase font-bold mt-1">Credit</span>
                         </button>
 
                         <button
                             onClick={() => handlePayment()}
                             disabled={isProcessing || items.length === 0}
-                            className="col-span-2 flex flex-col items-center justify-center py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-green-600/30 transition-all active:scale-95"
+                            className="flex flex-col items-center justify-center py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-green-600/30 transition-all active:scale-95"
                         >
                             <CreditCard size={24} className="mb-0.5" />
                             <span className="text-xs uppercase font-extrabold">{isProcessing ? 'Processing...' : 'Pay Now'}</span>

@@ -324,7 +324,7 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                         )}
                         <div className="flex justify-between font-semibold">
                             <span>Subtotal</span>
-                            <span>{formatCurrency(items.reduce((sum, item) => sum + (item.price_at_sale * item.quantity), 0) - (transaction.discount || 0))}</span>
+                            <span>{formatCurrency(items.reduce((sum, item) => sum + (Number(item.price_at_sale) * Number(item.quantity)), 0) - (Number(transaction.discount || 0)))}</span>
                         </div>
                         {taxEnabled && transaction.tax_amount > 0 && (
                             <div className="flex justify-between">
@@ -340,7 +340,7 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                         )}
                         <div className={`flex justify-between font-bold text-base mt-2 pt-2 border-t border-gray-300 ${transaction.type === 'return' ? 'text-red-600' : ''}`}>
                             <span>{transaction.type === 'return' ? 'REFUND TOTAL' : 'TOTAL'}</span>
-                            <span>{formatCurrency(transaction.total_amount)}</span>
+                            <span>{formatCurrency(Number(transaction.total_amount || 0))}</span>
                         </div>
                     </div>
 
@@ -349,18 +349,47 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                     <div className="text-xs">
                         <div className="flex justify-between mb-1">
                             <span>{transaction.type === 'return' ? 'Refund Method:' : 'Payment Method:'}</span>
-                            <span className="capitalize">{transaction.payment_method}</span>
+                            <span className="capitalize font-medium">{transaction.payment_method}</span>
                         </div>
-                        {transaction.payment_details?.cashAmount && (
-                            <div className="flex justify-between">
-                                <span>{transaction.type === 'return' ? 'Cash Refunded:' : 'Cash Received:'}</span>
-                                <span>{formatCurrency(transaction.payment_details.cashAmount)}</span>
+                        {transaction.payment_method === 'split' && transaction.payment_details && (
+                            <div className="space-y-1 ml-4 border-l-2 border-gray-100 dark:border-gray-800 pl-2 my-1">
+                                <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                                    <span>Cash Portion:</span>
+                                    <span>{formatCurrency(Number(transaction.payment_details.cashAmount || 0))}</span>
+                                </div>
+                                <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                                    <span>Card Portion:</span>
+                                    <span>{formatCurrency(Number(transaction.payment_details.cardAmount || 0))}</span>
+                                </div>
                             </div>
                         )}
-                        {transaction.payment_details?.cashAmount && transaction.payment_details.cashAmount > transaction.total_amount && transaction.type !== 'return' && (
+                        {transaction.payment_method === 'credit' && (
+                            <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-900/10 rounded border border-amber-200 dark:border-amber-900/30 text-amber-800 dark:text-amber-300">
+                                <p className="text-[10px] font-bold uppercase tracking-wider">
+                                    {transaction.type === 'return' ? 'Debt Reduction' : 'On Account (Credit)'}
+                                </p>
+                                <div className="flex justify-between mt-1 text-[11px]">
+                                    <span>{transaction.type === 'return' ? 'Amount Deduced:' : 'Current Charge:'}</span>
+                                    <span>{formatCurrency(Math.abs(Number(transaction.total_amount || 0)))}</span>
+                                </div>
+                                {customer && (
+                                    <div className="flex justify-between border-t border-amber-200/50 dark:border-amber-900/50 mt-1 pt-1 opacity-90 text-[11px] font-medium">
+                                        <span>Outstanding Balance:</span>
+                                        <span>{formatCurrency(Number(customer.total_due || 0))}</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        {transaction.payment_details?.cashAmount && !transaction.payment_details.cardAmount && (
+                            <div className="flex justify-between">
+                                <span>{transaction.type === 'return' ? 'Cash Refunded:' : 'Cash Received:'}</span>
+                                <span>{formatCurrency(Number(transaction.payment_details.cashAmount || 0))}</span>
+                            </div>
+                        )}
+                        {transaction.payment_details?.cashAmount && Number(transaction.payment_details.cashAmount) > Number(transaction.total_amount) && transaction.type !== 'return' && transaction.payment_method !== 'split' && (
                             <div className="flex justify-between">
                                 <span>Change:</span>
-                                <span>{formatCurrency(transaction.payment_details.cashAmount - transaction.total_amount)}</span>
+                                <span>{formatCurrency(Number(transaction.payment_details.cashAmount) - Number(transaction.total_amount))}</span>
                             </div>
                         )}
                     </div>

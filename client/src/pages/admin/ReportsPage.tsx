@@ -1,11 +1,12 @@
 import { useMemo, useState, useEffect } from 'react';
-import { BarChart3, Calendar, Package, Users, Truck, TrendingDown, Download, ArrowLeft, PieChart, ShoppingBag, DollarSign } from 'lucide-react';
+import { BarChart3, Calendar, Package, Users, Truck, TrendingDown, Download, ArrowLeft, PieChart, ShoppingBag, DollarSign, Printer } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCurrency } from '../../hooks/useCurrency';
 import { useLocale } from '../../hooks/useLocale';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { getApiUrl } from '../../config/api';
+import { ReceiptModal } from '../../components/ReceiptModal';
 
 const formatDateInput = (d: Date) => d.toISOString().split('T')[0];
 
@@ -74,6 +75,7 @@ export const ReportsPage = () => {
     const [profitThreshold, setProfitThreshold] = useState(-1);
     const [supplierFilter, setSupplierFilter] = useState<number | ''>('');
     const [activeTab, setActiveTab] = useState<'overview' | 'sales' | 'inventory' | 'customers' | 'suppliers'>('overview');
+    const [selectedPrintTxn, setSelectedPrintTxn] = useState<any | null>(null);
 
     // Fetch all report data from API
     useEffect(() => {
@@ -98,6 +100,9 @@ export const ReportsPage = () => {
                         customer_id: t.customerId,
                         total_amount: Number(t.total || 0),
                         tax_amount: Number(t.tax || 0),
+                        type: t.parentSaleId ? 'return' : 'sale',
+                        status: t.status || 'completed',
+                        parent_sale_id: t.parentSaleId || undefined,
                         items: (t.items || []).map((i: any) => ({
                             ...i,
                             product_id: i.productId,
@@ -508,19 +513,33 @@ export const ReportsPage = () => {
                                         <th className="p-4 text-left">Date & Time</th>
                                         <th className="p-4 text-left">Customer</th>
                                         <th className="p-4 text-right">Total Amount</th>
+                                        <th className="p-4 text-center">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                                     {filteredSales.map(txn => {
                                         const isReturn = txn.type === 'return';
                                         return (
-                                            <tr key={txn.transaction_id} className={`hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors ${isReturn ? 'bg-red-50/20 dark:bg-red-900/10' : ''}`}>
+                                            <tr
+                                                key={txn.transaction_id}
+                                                onClick={() => navigate(`/admin/transactions/${txn.transaction_id}`)}
+                                                className={`hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors cursor-pointer ${isReturn ? 'bg-red-50/20 dark:bg-red-900/10' : ''}`}
+                                            >
                                                 <td className="p-4">
                                                     <div className="flex flex-col gap-1 items-start">
                                                         <span className={`px-2 py-1 rounded text-xs font-mono font-bold ${isReturn ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}`}>
                                                             #{txn.transaction_id}
                                                         </span>
-                                                        {isReturn && <span className="text-[10px] text-red-600 dark:text-red-400 font-bold uppercase tracking-wider">Return</span>}
+                                                        {isReturn && (
+                                                            <span className="text-[10px] text-red-600 dark:text-red-400 font-bold uppercase tracking-wider flex flex-col gap-0.5 mt-0.5">
+                                                                <span>Return</span>
+                                                                {txn.parent_sale_id && (
+                                                                    <span className="text-gray-500 dark:text-gray-400 font-medium normal-case">
+                                                                        Ref: #{txn.parent_sale_id}
+                                                                    </span>
+                                                                )}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </td>
                                                 <td className="p-4 text-gray-600 dark:text-gray-400">{formatDateTime(new Date(txn.timestamp))}</td>
@@ -536,6 +555,18 @@ export const ReportsPage = () => {
                                                 </td>
                                                 <td className={`p-4 text-right font-bold ${isReturn ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
                                                     {formatCurrency(txn.total_amount)}
+                                                </td>
+                                                <td className="p-4 text-center">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setSelectedPrintTxn(txn);
+                                                        }}
+                                                        className="p-1 px-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                        title="Print Receipt"
+                                                    >
+                                                        <Printer size={16} />
+                                                    </button>
                                                 </td>
                                             </tr>
                                         )
@@ -795,6 +826,18 @@ export const ReportsPage = () => {
                     </div>
                 )}
             </div>
+            {selectedPrintTxn && (
+                <ReceiptModal
+                    transaction={selectedPrintTxn}
+                    items={(selectedPrintTxn.items || []).map((i: any) => ({
+                        ...i,
+                        name: productMap.get(i.product_id)?.name || 'Unknown Product'
+                    }))}
+                    customer={selectedPrintTxn.customer_id ? customerMap.get(selectedPrintTxn.customer_id) : null}
+                    user={useAuthStore.getState().user}
+                    onClose={() => setSelectedPrintTxn(null)}
+                />
+            )}
         </div>
     );
 };

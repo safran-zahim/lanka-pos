@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { Transaction } from '../db/db';
-import { ArrowDownLeft, ArrowUpRight, Download, RotateCcw, Search } from 'lucide-react';
+import type { Transaction, Customer } from '../db/db';
+import { ArrowDownLeft, ArrowUpRight, Download, RotateCcw, Search, Printer } from 'lucide-react';
 import { ReturnModal } from './ReturnModal';
+import { ReceiptModal } from './ReceiptModal';
 import { useNavigate } from 'react-router-dom';
 import { useCurrency } from '../hooks/useCurrency';
 import { useLocale } from '../hooks/useLocale';
@@ -19,6 +20,9 @@ type DailySummary = {
     grossSales: number;
     returnsAmount: number;
     netSales: number;
+    cashTotal: number;
+    cardTotal: number;
+    creditTotal: number;
 };
 
 const toDateInputValue = (date: Date) => {
@@ -63,9 +67,12 @@ export const SalesHistoryDashboard = () => {
     const [startDate, setStartDate] = useState(todayValue);
     const [endDate, setEndDate] = useState(todayValue);
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+    const [selectedPrintTxn, setSelectedPrintTxn] = useState<Transaction | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
-    const [activeTab, setActiveTab] = useState<'daily' | 'transactions' | 'products'>('daily');
+    const isTransactionsRoute = window.location.pathname.includes('/transactions');
+    const [activeTab, setActiveTab] = useState<'daily' | 'transactions' | 'products'>(isTransactionsRoute ? 'transactions' : 'daily');
+    const [customers, setCustomers] = useState<Customer[]>([]);
 
     const range = useMemo(() => getRangeBounds(startDate, endDate), [startDate, endDate]);
 
@@ -89,6 +96,11 @@ export const SalesHistoryDashboard = () => {
                 if (!response.ok) throw new Error('Failed to load sales');
                 const payload = await response.json();
                 setSales(payload || []);
+
+                const custResponse = await fetch(getApiUrl('/customers'), {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (custResponse.ok) setCustomers(await custResponse.json());
             } catch (error) {
                 console.error('Failed to load sales', error);
             }
@@ -108,7 +120,8 @@ export const SalesHistoryDashboard = () => {
             round_off_discount: Number(sale.roundOffDiscount || 0),
             payment_method: sale.paymentMethod || 'cash',
             status: 'completed',
-            type: sale.parentSaleId ? 'return' : 'sale'
+            type: sale.parentSaleId ? 'return' : 'sale',
+            parent_sale_id: sale.parentSaleId || undefined
         })) as Transaction[];
     }, [sales]);
 
@@ -142,15 +155,35 @@ export const SalesHistoryDashboard = () => {
                 returnsCount: 0,
                 grossSales: 0,
                 returnsAmount: 0,
-                netSales: 0
+                netSales: 0,
+                cashTotal: 0,
+                cardTotal: 0,
+                creditTotal: 0
             };
 
             if (txn.type === 'return') {
                 summary.returnsCount += 1;
                 summary.returnsAmount += Math.abs(txn.total_amount);
+                // For simplicity, returns are deducted from cash unless specified. 
+                // But usually we just track net sales. 
+                // Let's also track return payment methods if possible.
+                if (txn.payment_method === 'cash') summary.cashTotal -= Math.abs(txn.total_amount);
+                else if (txn.payment_method === 'card') summary.cardTotal -= Math.abs(txn.total_amount);
             } else {
                 summary.salesCount += 1;
                 summary.grossSales += Math.abs(txn.total_amount);
+
+                if (txn.payment_method === 'split' && txn.payment_details) {
+                    const details = txn.payment_details as any;
+                    summary.cashTotal += Number(details.cashAmount || 0);
+                    summary.cardTotal += Number(details.cardAmount || 0);
+                } else if (txn.payment_method === 'cash') {
+                    summary.cashTotal += txn.total_amount;
+                } else if (txn.payment_method === 'card') {
+                    summary.cardTotal += txn.total_amount;
+                } else if (txn.payment_method === 'credit') {
+                    summary.creditTotal += txn.total_amount;
+                }
             }
 
             summary.netSales = summary.grossSales - summary.returnsAmount;
@@ -535,44 +568,61 @@ export const SalesHistoryDashboard = () => {
                                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                                     {transactionsToDisplay.map((txn) => {
                                         const signedAmount = getSignedAmount(txn);
+                                        const isReturn = txn.type === 'return';
                                         return (
                                             <tr
                                                 key={txn.transaction_id}
                                                 onClick={() => navigate(`/admin/transactions/${txn.transaction_id}`)}
-                                                className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+                                                className={`cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 last:border-0 ${isReturn ? 'bg-red-50/20 dark:bg-red-900/10' : ''}`}
                                             >
-                                                <td className="p-4 text-gray-900 dark:text-white">#{txn.transaction_id}</td>
+                                                <td className="p-4">
+                                                    <div className="flex flex-col gap-1 items-start">
+                                                        <span className={`px-2 py-1 rounded text-xs font-mono font-bold ${isReturn ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}`}>
+                                                            #{txn.transaction_id}
+                                                        </span>
+                                                        {isReturn && (
+                                                            <span className="text-[10px] text-red-600 dark:text-red-400 font-bold uppercase tracking-wider flex flex-col gap-0.5 mt-0.5">
+                                                                <span>Return</span>
+                                                                {txn.parent_sale_id && (
+                                                                    <span className="text-gray-500 dark:text-gray-400 font-medium normal-case">
+                                                                        Ref: #{txn.parent_sale_id}
+                                                                    </span>
+                                                                )}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
                                                 <td className="p-4 text-gray-500 dark:text-gray-400">
                                                     {formatDateTime(new Date(txn.timestamp))}
                                                 </td>
                                                 <td className="p-4">
                                                     <span
-                                                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${txn.type === 'return'
-                                                            ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300'
+                                                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${isReturn
+                                                            ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
                                                             : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
                                                             }`}
                                                     >
-                                                        {txn.type === 'return' ? (
+                                                        {isReturn ? (
                                                             <ArrowDownLeft size={12} />
                                                         ) : (
                                                             <ArrowUpRight size={12} />
                                                         )}
-                                                        {txn.type === 'return' ? 'Return' : 'Sale'}
+                                                        {isReturn ? 'Return' : 'Sale'}
                                                     </span>
                                                 </td>
                                                 <td className="p-4 text-gray-500 dark:text-gray-400">
                                                     {txn.payment_method}
                                                 </td>
                                                 <td
-                                                    className={`p-4 text-right font-medium ${txn.type === 'return'
-                                                        ? 'text-orange-600 dark:text-orange-400'
+                                                    className={`p-4 text-right font-medium ${isReturn
+                                                        ? 'text-red-600 dark:text-red-400 font-bold'
                                                         : 'text-gray-900 dark:text-white'
                                                         }`}
                                                 >
                                                     {formatCurrency(signedAmount)}
                                                 </td>
                                                 <td className="p-4 text-center">
-                                                    {txn.type === 'sale' && (
+                                                    {!isReturn && (
                                                         <button
                                                             onClick={(event) => {
                                                                 event.stopPropagation();
@@ -584,6 +634,16 @@ export const SalesHistoryDashboard = () => {
                                                             <RotateCcw size={18} />
                                                         </button>
                                                     )}
+                                                    <button
+                                                        onClick={(event) => {
+                                                            event.stopPropagation();
+                                                            setSelectedPrintTxn(txn);
+                                                        }}
+                                                        className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors ml-2"
+                                                        title="Print Receipt"
+                                                    >
+                                                        <Printer size={18} />
+                                                    </button>
                                                 </td>
                                             </tr>
                                         );
@@ -663,6 +723,25 @@ export const SalesHistoryDashboard = () => {
                     saleId={selectedTransaction.transaction_id?.toString() || ''}
                     onClose={() => setSelectedTransaction(null)}
                     onSuccess={() => setSelectedTransaction(null)}
+                />
+            )}
+            {selectedPrintTxn && (
+                <ReceiptModal
+                    transaction={{
+                        ...selectedPrintTxn,
+                        total_amount: Number(selectedPrintTxn.total_amount),
+                        tax_amount: Number(selectedPrintTxn.tax_amount || 0),
+                        payment_method: selectedPrintTxn.payment_method,
+                        payment_details: selectedPrintTxn.payment_details
+                    }}
+                    items={(saleItemsBySaleId.get(String(selectedPrintTxn.transaction_id)) || []).map((i: any) => ({
+                        ...i,
+                        name: i.name || i.product?.name || 'Unknown Product',
+                        price_at_sale: Number(i.price || 0)
+                    }))}
+                    customer={selectedPrintTxn.customer_id ? customers?.find(c => String(c.customer_id) === String(selectedPrintTxn.customer_id)) : null}
+                    user={useAuthStore.getState().user}
+                    onClose={() => setSelectedPrintTxn(null)}
                 />
             )}
         </div>

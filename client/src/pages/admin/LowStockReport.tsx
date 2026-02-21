@@ -154,7 +154,7 @@ export const LowStockReport = () => {
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                         {lowStockItems.map(item => {
                             const alertLevel = getAlertLevel(item);
-                            const stock = item.stock || item.stock_quantity || 0;
+                            const stock = item.stock ?? item.stock_quantity ?? 0;
                             const deficit = alertLevel - stock;
                             const pId = item.id || item.product_id;
                             const editValue = alertEdits[pId] ?? String(alertLevel);

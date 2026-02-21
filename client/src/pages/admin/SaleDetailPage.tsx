@@ -87,30 +87,30 @@ export const SaleDetailPage = () => {
 
     if (!transaction) {
         return (
-            <div className="p-6 flex flex-col items-center justify-center h-[50vh]">
-                <div className="text-gray-500">Loading transaction...</div>
+            <div className="p-6 flex flex-col items-center justify-center h-[50vh] text-gray-900 dark:text-white">
+                <div className="text-gray-500 dark:text-gray-400">Loading transaction...</div>
             </div>
         );
     }
 
     return (
-        <div className="p-6 max-w-6xl mx-auto space-y-6">
+        <div className="p-6 max-w-6xl mx-auto space-y-6 text-gray-900 dark:text-white">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <button onClick={() => navigate('/admin/transactions')} className="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm border">
+                    <button onClick={() => navigate('/admin/transactions')} className="p-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
                         <ArrowLeft />
                     </button>
                     <div>
                         <h1 className="text-2xl font-bold">Sale Report</h1>
-                        <p className="text-sm text-gray-500">#{transaction.id}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">#{transaction.id}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <button onClick={() => setIsPrinting(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg border">
+                    <button onClick={() => setIsPrinting(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                         <Printer size={16} /> Print Again
                     </button>
                     {!transaction.parentSaleId && (
-                        <button onClick={handleDelete} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 text-red-600">
+                        <button onClick={handleDelete} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors">
                             <Trash2 size={16} /> Delete
                         </button>
                     )}
@@ -118,24 +118,27 @@ export const SaleDetailPage = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 bg-white rounded-lg border">
-                    <div className="text-xs text-gray-400 uppercase">Date</div>
-                    <div className="mt-2 font-semibold">{new Date(transaction.createdAt || transaction.timestamp).toLocaleString()}</div>
+                <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider font-semibold">Date</div>
+                    <div className="mt-2 font-semibold text-lg">{new Date(transaction.createdAt || transaction.timestamp).toLocaleString()}</div>
                 </div>
-                <div className="p-4 bg-white rounded-lg border">
-                    <div className="text-xs text-gray-400 uppercase">Customer</div>
-                    <div className="mt-2 font-semibold">{customer?.name || 'Walk-in'}</div>
+                <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider font-semibold">Customer</div>
+                    <div className="mt-2 font-semibold text-lg">{customer?.name || 'Walk-in'}</div>
                 </div>
                 {transaction.returns && transaction.returns.length > 0 && (
-                    <div className="p-4 bg-white rounded-lg border">
-                        <div className="text-xs text-orange-500 uppercase">Returns</div>
+                    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <div className="text-xs text-orange-500 dark:text-orange-400 uppercase tracking-wider font-semibold flex items-center gap-1">Returns</div>
                         <div className="mt-2">
                             {transaction.returns.map((ret: any) => (
-                                <div key={ret.id} className="mb-2">
-                                    <div className="font-semibold">Return #{ret.id} - {new Date(ret.createdAt).toLocaleString()}</div>
-                                    <ul className="text-sm text-gray-700">
+                                <div key={ret.id} className="mb-3 last:mb-0">
+                                    <div className="font-semibold text-orange-600 dark:text-orange-400 text-sm mb-1">Return #{ret.id} - {new Date(ret.createdAt).toLocaleString()}</div>
+                                    <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
                                         {ret.items.map((it: any) => (
-                                            <li key={it.id}>{it.product?.name || 'Product'} | Batch: {it.batchId || 'N/A'} | Qty: {Math.abs(Number(it.quantity || 0))} | Refund: {formatCurrency(Number(it.price || 0))}</li>
+                                            <li key={it.id} className="flex flex-col sm:flex-row sm:justify-between border-l-2 border-orange-200 dark:border-orange-800 pl-2">
+                                                <span>{it.product?.name || 'Product'} (Qty: {Math.abs(Number(it.quantity || 0))})</span>
+                                                <span className="font-medium">{formatCurrency(Number(it.price || 0))}</span>
+                                            </li>
                                         ))}
                                     </ul>
                                 </div>
@@ -145,25 +148,25 @@ export const SaleDetailPage = () => {
                 )}
             </div>
 
-            <div className="p-4 bg-white rounded-lg border">
-                <h2 className="font-bold mb-4 flex items-center gap-2"><Receipt size={16} /> Items</h2>
+            <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                <h2 className="text-lg font-bold mb-4 flex items-center gap-2"><Receipt size={18} className="text-blue-500" /> Items</h2>
                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                        <thead className="text-xs text-gray-500 border-b">
+                    <table className="w-full text-sm text-left">
+                        <thead className="text-xs text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-700/50">
                             <tr>
-                                <th className="py-2 text-left">Item</th>
-                                <th className="py-2 text-right">Qty</th>
-                                <th className="py-2 text-right">Price</th>
-                                <th className="py-2 text-right">Line Total</th>
+                                <th className="px-4 py-3 font-medium">Item</th>
+                                <th className="px-4 py-3 font-medium text-right">Qty</th>
+                                <th className="px-4 py-3 font-medium text-right">Price</th>
+                                <th className="px-4 py-3 font-medium text-right">Line Total</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y">
+                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                             {itemsWithNames.map(item => (
-                                <tr key={item.line_id}>
-                                    <td className="py-2">{item.name}</td>
-                                    <td className="py-2 text-right">{item.quantity}</td>
-                                    <td className="py-2 text-right">{formatCurrency(item.price_at_sale)}</td>
-                                    <td className="py-2 text-right">{formatCurrency(item.price_at_sale * item.quantity)}</td>
+                                <tr key={item.line_id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                                    <td className="px-4 py-3 font-medium">{item.name}</td>
+                                    <td className="px-4 py-3 text-right">{item.quantity}</td>
+                                    <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-400">{formatCurrency(item.price_at_sale)}</td>
+                                    <td className="px-4 py-3 text-right font-semibold">{formatCurrency(item.price_at_sale * item.quantity)}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -171,12 +174,12 @@ export const SaleDetailPage = () => {
                 </div>
             </div>
 
-            <div className="p-4 bg-white rounded-lg border">
-                <h2 className="font-bold mb-4">Edit Sale</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                <h2 className="text-lg font-bold mb-4">Edit Sale</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label className="block text-sm text-gray-500 mb-1">Payment Method</label>
-                        <select className="w-full px-3 py-2 rounded-lg bg-gray-50" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as any)}>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Payment Method</label>
+                        <select className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as any)}>
                             <option value="cash">Cash</option>
                             <option value="card">Card</option>
                             <option value="split">Split</option>
@@ -184,36 +187,50 @@ export const SaleDetailPage = () => {
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm text-gray-500 mb-1">Status</label>
-                        <select className="w-full px-3 py-2 rounded-lg bg-gray-50" value={status} onChange={(e) => setStatus(e.target.value as any)}>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+                        <select className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" value={status} onChange={(e) => setStatus(e.target.value as any)}>
                             <option value="completed">Completed</option>
                             <option value="voided">Voided</option>
                             <option value="parked">Parked</option>
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm text-gray-500 mb-1">Tax Amount ({currencySymbol})</label>
-                        <input type="number" step="0.01" className="w-full px-3 py-2 rounded-lg bg-gray-50" value={taxAmount} onChange={(e) => setTaxAmount(Number(e.target.value))} />
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tax Amount ({currencySymbol})</label>
+                        <input type="number" step="0.01" className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" value={taxAmount} onChange={(e) => setTaxAmount(Number(e.target.value))} />
                     </div>
                     <div>
-                        <label className="block text-sm text-gray-500 mb-1">Total Amount ({currencySymbol})</label>
-                        <input type="number" step="0.01" className="w-full px-3 py-2 rounded-lg bg-gray-50" value={totalAmount} onChange={(e) => setTotalAmount(Number(e.target.value))} />
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Total Amount ({currencySymbol})</label>
+                        <input type="number" step="0.01" className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" value={totalAmount} onChange={(e) => setTotalAmount(Number(e.target.value))} />
                     </div>
                 </div>
-                <div className="mt-4">
-                    <button onClick={handleSave} disabled={isSaving} className="px-4 py-2 bg-blue-600 text-white rounded-lg">
-                        <Save size={16} /> {isSaving ? 'Saving...' : 'Update Sale'}
+                <div className="mt-6">
+                    <button onClick={handleSave} disabled={isSaving} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50">
+                        <Save size={18} /> {isSaving ? 'Saving...' : 'Update Sale'}
                     </button>
                 </div>
             </div>
 
-            <div className="p-4 bg-white rounded-lg border">
-                <div className="text-xs text-gray-400 uppercase">Total</div>
-                <div className="mt-2 font-semibold">{formatCurrency(totalAmount)}</div>
+            <div className="p-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm flex justify-between items-center">
+                <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider font-bold">Total</div>
+                <div className="text-3xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalAmount)}</div>
             </div>
 
-            {isPrinting && (
-                <ReceiptModal transaction={transaction} items={itemsWithNames} customer={customer} user={user} onClose={() => setIsPrinting(false)} />
+            {isPrinting && transaction && (
+                <ReceiptModal
+                    transaction={{
+                        ...transaction,
+                        transaction_id: transaction.id,
+                        timestamp: transaction.createdAt,
+                        total_amount: Number(totalAmount),
+                        tax_amount: Number(taxAmount),
+                        payment_method: paymentMethod,
+                        payment_details: transaction.paymentDetails
+                    }}
+                    items={itemsWithNames}
+                    customer={customer}
+                    user={user}
+                    onClose={() => setIsPrinting(false)}
+                />
             )}
         </div>
     );

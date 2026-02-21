@@ -410,6 +410,8 @@ export const getLowStock = async (req: Request, res: Response) => {
             const alertLevel = Number(product.reorderLevel || 0);
             return product.stock <= alertLevel;
         });
+        console.log("getLowStock Final Count:", lowStock.length);
+        console.log("getLowStock items:", JSON.stringify(lowStock.map(l => ({ name: l.name, stock: l.stock, alertLevel: l.reorder_level }))));
 
         res.json(lowStock);
     } catch (error) {

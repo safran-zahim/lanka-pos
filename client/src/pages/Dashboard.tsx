@@ -79,15 +79,20 @@ export const Dashboard = () => {
     useEffect(() => {
         if (!sales) return;
 
-        const total = sales.reduce((sum, t) => sum + Number(t.total || 0), 0);
+        const total = sales.reduce((sum, t) => {
+            const val = Number(t.total || 0);
+            return t.parentSaleId ? sum - val : sum + val;
+        }, 0);
         setTotalSales(total);
         setTransactionCount(sales.length);
 
         const productCounts: Record<string, number> = {};
         sales.forEach((sale) => {
+            const isReturn = !!sale.parentSaleId;
             (sale.items || []).forEach((item: any) => {
                 const key = String(item.productId);
-                productCounts[key] = (productCounts[key] || 0) + Number(item.quantity || 0);
+                const qty = Number(item.quantity || 0);
+                productCounts[key] = (productCounts[key] || 0) + (isReturn ? -qty : qty);
             });
         });
 
@@ -105,7 +110,8 @@ export const Dashboard = () => {
     }, [sales, products]);
 
     // Filter low stock items to show only active products
-    const activeLowStockItems = (lowStockItems || []).filter(item => item.isActive !== false);
+    // Note: The API already filters for isActive: true, but extra safety check
+    const activeLowStockItems = (lowStockItems || []).filter(item => item.isActive !== false && item.isActive !== 'false');
 
     const displayedDailySales = dailySummary?.total_sales ?? 0;
     const displayedDailyTransactions = dailySummary?.transaction_count ?? 0;

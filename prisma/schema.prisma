@@ -8,52 +8,52 @@ datasource db {
 }
 
 model Staff {
-  id        Int      @id @default(autoincrement())
-  name      String
-  role      String   // admin, manager, cashier
-  password  String
+  id         Int      @id @default(autoincrement())
+  name       String
+  role       String // admin, manager, cashier
+  password   String
   hourlyRate Decimal?
-  createdAt DateTime @default(now())
-  shifts    Shift[]
-  sales     Sale[]
+  createdAt  DateTime @default(now())
+  shifts     Shift[]
+  sales      Sale[]
 }
 
 model Shift {
-  id         Int      @id @default(autoincrement())
-  staffId    Int
-  staff      Staff    @relation(fields: [staffId], references: [id])
-  startTime  DateTime @default(now())
-  endTime    DateTime?
-  cashStart  Decimal
-  cashEnd    Decimal?
+  id        Int       @id @default(autoincrement())
+  staffId   Int
+  staff     Staff     @relation(fields: [staffId], references: [id])
+  startTime DateTime  @default(now())
+  endTime   DateTime?
+  cashStart Decimal
+  cashEnd   Decimal?
 }
 
 model Product {
-  id            Int      @id @default(autoincrement())
-  name          String
-  skuCode       String?  @unique
-  barcode       String?
-  barcodeType   String?
-  description   String?
-  price         Decimal? // Current/suggested selling price
-  reorderLevel  Decimal  @default(10)
-  isActive      Boolean  @default(true)
-  
-  category      String?    // Legacy field
-  categoryId    Int?
-  categoryRel   Category?  @relation(fields: [categoryId], references: [id])
-  
-  brandId       Int?
-  brand         Brand?     @relation(fields: [brandId], references: [id])
-  
-  unitId        Int?
-  unit          Unit?      @relation(fields: [unitId], references: [id])
-  
+  id           Int      @id @default(autoincrement())
+  name         String
+  skuCode      String?  @unique
+  barcode      String?
+  barcodeType  String?
+  description  String?
+  price        Decimal? // Current/suggested selling price
+  reorderLevel Decimal  @default(10)
+  isActive     Boolean  @default(true)
+
+  category    String? // Legacy field
+  categoryId  Int?
+  categoryRel Category? @relation(fields: [categoryId], references: [id])
+
+  brandId Int?
+  brand   Brand? @relation(fields: [brandId], references: [id])
+
+  unitId Int?
+  unit   Unit? @relation(fields: [unitId], references: [id])
+
   subCategoryId Int?
   subCategory   SubCategory? @relation(fields: [subCategoryId], references: [id])
 
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   saleItems     SaleItem[]
   purchaseItems PurchaseItem[]
 }
@@ -78,7 +78,7 @@ model Unit {
 }
 
 model Supplier {
-  id            Int      @id @default(autoincrement())
+  id            Int               @id @default(autoincrement())
   name          String
   contactPerson String?
   email         String?
@@ -86,38 +86,38 @@ model Supplier {
   address       String?
   taxId         String?
   notes         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
   purchases     Purchase[]
   payments      PurchasePayment[]
   expenses      Expense[]
 }
 
 model Purchase {
-  id          Int      @id @default(autoincrement())
+  id          Int               @id @default(autoincrement())
   supplierId  Int
-  supplier    Supplier @relation(fields: [supplierId], references: [id])
+  supplier    Supplier          @relation(fields: [supplierId], references: [id])
   totalAmount Decimal
-  paidAmount  Decimal  @default(0)
-  status      String   // PENDING, COMPLETED, PARTIAL
-  date        DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  paidAmount  Decimal           @default(0)
+  status      String // PENDING, COMPLETED, PARTIAL
+  date        DateTime          @default(now())
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
   items       PurchaseItem[]
   payments    PurchasePayment[]
   expenses    Expense[]
 }
 
 model PurchaseItem {
-  id         Int      @id @default(autoincrement())
-  purchaseId Int
-  purchase   Purchase @relation(fields: [purchaseId], references: [id])
-  productId  Int
-  product    Product  @relation(fields: [productId], references: [id])
-  quantity   Decimal
-  costPrice  Decimal
+  id          Int        @id @default(autoincrement())
+  purchaseId  Int
+  purchase    Purchase   @relation(fields: [purchaseId], references: [id])
+  productId   Int
+  product     Product    @relation(fields: [productId], references: [id])
+  quantity    Decimal
+  costPrice   Decimal
   retailPrice Decimal?
-  saleItems  SaleItem[]
+  saleItems   SaleItem[]
 }
 
 model PurchasePayment {
@@ -134,18 +134,18 @@ model PurchasePayment {
 }
 
 model Expense {
-  id         Int       @id @default(autoincrement())
-  amount     Decimal
-  date       DateTime  @default(now())
-  category   String
+  id          Int              @id @default(autoincrement())
+  amount      Decimal
+  date        DateTime         @default(now())
+  category    String
   description String?
-  supplierId Int?
-  supplier   Supplier? @relation(fields: [supplierId], references: [id])
-  purchaseId Int?
-  purchase   Purchase? @relation(fields: [purchaseId], references: [id])
-  paymentId  Int?      @unique
-  payment    PurchasePayment? @relation(fields: [paymentId], references: [id])
-  createdAt  DateTime  @default(now())
+  supplierId  Int?
+  supplier    Supplier?        @relation(fields: [supplierId], references: [id])
+  purchaseId  Int?
+  purchase    Purchase?        @relation(fields: [purchaseId], references: [id])
+  paymentId   Int?             @unique
+  payment     PurchasePayment? @relation(fields: [paymentId], references: [id])
+  createdAt   DateTime         @default(now())
 }
 
 model Category {
@@ -158,34 +158,35 @@ model Category {
 }
 
 model SubCategory {
-  id         Int      @id @default(autoincrement())
+  id         Int       @id @default(autoincrement())
   name       String
   categoryId Int
-  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category   Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   products   Product[]
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   @@unique([categoryId, name])
 }
 
 model Sale {
-  id          Int       @id @default(autoincrement())
-  staffId     Int
-  staff       Staff     @relation(fields: [staffId], references: [id])
-  customerId  Int?
-  customer    Customer? @relation(fields: [customerId], references: [id])
-  parentSaleId Int?
-  parentSale  Sale?     @relation("SaleReturns", fields: [parentSaleId], references: [id])
-  returns     Sale[]    @relation("SaleReturns")
-  total       Decimal
-  subtotal    Decimal?  // optional detailed bill fields
-  tax         Decimal?
-  discount    Decimal?
+  id               Int        @id @default(autoincrement())
+  staffId          Int
+  staff            Staff      @relation(fields: [staffId], references: [id])
+  customerId       Int?
+  customer         Customer?  @relation(fields: [customerId], references: [id])
+  parentSaleId     Int?
+  parentSale       Sale?      @relation("SaleReturns", fields: [parentSaleId], references: [id])
+  returns          Sale[]     @relation("SaleReturns")
+  total            Decimal
+  subtotal         Decimal? // optional detailed bill fields
+  tax              Decimal?
+  discount         Decimal?
   roundOffDiscount Decimal?
-  paymentMethod String?
-  createdAt   DateTime  @default(now())
-  items       SaleItem[]
+  paymentMethod    String?
+  paymentDetails   Json? // Store breakdown for split payments
+  createdAt        DateTime   @default(now())
+  items            SaleItem[]
 }
 
 model HeldSale {
@@ -197,11 +198,11 @@ model HeldSale {
 }
 
 model SaleItem {
-  id        Int      @id @default(autoincrement())
+  id        Int           @id @default(autoincrement())
   saleId    Int
-  sale      Sale     @relation(fields: [saleId], references: [id])
+  sale      Sale          @relation(fields: [saleId], references: [id])
   productId Int
-  product   Product  @relation(fields: [productId], references: [id])
+  product   Product       @relation(fields: [productId], references: [id])
   quantity  Decimal
   price     Decimal
   batchId   Int?
@@ -209,51 +210,63 @@ model SaleItem {
 }
 
 model Customer {
-  id        Int      @id @default(autoincrement())
-  name      String
-  phone     String   @unique
-  email     String?
-  address   String?
-  pointsBalance Int  @default(0)
-  totalSpend Decimal @default(0)
-  createdAt DateTime @default(now())
-  sales     Sale[]
-  pointsLedger CustomerPointLedger[]
+  id            Int                   @id @default(autoincrement())
+  name          String
+  phone         String                @unique
+  email         String?
+  address       String?
+  pointsBalance Int                   @default(0)
+  totalSpend    Decimal               @default(0)
+  totalDue      Decimal               @default(0) // Current debt amount
+  creditLimit   Decimal               @default(10000) // Maximum allowed debt
+  createdAt     DateTime              @default(now())
+  sales         Sale[]
+  repayments    CustomerPayment[] // Payment history for debt
+  pointsLedger  CustomerPointLedger[]
 }
 
 model CustomerPointLedger {
-  id          Int      @id @default(autoincrement())
-  customerId  Int
-  customer    Customer @relation(fields: [customerId], references: [id])
-  points      Int
-  type        String   // EARN, REDEEM, ADJUST
-  reference   String?  // sale id or note
+  id           Int      @id @default(autoincrement())
+  customerId   Int
+  customer     Customer @relation(fields: [customerId], references: [id])
+  points       Int
+  type         String // EARN, REDEEM, ADJUST
+  reference    String? // sale id or note
   balanceAfter Int?
-  createdAt   DateTime @default(now())
+  createdAt    DateTime @default(now())
 }
 
 model AppConfig {
-  key                String @id
-  subscriptionStatus String @default("active")
+  key                String            @id
+  subscriptionStatus String            @default("active")
   subscriptionPlanId Int?
   subscriptionPlan   SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id])
-  updatedAt          DateTime @updatedAt
+  updatedAt          DateTime          @updatedAt
 }
 
 model SubscriptionPlan {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
+  id        Int         @id @default(autoincrement())
+  name      String      @unique
   price     Decimal
-  duration  Int      @default(30) // in days
-  features  String   // JSON string of enabled features
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  configs   AppConfig[]
+  duration  Int         @default(30) // in days
+  features  String // JSON string of enabled features
+  active    Boolean     @default(true)
+  createdAt DateTime    @default(now())
+  AppConfig AppConfig[]
+}
+
+model CustomerPayment {
+  id            Int      @id @default(autoincrement())
+  customerId    Int
+  customer      Customer @relation(fields: [customerId], references: [id])
+  amount        Decimal
+  paymentMethod String // cash, card, bank
+  note          String?
+  createdAt     DateTime @default(now())
 }
 
 model Setting {
-  key      String @id
-  value    Json
+  key       String   @id
+  value     Json
   updatedAt DateTime @updatedAt
 }

@@ -71,6 +71,8 @@ export interface Customer {
     email?: string;
     loyalty_points_balance: number;
     total_spend_to_date: number;
+    total_due?: number;        // Current debt
+    credit_limit?: number;     // Max debt
 }
 
 export interface CustomerPointHistory {
@@ -93,7 +95,7 @@ export interface Transaction {
     tax_amount: number;
     discount?: number;
     round_off_discount?: number;
-    payment_method: 'cash' | 'card' | 'split' | 'other';
+    payment_method: 'cash' | 'card' | 'split' | 'other' | 'credit';
     status: 'completed' | 'voided' | 'parked';
     type: 'sale' | 'return';
     parent_sale_id?: number | string;  // Reference to original sale for returns

@@ -32,6 +32,10 @@ const checkoutSchema = z.object({
     loyalty: z.object({
         points_earned: z.number().int().nonnegative().optional(),
         points_redeemed: z.number().int().nonnegative().optional(),
+    }).optional(),
+    payment_details: z.object({
+        cashAmount: z.number().optional(),
+        cardAmount: z.number().optional()
     }).optional()
 });
 
@@ -247,6 +251,7 @@ export const checkout = async (req: Request, res: Response) => {
                     discount: new Decimal(isReturn ? refundDiscount.neg() : data.totals.discount),
                     roundOffDiscount: new Decimal(isReturn ? refundRoundOff.neg() : (data.totals.round_off_discount || 0)),
                     paymentMethod: data.payment_method,
+                    paymentDetails: data.payment_details ? (data.payment_details as any) : Prisma.JsonNull,
                     items: {
                         create: data.items.map(item => {
                             const key = `${item.product_id}-${item.batch_id || 'null'}`;
@@ -341,6 +346,28 @@ export const checkout = async (req: Request, res: Response) => {
                 }
             }
 
+            // Update customer debt if payment method is "credit"
+            if (data.payment_method === 'credit' && saleCustomerId) {
+                const customer = await tx.customer.findUnique({ where: { id: saleCustomerId } });
+                if (!customer) throw new Error("Customer not found for credit sale");
+
+                const currentDue = new Decimal(customer.totalDue.toString());
+                const creditLimit = new Decimal(customer.creditLimit.toString());
+                const newGrandTotal = new Decimal(data.totals.grand_total);
+
+                // For sales (positive), check limit. For returns (negative), skip check.
+                if (newGrandTotal.gt(0) && currentDue.plus(newGrandTotal).gt(creditLimit)) {
+                    throw new Error(`Credit limit exceeded. Limit: ${creditLimit}, Current Due: ${currentDue}`);
+                }
+
+                await tx.customer.update({
+                    where: { id: saleCustomerId },
+                    data: {
+                        totalDue: { increment: newGrandTotal }
+                    }
+                });
+            }
+
             return sale;
         });
 
@@ -420,7 +447,7 @@ export const getSales = async (req: Request, res: Response) => {
         const end = req.query.end ? new Date(String(req.query.end)) : null;
         const includeItems = String(req.query.includeItems || 'false') === 'true';
 
-        const where: any = { parentSaleId: null };
+        const where: any = {};
         if (start || end) {
             where.createdAt = {};
             if (start) where.createdAt.gte = start;
@@ -548,22 +575,77 @@ export const getDailySummary = async (req: Request, res: Response) => {
         const endOfDay = new Date();
         endOfDay.setHours(23, 59, 59, 999);
 
-        const sales = await prisma.sale.findMany({
-            where: {
-                createdAt: {
-                    gte: startOfDay,
-                    lte: endOfDay
+        const [sales, repayments] = await Promise.all([
+            prisma.sale.findMany({
+                where: {
+                    createdAt: {
+                        gte: startOfDay,
+                        lte: endOfDay
+                    }
                 }
+            }),
+            prisma.customerPayment.findMany({
+                where: {
+                    createdAt: {
+                        gte: startOfDay,
+                        lte: endOfDay
+                    }
+                }
+            })
+        ]);
+
+        let totalSales = new Decimal(0);
+        let cashTotal = new Decimal(0);
+        let cardTotal = new Decimal(0);
+        let bankTotal = new Decimal(0);
+        let creditTotal = new Decimal(0);
+        let otherTotal = new Decimal(0);
+        let paymentsTotal = new Decimal(0);
+
+        sales.forEach((sale: any) => {
+            const saleTotal = new Decimal(sale.total.toString());
+            totalSales = totalSales.plus(saleTotal);
+
+            if (sale.paymentMethod === 'split' && sale.paymentDetails) {
+                const details = sale.paymentDetails as any;
+                cashTotal = cashTotal.plus(new Decimal(details.cashAmount || 0));
+                cardTotal = cardTotal.plus(new Decimal(details.cardAmount || 0));
+            } else if (sale.paymentMethod === 'cash') {
+                cashTotal = cashTotal.plus(saleTotal);
+            } else if (sale.paymentMethod === 'card') {
+                cardTotal = cardTotal.plus(saleTotal);
+            } else if (sale.paymentMethod === 'bank') {
+                bankTotal = bankTotal.plus(saleTotal);
+            } else if (sale.paymentMethod === 'credit') {
+                creditTotal = creditTotal.plus(saleTotal);
+            } else {
+                otherTotal = otherTotal.plus(saleTotal);
             }
         });
 
-        const totalSales = sales.reduce((sum: Decimal, sale: Sale) => sum.plus(new Decimal(sale.total.toString())), new Decimal(0)); // using Decimal.js
-        const transactionCount = sales.length;
+        repayments.forEach((payment: any) => {
+            const amount = new Decimal(payment.amount.toString());
+            paymentsTotal = paymentsTotal.plus(amount);
+
+            if (payment.paymentMethod === 'cash') {
+                cashTotal = cashTotal.plus(amount);
+            } else if (payment.paymentMethod === 'card') {
+                cardTotal = cardTotal.plus(amount);
+            } else if (payment.paymentMethod === 'bank') {
+                bankTotal = bankTotal.plus(amount);
+            }
+        });
 
         res.json({
             date: startOfDay.toISOString().split('T')[0],
             total_sales: totalSales.toNumber(),
-            transaction_count: transactionCount
+            transaction_count: sales.length,
+            cash_total: cashTotal.toNumber(),
+            card_total: cardTotal.toNumber(),
+            bank_total: bankTotal.toNumber(),
+            credit_total: creditTotal.toNumber(),
+            other_total: otherTotal.toNumber(),
+            payments_total: paymentsTotal.toNumber()
         });
     } catch (error) {
         console.error(error);
