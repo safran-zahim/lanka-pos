@@ -249,7 +249,9 @@ export const addPettyCash = async (req: Request, res: Response) => {
 
         // Check global settings if Daily Register is required
         const settingEntry = await prisma.setting.findUnique({ where: { key: 'enableDailyRegister' } });
-        const requireRegister = settingEntry ? (settingEntry.value as boolean) === true : true;
+        const requireRegister = settingEntry
+            ? settingEntry.value === true || settingEntry.value === 'true'
+            : true;
 
         const shift = await getActiveShiftForUser(staffId);
 
@@ -257,7 +259,6 @@ export const addPettyCash = async (req: Request, res: Response) => {
             return res.status(400).json({ error: "No active register found. Open a register first before logging petty cash." });
         }
 
-        // @ts-ignore
         const entry = await prisma.pettyCash.create({
             data: {
                 shiftId: shift ? shift.id : undefined,

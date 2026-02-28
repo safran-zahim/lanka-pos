@@ -3,6 +3,7 @@ import prisma from '../utils/prisma';
 import { generateToken } from '../utils/jwt';
 import { z } from 'zod';
 import { getAppConfig } from '../utils/appConfig';
+import bcrypt from 'bcrypt';
 
 const loginSchema = z.object({
     username: z.string(),
@@ -13,14 +14,29 @@ export const login = async (req: Request, res: Response) => {
     try {
         const { username, password } = loginSchema.parse(req.body);
 
-        // In a real app, passwords should be hashed. 
-        // For this simplified version (internal tool), checking plain text (or assuming pre-hashed in DB logic if updated later).
-        // BRD didn't specify hashing, but "Secure" implies it. I'll add a TODO/Comment about hashing.
         const staff = await prisma.staff.findFirst({
-            where: { name: username.toLowerCase() }, // Using name as username for now as per schema
+            where: { name: username.toLowerCase() },
         });
 
-        if (!staff || staff.password !== password) {
+        if (!staff) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        // Support both bcrypt hashes and legacy plaintext (migration path)
+        let passwordMatch = false;
+        if (staff.password.startsWith('$2b$') || staff.password.startsWith('$2a$')) {
+            // bcrypt hash
+            passwordMatch = await bcrypt.compare(password, staff.password);
+        } else {
+            // Legacy plaintext — auto-upgrade on successful login
+            passwordMatch = staff.password === password;
+            if (passwordMatch) {
+                const hash = await bcrypt.hash(password, 12);
+                await prisma.staff.update({ where: { id: staff.id }, data: { password: hash } });
+            }
+        }
+
+        if (!passwordMatch) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 

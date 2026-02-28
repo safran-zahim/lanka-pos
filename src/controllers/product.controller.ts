@@ -76,26 +76,38 @@ export const getProducts = async (req: Request, res: Response) => {
             },
             orderBy: { name: 'asc' }
         });
-        const enriched = await Promise.all(products.map(async (product) => {
-            const [purchaseAgg, saleAgg, latestPurchase] = await Promise.all([
-                prisma.purchaseItem.aggregate({
-                    where: { productId: product.id },
-                    _sum: { quantity: true }
-                }),
-                prisma.saleItem.aggregate({
-                    where: { productId: product.id },
-                    _sum: { quantity: true }
-                }),
-                prisma.purchaseItem.findFirst({
-                    where: { productId: product.id },
-                    include: { purchase: { select: { date: true } } },
-                    orderBy: { purchase: { date: 'desc' } }
-                })
-            ]);
+        const productIds = products.map(p => p.id);
 
-            const totalPurchased = Number(purchaseAgg._sum.quantity || 0);
-            const totalSold = Number(saleAgg._sum.quantity || 0);
+        // BUG-04 Fix: Batch all stock queries instead of N+1 per-product queries
+        const [purchaseAggs, saleAggs, latestPurchases] = await Promise.all([
+            prisma.purchaseItem.groupBy({
+                by: ['productId'],
+                where: { productId: { in: productIds } },
+                _sum: { quantity: true }
+            }),
+            prisma.saleItem.groupBy({
+                by: ['productId'],
+                where: { productId: { in: productIds } },
+                _sum: { quantity: true }
+            }),
+            prisma.purchaseItem.findMany({
+                where: { productId: { in: productIds } },
+                include: { purchase: { select: { date: true } } },
+                orderBy: { purchase: { date: 'desc' } },
+                distinct: ['productId']
+            })
+        ]);
+
+        // Build lookup maps for O(1) access
+        const purchaseMap = new Map(purchaseAggs.map(a => [a.productId, Number(a._sum.quantity || 0)]));
+        const saleMap = new Map(saleAggs.map(a => [a.productId, Number(a._sum.quantity || 0)]));
+        const latestPurchaseMap = new Map(latestPurchases.map(p => [p.productId, p]));
+
+        const enriched = products.map((product) => {
+            const totalPurchased = purchaseMap.get(product.id) || 0;
+            const totalSold = saleMap.get(product.id) || 0;
             const stock = totalPurchased - totalSold;
+            const latestPurchase = latestPurchaseMap.get(product.id);
 
             return {
                 id: product.id,
@@ -123,7 +135,7 @@ export const getProducts = async (req: Request, res: Response) => {
                 costPrice: latestPurchase?.costPrice ? Number(latestPurchase.costPrice) : null,
                 hasPurchase: Boolean(latestPurchase)
             };
-        }));
+        });
 
         res.json(enriched);
     } catch (error) {
@@ -244,9 +256,7 @@ export const updateProduct = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Invalid product id' });
         }
 
-        console.log('Update Product Request Body:', req.body);
         const data = updateProductSchema.parse(req.body);
-        console.log('Parsed Update Data:', data);
 
         // Check if SKU is unique if being updated
         if (data.skuCode) {
@@ -275,7 +285,6 @@ export const updateProduct = async (req: Request, res: Response) => {
             }
         });
 
-        console.log('Updated Product:', { id: product.id, categoryId: product.categoryId, subCategoryId: product.subCategoryId });
         res.json(product);
     } catch (error) {
         if (error instanceof z.ZodError) {
@@ -409,17 +418,27 @@ export const getLowStock = async (req: Request, res: Response) => {
             orderBy: { name: 'asc' }
         });
 
-        const enriched = await Promise.all(products.map(async (product) => {
-            const totalPurchased = await prisma.purchaseItem.aggregate({
-                where: { productId: product.id },
-                _sum: { quantity: true }
-            });
-            const totalSold = await prisma.saleItem.aggregate({
-                where: { productId: product.id },
-                _sum: { quantity: true }
-            });
+        const productIds = products.map(p => p.id);
 
-            const stock = Number(totalPurchased._sum.quantity || 0) - Number(totalSold._sum.quantity || 0);
+        // BUG-04 Fix: Batch all stock aggregations — 2 queries total instead of 2 per product
+        const [purchaseAggs, saleAggs] = await Promise.all([
+            prisma.purchaseItem.groupBy({
+                by: ['productId'],
+                where: { productId: { in: productIds } },
+                _sum: { quantity: true }
+            }),
+            prisma.saleItem.groupBy({
+                by: ['productId'],
+                where: { productId: { in: productIds } },
+                _sum: { quantity: true }
+            })
+        ]);
+
+        const purchaseMap = new Map(purchaseAggs.map(a => [a.productId, Number(a._sum.quantity || 0)]));
+        const saleMap = new Map(saleAggs.map(a => [a.productId, Number(a._sum.quantity || 0)]));
+
+        const enriched = products.map((product) => {
+            const stock = (purchaseMap.get(product.id) || 0) - (saleMap.get(product.id) || 0);
             const alertLevel = Number(product.reorderLevel || 0);
 
             return {
@@ -433,15 +452,10 @@ export const getLowStock = async (req: Request, res: Response) => {
                 sku_code: product.skuCode,
                 barcode_type: product.barcodeType
             };
-        }));
-
-        // Filter products where stock is below or equal to alert level
-        const lowStock = enriched.filter((product) => {
-            const alertLevel = Number(product.reorderLevel || 0);
-            return product.stock <= alertLevel;
         });
-        console.log("getLowStock Final Count:", lowStock.length);
-        console.log("getLowStock items:", JSON.stringify(lowStock.map(l => ({ name: l.name, stock: l.stock, alertLevel: l.reorder_level }))));
+
+        // Filter products where stock is at or below alert level
+        const lowStock = enriched.filter(product => product.stock <= Number(product.reorderLevel || 0));
 
         res.json(lowStock);
     } catch (error) {
@@ -456,6 +470,19 @@ export const deleteProduct = async (req: Request, res: Response) => {
         if (!Number.isFinite(id)) {
             return res.status(400).json({ error: 'Invalid product id' });
         }
+
+        // BUG-06 Fix: Guard against deleting products with sales/purchase history
+        const [saleCount, purchaseCount] = await Promise.all([
+            prisma.saleItem.count({ where: { productId: id } }),
+            prisma.purchaseItem.count({ where: { productId: id } })
+        ]);
+
+        if (saleCount > 0 || purchaseCount > 0) {
+            return res.status(409).json({
+                error: `Cannot delete product — it has ${saleCount} sales record(s) and ${purchaseCount} purchase batch(es). Use "Mark as Inactive" instead.`
+            });
+        }
+
         await prisma.product.delete({ where: { id } });
         res.status(204).send();
     } catch (error: any) {
@@ -475,8 +502,6 @@ export const toggleProductStatus = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Invalid product id' });
         }
 
-        console.log(`[ToggleStatus] Toggling status for product ID: ${id}`);
-
         const product = await prisma.product.findUnique({
             where: { id },
             select: {
@@ -487,20 +512,12 @@ export const toggleProductStatus = async (req: Request, res: Response) => {
         });
 
         if (!product) {
-            console.warn(`[ToggleStatus] Product not found for ID: ${id}`);
             return res.status(404).json({ error: 'Product not found' });
         }
 
-        console.log(`[ToggleStatus] Current status for ${product.name} (${product.id}): ${product.isActive}`);
-
-        // Handle null/undefined isActive by defaulting to true (since default db value is true)
-        // If it's currently null, treat it as true (active), so toggle makes it false (inactive).
-        // Or if we treat null as inactive, toggle makes it true.
-        // Let's assume strict boolean toggle: !isActive.
+        // Toggle: treat null as active (default DB value)
         const currentStatus = product.isActive ?? true;
         const newStatus = !currentStatus;
-
-        console.log(`[ToggleStatus] Setting status to: ${newStatus}`);
 
         const updatedProduct = await prisma.product.update({
             where: { id },
@@ -513,13 +530,11 @@ export const toggleProductStatus = async (req: Request, res: Response) => {
             }
         });
 
-        console.log(`[ToggleStatus] Successfully updated status for product ${id}`);
         res.json(updatedProduct);
     } catch (error) {
         console.error('[ToggleStatus] Error toggling product status:', error);
         res.status(500).json({
             error: 'Internal server error',
-            details: error instanceof Error ? error.message : 'Unknown error'
         });
     }
 };

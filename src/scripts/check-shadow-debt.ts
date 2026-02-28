@@ -36,7 +36,7 @@ async function checkShadowDebt() {
             console.log("✅ SYSTEM FLOATING: No shadow debts found! The mathematically calculated ledger perfectly matches all customer cached profile balances.");
         }
     } catch (e) {
-        console.error("Audit query failed:", e.message);
+        console.error("Audit query failed:", e instanceof Error ? e.message : e);
     } finally {
         await prisma.$disconnect();
     }

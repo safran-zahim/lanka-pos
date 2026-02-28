@@ -62,7 +62,7 @@ export const checkout = async (req: Request, res: Response) => {
 
         const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
             const oversellingSetting = await tx.setting.findUnique({ where: { key: 'allowOverSelling' } });
-            const allowOverSelling = oversellingSetting?.value === true;
+            const allowOverSelling = oversellingSetting?.value === true || oversellingSetting?.value === 'true';
 
             // Get Active Shift
             const activeShift = await tx.shift.findFirst({
@@ -265,7 +265,6 @@ export const checkout = async (req: Request, res: Response) => {
 
                         if (batchAvailable > 0) {
                             const assignQty = Math.min(remainingToAssign, batchAvailable);
-                            console.log(`[FIFO Validation] Product ${item.product_id}: Assigning ${assignQty} to batch ${batch.id} (Available: ${batchAvailable})`);
                             remainingToAssign -= assignQty;
                             if (remainingToAssign <= 0) break;
                         }
@@ -362,7 +361,6 @@ export const checkout = async (req: Request, res: Response) => {
 
                         if (batchAvailable > 0) {
                             const assignQty = Math.min(remainingToAssign, batchAvailable);
-                            console.log(`[FIFO Creation] Product ${item.product_id}: Splitting ${assignQty} into batch ${batch.id}`);
                             saleItemsData.push({
                                 productId: item.product_id,
                                 quantity: assignQty,
@@ -376,8 +374,6 @@ export const checkout = async (req: Request, res: Response) => {
                     }
 
                     if (remainingToAssign > 0 && allowOverSelling) {
-                        console.log(`[Over-Selling] Product ${item.product_id}: Recording over-sale of ${remainingToAssign}`);
-
                         const product = await tx.product.findUnique({ where: { id: item.product_id } });
                         const latestPurchase = await tx.purchaseItem.findFirst({
                             where: { productId: item.product_id },

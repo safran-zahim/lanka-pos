@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import { z } from 'zod';
 import { Decimal } from 'decimal.js';
+import bcrypt from 'bcrypt';
 
 // Schema for clock-in
 const clockInSchema = z.object({
@@ -50,11 +51,13 @@ export const createStaff = async (req: Request, res: Response) => {
             return res.status(409).json({ error: 'Staff name already exists' });
         }
 
+        const hashedPassword = await bcrypt.hash(data.password, 12);
+
         const staff = await prisma.staff.create({
             data: {
                 name: data.name.toLowerCase(),
                 role: data.role,
-                password: data.password,
+                password: hashedPassword,
                 hourlyRate: data.hourly_rate !== undefined ? new Decimal(data.hourly_rate) : null
             },
             select: { id: true, name: true, role: true, hourlyRate: true, createdAt: true }
@@ -138,9 +141,11 @@ export const resetStaffPassword = async (req: Request, res: Response) => {
         }
         const data = staffPasswordSchema.parse(req.body);
 
+        const hashedPassword = await bcrypt.hash(data.password, 12);
+
         await prisma.staff.update({
             where: { id },
-            data: { password: data.password }
+            data: { password: hashedPassword }
         });
 
         res.json({ message: 'Password updated' });

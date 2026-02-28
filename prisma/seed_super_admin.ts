@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -19,7 +20,7 @@ async function main() {
     });
     console.log('Plan created:', plan.name);
 
-    // Create Staff Users
+    // Create Staff Users with hashed passwords
     const users = [
         { id: 1, name: 'superadmin', role: 'super_admin', password: 'admin123' },
         { id: 2, name: 'admin', role: 'admin', password: 'admin123' },
@@ -28,18 +29,19 @@ async function main() {
     ];
 
     for (const user of users) {
+        const hashedPassword = await bcrypt.hash(user.password, 12);
         await prisma.staff.upsert({
             where: { id: user.id },
             update: {
                 name: user.name,
                 role: user.role,
-                password: user.password
+                password: hashedPassword
             },
             create: {
                 id: user.id,
                 name: user.name,
                 role: user.role,
-                password: user.password
+                password: hashedPassword
             }
         });
         console.log(`Staff updated/created: ${user.name} (Role: ${user.role}, ID: ${user.id})`);

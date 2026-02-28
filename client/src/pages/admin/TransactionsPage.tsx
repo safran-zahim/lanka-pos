@@ -154,8 +154,8 @@ export const TransactionsPage = () => {
                                         </td>
                                         <td className="p-4 text-sm">
                                             <span className={`px-2.5 py-1 rounded-md text-xs font-medium border ${tx.type === 'IN'
-                                                    ? 'bg-green-50 text-green-700 border-green-100 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800'
-                                                    : 'bg-red-50 text-red-700 border-red-100 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800'
+                                                ? 'bg-green-50 text-green-700 border-green-100 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800'
+                                                : 'bg-red-50 text-red-700 border-red-100 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800'
                                                 }`}>
                                                 {tx.category}
                                             </span>
@@ -166,7 +166,7 @@ export const TransactionsPage = () => {
                                         </td>
                                         <td className="p-4 text-right">
                                             <div className={`text-base font-bold ${tx.type === 'IN' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                                                {tx.type === 'IN' ? '+' : '-'}{formatCurrency(tx.amount)}
+                                                {tx.type === 'IN' ? '+' : '-'}{formatCurrency(Number(tx.amount))}
                                             </div>
                                         </td>
                                     </tr>

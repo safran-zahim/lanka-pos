@@ -1,6 +1,26 @@
 # Feature Updates & Bug Fixes Changelog
 
-## [2026-02-28] - Receipt Refinements & Registration Lock System
+## [2026-02-28] - Security Hardening & Bug Fix Batch
+
+### Security
+- **Plaintext Passwords (BUG-01)**: Passwords now hashed with `bcrypt` (12 rounds). Existing plain-text passwords are auto-upgraded to hashed on first successful login — no manual migration needed.
+
+### Fixed
+- **Settings Boolean Casting (BUG-02)**: `enableDailyRegister` and `allowOverSelling` settings were always being read as `false` due to Prisma storing JSON `"true"` as a string. Both `shift.controller.ts` and `sales.controller.ts` now handle both `true` (boolean) and `"true"` (string) correctly.
+- **Customer List Cap (BUG-07)**: Admin customer list was hard-capped at 50 records. Now returns up to 500 when no search is active, and 50 when filtering by search term.
+- **Empty Purchase Submissions (BUG-09)**: Purchase creation now requires at least 1 item. A Zod `.min(1)` guard prevents zero-item purchases from reaching the database.
+- **@ts-ignore Removed (BUG-08)**: The `// @ts-ignore` workaround in `addPettyCash` is removed since Prisma now accepts `shiftId: undefined` with the optional schema field.
+- **Debug Console Logs Removed (BUG-10)**: Removed all development `console.log` statements from `product.controller.ts` and `sales.controller.ts` — these were leaking internal product names, batch IDs, and stock counts to server logs in production.
+- **Audit Script TypeScript Error**: Fixed pre-existing `e.message` strict-mode error in `check-shadow-debt.ts`.
+
+### Performance
+- **N+1 Query Fix — Product List (BUG-04)**: `getProducts` and `getLowStock` previously ran 3 DB queries *per product* (300+ queries for 100 products). Now uses 3 batched `groupBy` queries total — constant time regardless of catalog size.
+- **Remaining Debug Logs (BUG-10)**: Removed FIFO creation and over-selling `console.log` statements from `sales.controller.ts`.
+
+### Data Integrity
+- **Expense Bill Number Race Condition (BUG-03)**: Bill numbers now use `EXP-YYYYMMDD-XXXX` format (timestamp + 4-char random suffix) instead of `count() + 1`, preventing duplicate bill numbers under concurrent requests.
+- **Product Delete Guard (BUG-06)**: `deleteProduct` now checks for existing sale items and purchase batches. Products with history return HTTP 409 with a message directing staff to use "Mark as Inactive" instead.
+
 
 ### Added
 - **Transactions Dashboard (`/admin/transactions`)**: 

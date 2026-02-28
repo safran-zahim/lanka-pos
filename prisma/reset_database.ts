@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import * as readline from 'readline';
+import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -80,11 +81,12 @@ async function resetDatabase() {
 
         // Create Super Admin
         const password = 'admin123';
+        const hashedPassword = await bcrypt.hash(password, 12);
         await prisma.staff.create({
             data: {
                 name: 'SuperAdmin',
                 role: 'super_admin',
-                password: password
+                password: hashedPassword
             }
         });
         console.log('  ✓ Created Super Admin account');

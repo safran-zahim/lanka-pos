@@ -39,7 +39,7 @@ export const getCustomers = async (req: Request, res: Response) => {
 
         const customers = await prisma.customer.findMany({
             where,
-            take: 50,
+            take: search ? 50 : 500,
             orderBy: { createdAt: 'desc' }
         });
 

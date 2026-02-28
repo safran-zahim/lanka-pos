@@ -28,7 +28,7 @@ const purchaseSchema = z.object({
     shipping: z.number().nonnegative().optional(),
     discount: z.number().nonnegative().optional(),
     tax_amount: z.number().nonnegative().optional(),
-    items: z.array(purchaseItemSchema)
+    items: z.array(purchaseItemSchema).min(1, 'At least one product is required')
 });
 
 const purchasePaymentSchema = z.object({

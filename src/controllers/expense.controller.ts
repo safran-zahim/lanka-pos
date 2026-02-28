@@ -117,9 +117,11 @@ export const createExpense = async (req: Request, res: Response) => {
         const user = (req as any).user;
         const staffId = user ? user.id : undefined;
 
-        // Generate unique bill number
-        const count = await prisma.expense.count();
-        const billNumber = `EXP-${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, '0')}-${(count + 1).toString().padStart(4, '0')}`;
+        // Generate unique bill number using timestamp + random suffix to avoid race conditions
+        const now = new Date();
+        const datePart = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}`;
+        const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+        const billNumber = `EXP-${datePart}-${randomSuffix}`;
 
         // Tie to active shift if cash
         let shiftId = undefined;

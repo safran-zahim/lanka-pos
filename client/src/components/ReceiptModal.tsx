@@ -332,16 +332,16 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                             </div>
                         )}
                         {transaction.payment_method === 'credit' && (
-                            <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-900/10 rounded border border-amber-200 dark:border-amber-900/30 text-amber-800 dark:text-amber-300">
+                            <div className="mt-2 p-2 bg-white rounded border border-black text-black">
                                 <p className="text-[10px] font-bold uppercase tracking-wider">
                                     {transaction.type === 'return' ? 'Debt Reduction' : 'On Account (Credit)'}
                                 </p>
                                 <div className="flex justify-between mt-1 text-[11px]">
                                     <span>{transaction.type === 'return' ? 'Amount Deduced:' : 'Current Charge:'}</span>
-                                    <span>{formatCurrency(Math.abs(Number(transaction.total_amount || 0)))}</span>
+                                    <span className="font-semibold">{formatCurrency(Math.abs(Number(transaction.total_amount || 0)))}</span>
                                 </div>
                                 {customer && (
-                                    <div className="flex justify-between border-t border-amber-200/50 dark:border-amber-900/50 mt-1 pt-1 opacity-90 text-[11px] font-medium">
+                                    <div className="flex justify-between border-t border-black mt-1 pt-1 text-[11px] font-medium">
                                         <span>Outstanding Balance:</span>
                                         <span>{formatCurrency(Number(customer.total_due || 0))}</span>
                                     </div>
