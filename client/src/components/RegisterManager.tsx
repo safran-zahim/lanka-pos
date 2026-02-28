@@ -28,6 +28,21 @@ export const RegisterManager: React.FC<RegisterManagerProps> = ({ onRegisterStat
             } else if (res.status === 404) {
                 setIsOpen(false);
                 onRegisterStatusKnown(false);
+
+                // Fetch the expected cash from the last closed register to pre-fill the float
+                try {
+                    const lastRes = await fetch(getApiUrl('/shifts/last-closed'), {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    if (lastRes.ok) {
+                        const lastData = await lastRes.json();
+                        if (lastData && lastData.expectedCash != null) {
+                            setStartingCash(String(lastData.expectedCash));
+                        }
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch last closed shift float", e);
+                }
             }
         } catch (error) {
             console.error("Failed to check register status", error);

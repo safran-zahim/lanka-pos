@@ -108,6 +108,24 @@ export const getActiveShift = async (req: Request, res: Response) => {
     }
 };
 
+export const getLastClosedShift = async (req: Request, res: Response) => {
+    try {
+        const staffId = (req as any).user.id;
+        const lastShift = await prisma.shift.findFirst({
+            where: { staffId, status: 'CLOSED' },
+            orderBy: { endTime: 'desc' }
+        });
+
+        if (!lastShift) {
+            return res.status(404).json({ error: "No previously closed register found" });
+        }
+
+        res.json(lastShift);
+    } catch (error) {
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
 export const closeShift = async (req: Request, res: Response) => {
     try {
         const staffId = (req as any).user.id;
@@ -229,17 +247,23 @@ export const addPettyCash = async (req: Request, res: Response) => {
         const staffId = (req as any).user.id;
         const data = pettyCashSchema.parse(req.body);
 
+        // Check global settings if Daily Register is required
+        const settingEntry = await prisma.setting.findUnique({ where: { key: 'enableDailyRegister' } });
+        const requireRegister = settingEntry ? (settingEntry.value as boolean) === true : true;
+
         const shift = await getActiveShiftForUser(staffId);
-        if (!shift) {
+
+        if (requireRegister && !shift) {
             return res.status(400).json({ error: "No active register found. Open a register first before logging petty cash." });
         }
 
+        // @ts-ignore
         const entry = await prisma.pettyCash.create({
             data: {
-                shiftId: shift.id,
+                shiftId: shift ? shift.id : undefined,
                 staffId,
                 amount: new Decimal(data.amount),
-                type: data.type,
+                type: data.type as any,
                 description: data.description
             }
         });

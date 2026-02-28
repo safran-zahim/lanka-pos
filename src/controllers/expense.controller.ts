@@ -56,22 +56,54 @@ export const getExpenses = async (req: Request, res: Response) => {
             supplierId: null
         };
 
+        // Also fetch petty cash if category filtration allows or if no category filter
+        let pettyWhere: any = {};
+
         if (startDate && endDate) {
             where.date = {
+                gte: new Date(String(startDate)),
+                lte: new Date(String(endDate))
+            };
+            pettyWhere.createdAt = {
                 gte: new Date(String(startDate)),
                 lte: new Date(String(endDate))
             };
         }
         if (categoryId) {
             where.categoryId = Number(categoryId);
+            // If filtering by specific expense category DB ID, do not fetch petty cash (which lacks categoryId)
+            pettyWhere.id = -1; // impossible ID to force zero results
         }
 
-        const expenses = await prisma.expense.findMany({
-            where,
-            include: { categoryRel: true, staff: { select: { id: true, name: true } } },
-            orderBy: { date: 'desc' }
-        });
-        res.json(expenses);
+        const [expenses, pettyCashLogs] = await Promise.all([
+            prisma.expense.findMany({
+                where,
+                include: { categoryRel: true, staff: { select: { id: true, name: true } } },
+                orderBy: { date: 'desc' }
+            }),
+            prisma.pettyCash.findMany({
+                where: pettyWhere,
+                include: { staff: { select: { id: true, name: true } } }
+            })
+        ]);
+
+        const mappedPettyCash = pettyCashLogs.map(pc => ({
+            id: `PC-${pc.id}`, // String ID to prevent React key collision with expense IDs
+            billNumber: 'PETTY-CASH',
+            date: pc.createdAt,
+            amount: pc.amount,
+            description: pc.description,
+            paymentMethod: 'cash',
+            staff: pc.staff,
+            category: { name: pc.type === 'IN' ? 'Petty Cash IN' : 'Petty Cash OUT' },
+            categoryRel: { name: pc.type === 'IN' ? 'Petty Cash IN' : 'Petty Cash OUT' }
+        }));
+
+        const combined = [...expenses, ...mappedPettyCash].sort((a: any, b: any) =>
+            new Date(b.date || b.createdAt).getTime() - new Date(a.date || a.createdAt).getTime()
+        );
+
+        res.json(combined);
     } catch (error) {
         console.error("Failed to get expenses:", error);
         res.status(500).json({ error: 'Internal server error' });

@@ -10,6 +10,7 @@ import { ProductHistoryPage } from './pages/admin/ProductHistoryPage';
 import { UserList } from './pages/admin/UserList';
 import { CustomerList } from './pages/admin/CustomerList';
 import { CustomerProfilePage } from './pages/admin/CustomerProfilePage';
+import { SalesHistoryPage } from './pages/admin/SalesHistoryPage';
 import { TransactionsPage } from './pages/admin/TransactionsPage';
 import { SaleDetailPage } from './pages/admin/SaleDetailPage';
 import { SupplierManager } from './components/admin/SupplierManager';
@@ -81,6 +82,7 @@ function App() {
               <Route path="/admin/products/:id/history" element={<ProductHistoryPage />} />
               <Route path="/admin/customers" element={<CustomerList />} />
               <Route path="/admin/customers/:id" element={<CustomerProfilePage />} />
+              <Route path="/admin/sales" element={<SalesHistoryPage />} />
               <Route path="/admin/transactions" element={<TransactionsPage />} />
               <Route path="/admin/transactions/:id" element={<SaleDetailPage />} />
               <Route path="/admin/suppliers" element={<SupplierManager />} />

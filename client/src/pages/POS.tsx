@@ -23,7 +23,7 @@ import { ReturnModal } from '../components/ReturnModal';
 import { SelectBatchModal } from '../components/SelectBatchModal';
 import { RegisterManager } from '../components/RegisterManager';
 import { ActiveRegisterModal } from '../components/ActiveRegisterModal';
-import { POSCashPanel } from '../components/POSCashPanel';
+import { POSCashModal } from '../components/POSCashModal';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useCurrency } from '../hooks/useCurrency';
 import { getApiUrl } from '../config/api';
@@ -1413,7 +1413,10 @@ export const POS = () => {
                 <ActiveRegisterModal
                     isOpen={showActiveRegister}
                     onClose={() => setShowActiveRegister(false)}
-                    onRegisterClosed={() => setIsRegisterOpen(false)}
+                    onRegisterClosed={() => {
+                        setIsRegisterOpen(false);
+                        setShowActiveRegister(false);
+                    }}
                 />
             )}
 
@@ -1424,7 +1427,7 @@ export const POS = () => {
             )}
 
             {showCashPanel && (
-                <POSCashPanel onClose={() => setShowCashPanel(false)} />
+                <POSCashModal onClose={() => setShowCashPanel(false)} />
             )}
         </div>
     );

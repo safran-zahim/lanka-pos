@@ -70,8 +70,8 @@ export const RegisterSummaryReceipt = ({ shiftData, countedCash, variance, close
     const phone = settings['receipt.phone'] || APP_CONFIG.company.supportPhone;
 
     return (
-        <div id="receipt-modal" className="fixed inset-0 bg-white z-[200] flex justify-center text-black overflow-y-auto">
-            <div className="w-[80mm] min-h-screen bg-white text-black p-4 text-[12px] font-mono leading-tight shadow-none border-none mx-auto relative">
+        <div id="receipt-modal" className="fixed inset-0 bg-black/80 z-[200] flex justify-center items-center text-black overflow-y-auto print:bg-white print:static print:h-auto print:w-auto">
+            <div className="w-[80mm] max-h-[90vh] bg-white text-black p-4 text-[12px] font-mono leading-tight shadow-none border-none mx-auto relative overflow-y-auto print:w-full print:shadow-none print:p-0 print:max-h-none print:overflow-visible">
                 {/* Print action buttons visible only on screen, hidden via @media print in index.css */}
                 <div className="absolute top-2 right-2 flex gap-2 print:hidden z-10">
                     <button onClick={() => window.print()} className="bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-300">

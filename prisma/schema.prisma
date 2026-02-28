@@ -187,8 +187,8 @@ model Expense {
 
 model PettyCash {
   id          Int      @id @default(autoincrement())
-  shiftId     Int
-  shift       Shift    @relation(fields: [shiftId], references: [id])
+  shiftId     Int?
+  shift       Shift?   @relation(fields: [shiftId], references: [id])
   staffId     Int
   staff       Staff    @relation(fields: [staffId], references: [id])
   amount      Decimal

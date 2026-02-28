@@ -139,7 +139,12 @@ export const ExpensesPage = () => {
                                         <td className="p-4 text-sm text-gray-900 dark:text-gray-300">{new Date(exp.date).toLocaleDateString()}</td>
                                         <td className="p-4 text-sm font-medium text-gray-900 dark:text-white">#{exp.billNumber}</td>
                                         <td className="p-4 text-sm text-gray-600 dark:text-gray-400">
-                                            <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2.5 py-1 rounded-md text-xs font-medium border border-blue-100 dark:border-blue-800">
+                                            <span className={`px-2.5 py-1 rounded-md text-xs font-medium border ${exp.category?.name === 'Petty Cash IN'
+                                                    ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-100 dark:border-green-800'
+                                                    : exp.category?.name === 'Petty Cash OUT'
+                                                        ? 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border-orange-100 dark:border-orange-800'
+                                                        : 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-100 dark:border-blue-800'
+                                                }`}>
                                                 {exp.category?.name || 'General'}
                                             </span>
                                         </td>

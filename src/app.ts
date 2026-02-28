@@ -48,6 +48,7 @@ import unitRoutes from './routes/unit.routes';
 import purchaseRoutes from './routes/purchase.routes';
 import expenseRoutes from './routes/expense.routes';
 import shiftRoutes from './routes/shift.routes';
+import transactionRoutes from './routes/transaction.routes';
 
 app.use('/auth', authRoutes);
 app.use('/staff', staffRoutes);
@@ -64,6 +65,7 @@ app.use('/units', unitRoutes);
 app.use('/purchases', purchaseRoutes);
 app.use('/expenses', expenseRoutes);
 app.use('/shifts', shiftRoutes);
+app.use('/transactions', transactionRoutes);
 
 
 export default app;

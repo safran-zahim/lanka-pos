@@ -66,7 +66,8 @@ export const AdminLayout = () => {
             ? [{ path: '/admin/users', icon: <Users size={20} />, label: 'Users' }]
             : []),
         { path: '/admin/customers', icon: <Users size={20} />, label: 'Customers' },
-        { path: '/admin/transactions', icon: <FileText size={20} />, label: 'Transactions' },
+        { path: '/admin/sales', icon: <ShoppingCart size={20} />, label: 'Sales History' },
+        { path: '/admin/transactions', icon: <Wallet size={20} />, label: 'Transactions' },
         { path: '/admin/suppliers', icon: <Truck size={20} />, label: 'Suppliers' },
         { path: '/admin/purchases', icon: <Package size={20} />, label: 'Purchases' },
         { path: '/admin/low-stock', icon: <AlertTriangle size={20} />, label: 'Low Stock' },

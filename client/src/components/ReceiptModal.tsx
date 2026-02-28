@@ -91,44 +91,12 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
         const total = transaction.total_amount;
         const taxPercent = taxEnabled && taxAmount > 0 ? ((taxAmount / subtotal) * 100).toFixed(2).replace(/\.00$/, '') : '0';
 
-        const divider = '────────────────────';
-        const lines = [
-            `🧾 ${header}`,
-            address,
-            phone ? `Tel: ${phone}` : null,
-            email ? `Email: ${email}` : null,
-            divider,
-            `Invoice: #${transaction.transaction_id}`,
-            `Date: ${formatDateTime(new Date(transaction.timestamp))}`,
-            customer?.name ? `Customer: ${customer.name}` : null,
-            divider,
-            'Items',
-            ...items.flatMap((item) => {
-                const amount = formatCurrency(item.price_at_sale * item.quantity);
-                const base = `• ${item.quantity} × ${item.name}  (${amount})`;
-                return item.note ? [base, `  note: ${item.note}`] : [base];
-            }),
-            divider,
-            'Summary',
-            `Items Total: ${formatCurrency(itemsTotal)}`,
-            ...(discountAmount > 0 ? [`Discount: -${formatCurrency(discountAmount)}`] : []),
-            `Subtotal: ${formatCurrency(subtotal)}`,
-            ...(taxEnabled && taxAmount > 0 ? [`Tax (${taxPercent}%): ${formatCurrency(taxAmount)}`] : []),
-            ...(roundOffEnabled && roundOff > 0 ? [`Round Off: -${formatCurrency(roundOff)}`] : []),
-            `Total: ${formatCurrency(total)}`,
-            `Payment: ${transaction.payment_method.toUpperCase()}`,
-            divider,
-            footer || 'Developed by Tap Lanka POS 0705083388',
-            divider,
-            `Powered by ${APP_CONFIG.appName} - ${APP_CONFIG.company.supportPhone}`
-        ].filter(Boolean);
-
-        const receiptText = lines.join('\n');
+        const receiptText = `🧾 *${header}*\n${address}\n${phone ? `Tel: ${phone}` : ''}\n${email ? `Email: ${email}` : ''}\n\n*Invoice:* #${transaction.transaction_id}\n*Date:* ${formatDateTime(new Date(transaction.timestamp))}\n${customer?.name ? `*Customer:* ${customer.name}\n` : ''}\n*Items:*\n${items.map(item => `• ${item.quantity} × ${item.name} (${formatCurrency(item.price_at_sale * item.quantity)})`).join('\n')}\n\n*Summary:*\nSubtotal: ${formatCurrency(subtotal)}\n${discountAmount > 0 ? `Discount: -${formatCurrency(discountAmount)}\n` : ''}${taxEnabled && taxAmount > 0 ? `Tax (${taxPercent}%): ${formatCurrency(taxAmount)}\n` : ''}${roundOffEnabled && roundOff > 0 ? `Round Off: -${formatCurrency(roundOff)}\n` : ''}*Total: ${formatCurrency(total)}*\n\nPayment Method: ${transaction.payment_method.toUpperCase()}\n\n${footer || 'Thank you for your business!'}`;
 
         // Clean phone number
         const phoneNumber = customer?.phone?.replace(/[^0-9]/g, '') || '';
 
-        // Use WhatsApp API format (like the example)
+        // Use WhatsApp API format
         const whatsappUrl = `https://api.whatsapp.com/send/?phone=${phoneNumber}&text=${encodeURIComponent(receiptText)}&type=phone_number&app_absent=0`;
 
         // Open WhatsApp
