@@ -5,6 +5,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { ReceiptModal } from './ReceiptModal';
 import { useCurrency } from '../hooks/useCurrency';
 import { useToast } from '../store/useToast';
+import { useSettingsStore } from '../store/useSettingsStore';
 import { getApiUrl } from '../config/api';
 
 interface ReturnModalProps {
@@ -58,6 +59,7 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
     const { user, token } = useAuthStore();
     const { formatCurrency } = useCurrency();
     const { addToast } = useToast();
+    const { taxEnabled } = useSettingsStore();
     const [items, setItems] = useState<ReturnItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
@@ -66,9 +68,10 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
     const [receiptTransaction, setReceiptTransaction] = useState<Transaction | null>(null);
     const [receiptItems, setReceiptItems] = useState<(TransactionItem & { name: string })[]>([]);
     const [refundMethod, setRefundMethod] = useState<'cash' | 'card' | 'credit'>('cash');
+    const [refundNote, setRefundNote] = useState('');
 
     useEffect(() => {
-        if (sale?.paymentMethod === 'credit') {
+        if (sale?.paymentMethod === 'credit' || sale?.paymentMethod?.toLowerCase() === 'credit') {
             setRefundMethod('credit');
         } else {
             setRefundMethod('cash');
@@ -166,15 +169,26 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
         return sale.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     }, [sale]);
 
-    const refundSubtotal = items.reduce((sum, item) => {
-        if (!item.selected) return sum;
-        return sum + (item.price * item.return_qty);
-    }, 0);
+    // Robust calculation of refund totals
+    const { refundSubtotal, refundTax, refundDiscount, refundRoundOff, refundTotal } = useMemo(() => {
+        const subtotal = items.reduce((sum, item) => {
+            if (!item.selected) return sum;
+            return sum + (item.price * item.return_qty);
+        }, 0);
 
-    const refundTax = saleSubtotal > 0 ? (refundSubtotal / saleSubtotal) * Number(sale?.tax || 0) : 0;
-    const refundDiscount = saleSubtotal > 0 ? (refundSubtotal / saleSubtotal) * Number(sale?.discount || 0) : 0;
-    const refundRoundOff = saleSubtotal > 0 ? (refundSubtotal / saleSubtotal) * Number(sale?.roundOffDiscount || 0) : 0;
-    const refundTotal = refundSubtotal + refundTax - refundDiscount - refundRoundOff;
+        const taxVal = taxEnabled && saleSubtotal > 0 ? (subtotal / saleSubtotal) * Number(sale?.tax || 0) : 0;
+        const discountVal = saleSubtotal > 0 ? (subtotal / saleSubtotal) * Number(sale?.discount || 0) : 0;
+        const roundOffVal = saleSubtotal > 0 ? (subtotal / saleSubtotal) * Number(sale?.roundOffDiscount || 0) : 0;
+        const totalVal = subtotal + taxVal - discountVal - roundOffVal;
+
+        return {
+            refundSubtotal: subtotal,
+            refundTax: taxVal,
+            refundDiscount: discountVal,
+            refundRoundOff: roundOffVal,
+            refundTotal: totalVal
+        };
+    }, [items, sale, saleSubtotal, taxEnabled]);
 
     const handleToggleSelect = (index: number) => {
         const newItems = [...items];
@@ -220,6 +234,7 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                     parent_sale_id: sale.id,
                     customer_id: sale.customerId || undefined,
                     payment_method: refundMethod,
+                    note: refundNote || `Refund for bill #${sale.id}`,
                     items: selectedItems.map(item => ({
                         product_id: item.productId,
                         quantity: -Math.abs(item.return_qty),
@@ -321,10 +336,12 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                         <div className="text-xs text-gray-500">Refund Subtotal</div>
                         <div className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(refundSubtotal)}</div>
                     </div>
-                    <div className="p-3 rounded-lg border border-gray-200 dark:border-gray-700">
-                        <div className="text-xs text-gray-500">Estimated Tax</div>
-                        <div className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(refundTax)}</div>
-                    </div>
+                    {taxEnabled && (
+                        <div className="p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                            <div className="text-xs text-gray-500">Estimated Tax</div>
+                            <div className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(refundTax)}</div>
+                        </div>
+                    )}
                     <div className="p-3 rounded-lg border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20">
                         <div className="text-xs text-orange-600 dark:text-orange-300">Total Refund</div>
                         <div className="text-xl font-bold text-orange-600 dark:text-orange-300">{formatCurrency(refundTotal)}</div>
@@ -341,8 +358,8 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                                     onClick={() => setRefundMethod(method)}
                                     disabled={method === 'credit' && !sale?.customerId}
                                     className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${refundMethod === method
-                                            ? 'bg-orange-600 text-white shadow-md scale-105'
-                                            : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:bg-gray-50'
+                                        ? 'bg-orange-600 text-white shadow-md scale-105'
+                                        : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:bg-gray-50'
                                         } disabled:opacity-50 disabled:cursor-not-allowed`}
                                 >
                                     {method}
@@ -355,6 +372,17 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                             * This will reduce the customer's outstanding balance
                         </div>
                     )}
+                </div>
+
+                <div className="px-6 py-3 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Refund Note / Reason</label>
+                    <input
+                        type="text"
+                        placeholder="e.g. Damaged goods, customer changed mind..."
+                        className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                        value={refundNote}
+                        onChange={(e) => setRefundNote(e.target.value)}
+                    />
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-6 pb-6">

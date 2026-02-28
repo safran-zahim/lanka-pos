@@ -5,6 +5,7 @@ import { Decimal } from 'decimal.js';
 
 const productImportSchema = z.object({
     name: z.string(),
+    skuCode: z.string().optional().nullable(),
     category: z.string().optional(), // We might need to map category name to Category ID or create if not exists.
     price: z.number().optional(), // retail price (stored per purchase batch)
     stock: z.number().int().optional(),
@@ -50,9 +51,21 @@ export const bulkImportProducts = async (req: Request, res: Response) => {
                     // Let's find by name if category matches, or just create.
                     // If we have a unique SKU field in future, use it.
 
+                    // Check if product with SKU exists
+                    if (data.skuCode) {
+                        const existing = await tx.product.findUnique({
+                            where: { skuCode: data.skuCode }
+                        });
+                        if (existing) {
+                            errors.push(`${data.name} (SKU: ${data.skuCode}): SKU already exists`);
+                            continue;
+                        }
+                    }
+
                     const created = await tx.product.create({
                         data: {
                             name: data.name,
+                            skuCode: data.skuCode,
                             reorderLevel: data.reorderLevel,
                             categoryId: categoryId,
                             price: data.price ? new Decimal(data.price) : undefined

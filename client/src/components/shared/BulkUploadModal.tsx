@@ -70,7 +70,7 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClos
                     // Product Mapping
                     if (type === 'products') {
                         if (['name', 'productname', 'itemname', 'title'].includes(normalizedKey)) newRow.name = row[key];
-                        else if (['sku', 'skucode', 'code', 'itemcode'].includes(normalizedKey)) newRow.sku_code = String(row[key]);
+                        else if (['sku', 'skucode', 'code', 'itemcode'].includes(normalizedKey)) newRow.skuCode = String(row[key]);
                         else if (['category', 'categoryname', 'cat'].includes(normalizedKey)) newRow.category_id = row[key];
                         else if (['subcategory', 'subcat', 'subcategoryname'].includes(normalizedKey)) newRow.sub_category_id = row[key];
                         else if (['unit', 'unitname', 'uom'].includes(normalizedKey)) newRow.unit_id = row[key];
@@ -104,7 +104,7 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClos
                 if (type === 'products') {
                     if (!newRow.price) newRow.price = 0;
                     if (!newRow.stock) newRow.stock = 0;
-                    if (!newRow.sku_code && row.sku) newRow.sku_code = String(row.sku);
+                    if (!newRow.skuCode && row.sku) newRow.skuCode = String(row.sku);
                 }
                 return newRow;
             });

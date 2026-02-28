@@ -192,7 +192,10 @@ export const createProduct = async (req: Request, res: Response) => {
                 where: { skuCode: data.skuCode }
             });
             if (existing) {
-                return res.status(400).json({ error: 'SKU code already exists' });
+                return res.status(400).json({
+                    error: 'Validation failed',
+                    details: [{ field: 'skuCode', message: 'SKU code already exists' }]
+                });
             }
         }
 
@@ -220,7 +223,13 @@ export const createProduct = async (req: Request, res: Response) => {
         res.status(201).json(product);
     } catch (error) {
         if (error instanceof z.ZodError) {
-            res.status(400).json({ error: error.errors });
+            res.status(400).json({
+                error: 'Validation failed',
+                details: error.errors.map(e => ({
+                    field: e.path[0],
+                    message: e.message
+                }))
+            });
         } else {
             console.error("Error creating product:", error);
             res.status(500).json({ error: 'Internal server error' });
@@ -239,11 +248,25 @@ export const updateProduct = async (req: Request, res: Response) => {
         const data = updateProductSchema.parse(req.body);
         console.log('Parsed Update Data:', data);
 
-        const updateData: any = { ...data };
+        // Check if SKU is unique if being updated
+        if (data.skuCode) {
+            const existing = await prisma.product.findFirst({
+                where: {
+                    skuCode: data.skuCode,
+                    id: { not: id } // Exclude current product
+                }
+            });
+            if (existing) {
+                return res.status(400).json({
+                    error: 'Validation failed',
+                    details: [{ field: 'skuCode', message: 'SKU code already exists' }]
+                });
+            }
+        }
 
         const product = await prisma.product.update({
             where: { id },
-            data: updateData,
+            data: data,
             include: {
                 categoryRel: true,
                 subCategory: true,
@@ -256,7 +279,14 @@ export const updateProduct = async (req: Request, res: Response) => {
         res.json(product);
     } catch (error) {
         if (error instanceof z.ZodError) {
-            res.status(400).json({ error: error.errors });
+            // Return structured Zod errors
+            res.status(400).json({
+                error: 'Validation failed',
+                details: error.errors.map(e => ({
+                    field: e.path[0],
+                    message: e.message
+                }))
+            });
         } else {
             console.error("Error updating product:", error);
             res.status(500).json({ error: 'Internal server error' });

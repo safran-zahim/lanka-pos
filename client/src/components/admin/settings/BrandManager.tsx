@@ -83,12 +83,21 @@ export const BrandManager = ({ onBrandCreated }: BrandManagerProps = {}) => {
 
     const handleDelete = async (id: string) => {
         if (confirm('Are you sure you want to delete this brand?')) {
-            if (!token) return;
-            await fetch(getApiUrl(`/brands/${id}`), {
-                method: 'DELETE',
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setBrands((prev) => prev.filter((brand) => brand.id !== id));
+            try {
+                if (!token) throw new Error('Missing auth token');
+                const response = await fetch(getApiUrl(`/brands/${id}`), {
+                    method: 'DELETE',
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!response.ok) {
+                    const errorPayload = await response.json().catch(() => ({}));
+                    throw new Error(errorPayload.error || 'Failed to delete brand');
+                }
+                setBrands((prev) => prev.filter((brand) => brand.id !== id));
+            } catch (error: any) {
+                console.error('Delete brand error:', error);
+                alert(error.message || 'Failed to delete brand');
+            }
         }
     };
 

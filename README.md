@@ -14,6 +14,38 @@ This project includes both the **backend API** (Node.js, Express, TypeScript, Pr
 - Batch-aware returns with parent sale references
 - Daily sales summary on the dashboard
 - Refund receipts labeled with original sale references
+- **Daily Register System** — Cashier shift management with cash float tracking
+- **Petty Cash** — In/Out drawer adjustments linked to a shift, included in balance math
+- **Expense Management** — Log general expenses by category, with auto-deduction from active shift
+- **Credit Sales Tracking** — Track partial and full payments per-bill for customer debt
+- **Supplier Payment Tracking** — Log supplier payments, auto-deducted from active shift cash
+
+## 🆕 Recent Updates (Feb 27, 2026)
+
+### Unified Daily Register & Cash Drawer
+- **Register Manager** — Blocks the POS screen until a cashier opens a shift with a starting float (opt-in via Settings)
+- **Active Register Modal** — Live drawer view with full cash flow breakdown:
+  - Cash Sales (+), Customer Debt Payments (+), Petty Cash IN (+)
+  - Refunds (−), Supplier Payments (−), General Expenses (−), Petty Cash OUT (−)
+  - = **Expected Drawer Cash**
+- **Close Register** — Enter physical cash count, system shows variance (Surplus/Shortage)
+- **Petty Cash** — Log ad-hoc drawer adjustments (e.g., making change, staff lunch) with description
+
+### Expense Management
+- New **Expenses** page at `/admin/expenses` accessible from sidebar
+- Create expense categories (Utilities, Supplies, Maintenance, etc.)
+- Log expenses with amount, date, category, payment method, and description
+- Cash expenses automatically deduct from the active shift's total
+
+### Settings
+- New **Enable Daily Register** toggle in Settings → General & Tax
+- Off by default (fully opt-in)
+- When enabled: shifts must be opened before POS use, Cash Drawer button appears
+
+### Other
+- API Documentation (`docs/api_documentation.md`) fully updated and restructured
+- Fixed `clockIn` function to use updated `startingCash` field
+- Prisma schema updated with `PettyCash`, `ExpenseCategory`, `Shift` models
 
 ## 🆕 Recent Updates (Feb 21, 2026)
 
@@ -196,7 +228,16 @@ docker build ./client -t pos-frontend
 
 ---
 
-## 📖 API Documentation & Project Structure
+## 📖 API Documentation
+
+The full API reference is in [`docs/api_documentation.md`](./docs/api_documentation.md), covering:
+- Authentication
+- Shift Management (Daily Register, Petty Cash)
+- Expense Management
+- Sales & Returns
+- Customer & Supplier Management
+- Product Management
+- Settings (with all available keys)
 
 ---
 

@@ -17,7 +17,7 @@ export const login = async (req: Request, res: Response) => {
         // For this simplified version (internal tool), checking plain text (or assuming pre-hashed in DB logic if updated later).
         // BRD didn't specify hashing, but "Secure" implies it. I'll add a TODO/Comment about hashing.
         const staff = await prisma.staff.findFirst({
-            where: { name: username }, // Using name as username for now as per schema
+            where: { name: username.toLowerCase() }, // Using name as username for now as per schema
         });
 
         if (!staff || staff.password !== password) {

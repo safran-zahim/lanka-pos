@@ -39,6 +39,7 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
         showBrand: false,
         showUnit: false
     });
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -75,17 +76,17 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
                 if (productsRes.ok) {
                     const loadedProducts = await productsRes.json();
                     setProducts(loadedProducts);
-                    
+
                     // Auto-generate SKU for new products if not editing
                     if (!isEdit && !product) {
                         const numericSKUs = (loadedProducts || [])
                             .map((p: any) => parseInt(p.skuCode || p.sku_code))
                             .filter((n: number) => !isNaN(n));
-                        
+
                         const nextSKU = numericSKUs.length > 0
                             ? Math.max(...numericSKUs) + 1
                             : 10001;
-                        
+
                         setFormData(prev => ({ ...prev, sku_code: nextSKU.toString() }));
                     }
                 }
@@ -158,6 +159,7 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setFieldErrors({}); // Reset errors before submission
         try {
             if (!token) {
                 addToast('Missing auth token', 'error');
@@ -191,14 +193,31 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
 
             if (!response.ok) {
                 const errorPayload = await response.json().catch(() => ({}));
-                let errorMessage;
-                if (Array.isArray(errorPayload.error)) {
+                console.log('Product Validation Error Payload:', errorPayload);
+                let errorMessage = '';
+                const newFieldErrors: Record<string, string> = {};
+
+                if (errorPayload.field) {
+                    // Single field error (e.g., SKU collision)
+                    // Map sku_code to skuCode for consistent highlighting
+                    const fieldName = errorPayload.field === 'sku_code' ? 'skuCode' : errorPayload.field;
+                    newFieldErrors[fieldName] = errorPayload.error;
+                    errorMessage = errorPayload.error;
+                } else if (Array.isArray(errorPayload.details)) {
+                    // Structured Zod errors
+                    errorPayload.details.forEach((d: any) => {
+                        const fieldName = d.field === 'sku_code' ? 'skuCode' : d.field;
+                        newFieldErrors[fieldName] = d.message;
+                    });
+                    errorMessage = 'Please fix the highlighted errors';
+                } else if (Array.isArray(errorPayload.error)) {
+                    // Legacy Zod error format if any
                     errorMessage = errorPayload.error.map((e: any) => e.message || JSON.stringify(e)).join(', ');
-                } else if (typeof errorPayload.error === 'object') {
-                    errorMessage = JSON.stringify(errorPayload.error);
                 } else {
                     errorMessage = errorPayload.error || (isEdit ? 'Failed to update product' : 'Failed to add product');
                 }
+
+                setFieldErrors(newFieldErrors);
                 throw new Error(errorMessage);
             }
             addToast(isEdit ? 'Product updated successfully!' : 'Product added successfully!', 'success');
@@ -327,8 +346,14 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div className="space-y-2">
                                         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">Product Name*</label>
-                                        <input required type="text" className="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Product Name"
-                                            value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                                        <input
+                                            required
+                                            type="text"
+                                            className={`w-full p-2.5 rounded-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none ${fieldErrors.name ? 'border-red-500 dark:border-red-500 ring-1 ring-red-500' : 'border-gray-300 dark:border-gray-600'}`}
+                                            placeholder="Product Name"
+                                            value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                        />
+                                        {fieldErrors.name && <p className="text-xs text-red-500 font-medium">{fieldErrors.name}</p>}
                                     </div>
                                     <div className="space-y-2">
                                         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
@@ -336,8 +361,12 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
                                             {!isEdit && <span className="text-xs text-green-600 dark:text-green-400 ml-2">(Auto-generated)</span>}
                                         </label>
                                         <div className="relative">
-                                            <input type="text" className="w-full p-2.5 pr-12 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="SKU Code (Auto-generated)"
-                                                value={formData.sku_code} onChange={e => setFormData({ ...formData, sku_code: e.target.value })} />
+                                            <input
+                                                type="text"
+                                                className={`w-full p-2.5 pr-12 rounded-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none ${fieldErrors.skuCode ? 'border-red-500 dark:border-red-500 ring-1 ring-red-500' : 'border-gray-300 dark:border-gray-600'}`}
+                                                placeholder="SKU Code (Auto-generated)"
+                                                value={formData.sku_code} onChange={e => setFormData({ ...formData, sku_code: e.target.value })}
+                                            />
                                             <button
                                                 type="button"
                                                 onClick={handleGenerateSKU}
@@ -347,12 +376,18 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
                                                 <RefreshCw size={18} />
                                             </button>
                                         </div>
-                                        {!isEdit && <p className="text-xs text-gray-500 dark:text-gray-400">SKU is automatically generated. Click refresh to regenerate.</p>}
+                                        {fieldErrors.skuCode && <p className="text-xs text-red-500 font-medium">{fieldErrors.skuCode}</p>}
+                                        {!isEdit && !fieldErrors.skuCode && <p className="text-xs text-gray-500 dark:text-gray-400">SKU is automatically generated. Click refresh to regenerate.</p>}
                                     </div>
                                     <div className="space-y-2">
                                         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">Barcode</label>
-                                        <input type="text" className="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Barcode (Optional)"
-                                            value={formData.barcode} onChange={e => setFormData({ ...formData, barcode: e.target.value })} />
+                                        <input
+                                            type="text"
+                                            className={`w-full p-2.5 rounded-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none ${fieldErrors.barcode ? 'border-red-500 dark:border-red-500 ring-1 ring-red-500' : 'border-gray-300 dark:border-gray-600'}`}
+                                            placeholder="Barcode (Optional)"
+                                            value={formData.barcode} onChange={e => setFormData({ ...formData, barcode: e.target.value })}
+                                        />
+                                        {fieldErrors.barcode && <p className="text-xs text-red-500 font-medium">{fieldErrors.barcode}</p>}
                                         <div className="mt-3">
                                             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">Barcode Type</label>
                                             <select className="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none"

@@ -8,24 +8,39 @@ datasource db {
 }
 
 model Staff {
-  id         Int      @id @default(autoincrement())
+  id         Int       @id @default(autoincrement())
   name       String
-  role       String // admin, manager, cashier
+  role       String    // admin, manager, cashier
   password   String
   hourlyRate Decimal?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime  @default(now())
   shifts     Shift[]
   sales      Sale[]
+  expenses   Expense[]
+  pettyCashLogs PettyCash[]
 }
 
 model Shift {
-  id        Int       @id @default(autoincrement())
-  staffId   Int
-  staff     Staff     @relation(fields: [staffId], references: [id])
-  startTime DateTime  @default(now())
-  endTime   DateTime?
-  cashStart Decimal
-  cashEnd   Decimal?
+  id                    Int       @id @default(autoincrement())
+  staffId               Int
+  staff                 Staff     @relation(fields: [staffId], references: [id])
+  startTime             DateTime  @default(now())
+  endTime               DateTime?
+  status                String    @default("OPEN") // OPEN, CLOSED
+  startingCash          Decimal
+  countedCash           Decimal?
+  expectedCash          Decimal?
+  totalCashSales        Decimal   @default(0)
+  totalCustomerPayments Decimal   @default(0) // debt repayments
+  totalCashRefunds      Decimal   @default(0)
+  totalSupplierPayments Decimal   @default(0) // purchase payouts
+  totalExpenses         Decimal   @default(0)
+  note                  String?
+  sales                 Sale[]
+  customerPayments      CustomerPayment[]
+  purchasePayments      PurchasePayment[]
+  expenses              Expense[]
+  pettyCashLogs         PettyCash[]
 }
 
 model Product {
@@ -99,6 +114,9 @@ model Purchase {
   supplier    Supplier          @relation(fields: [supplierId], references: [id])
   totalAmount Decimal
   paidAmount  Decimal           @default(0)
+  shipping    Decimal           @default(0)
+  discount    Decimal           @default(0)
+  taxAmount   Decimal           @default(0)
   status      String // PENDING, COMPLETED, PARTIAL
   date        DateTime          @default(now())
   createdAt   DateTime          @default(now())
@@ -126,6 +144,8 @@ model PurchasePayment {
   purchase   Purchase @relation(fields: [purchaseId], references: [id])
   supplierId Int
   supplier   Supplier @relation(fields: [supplierId], references: [id])
+  shiftId    Int?
+  shift      Shift?   @relation(fields: [shiftId], references: [id])
   amount     Decimal
   method     String
   paidAt     DateTime @default(now())
@@ -133,19 +153,48 @@ model PurchasePayment {
   expense    Expense?
 }
 
-model Expense {
-  id          Int              @id @default(autoincrement())
-  amount      Decimal
-  date        DateTime         @default(now())
-  category    String
+model ExpenseCategory {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
   description String?
-  supplierId  Int?
-  supplier    Supplier?        @relation(fields: [supplierId], references: [id])
-  purchaseId  Int?
-  purchase    Purchase?        @relation(fields: [purchaseId], references: [id])
-  paymentId   Int?             @unique
-  payment     PurchasePayment? @relation(fields: [paymentId], references: [id])
-  createdAt   DateTime         @default(now())
+  expenses    Expense[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Expense {
+  id            Int              @id @default(autoincrement())
+  categoryId    Int?
+  categoryRel   ExpenseCategory? @relation(fields: [categoryId], references: [id])
+  category      String? // Legacy / freeform
+  amount        Decimal
+  date          DateTime         @default(now())
+  description   String?
+  billNumber    String?          @unique
+  paymentMethod String           @default("cash")
+  shiftId       Int?
+  shift         Shift?           @relation(fields: [shiftId], references: [id])
+  staffId       Int?
+  staff         Staff?           @relation(fields: [staffId], references: [id])
+  supplierId    Int?
+  supplier      Supplier?        @relation(fields: [supplierId], references: [id])
+  purchaseId    Int?
+  purchase      Purchase?        @relation(fields: [purchaseId], references: [id])
+  paymentId     Int?             @unique
+  payment       PurchasePayment? @relation(fields: [paymentId], references: [id])
+  createdAt     DateTime         @default(now())
+}
+
+model PettyCash {
+  id          Int      @id @default(autoincrement())
+  shiftId     Int
+  shift       Shift    @relation(fields: [shiftId], references: [id])
+  staffId     Int
+  staff       Staff    @relation(fields: [staffId], references: [id])
+  amount      Decimal
+  type        String   // 'IN' or 'OUT'
+  description String
+  createdAt   DateTime @default(now())
 }
 
 model Category {
@@ -173,6 +222,8 @@ model Sale {
   id               Int        @id @default(autoincrement())
   staffId          Int
   staff            Staff      @relation(fields: [staffId], references: [id])
+  shiftId          Int?
+  shift            Shift?     @relation(fields: [shiftId], references: [id])
   customerId       Int?
   customer         Customer?  @relation(fields: [customerId], references: [id])
   parentSaleId     Int?
@@ -184,9 +235,12 @@ model Sale {
   discount         Decimal?
   roundOffDiscount Decimal?
   paymentMethod    String?
-  paymentDetails   Json? // Store breakdown for split payments
+  status           String     @default("COMPLETED") // COMPLETED, VOIDED, RETURNED
+  note             String?    // For refund notes / bill IDs
   createdAt        DateTime   @default(now())
   items            SaleItem[]
+  dueAmount        Decimal?   @default(0) // Track outstanding balance for credit sales
+  repayments       CustomerPayment[]
 }
 
 model HeldSale {
@@ -198,16 +252,18 @@ model HeldSale {
 }
 
 model SaleItem {
-  id        Int           @id @default(autoincrement())
-  saleId    Int
-  sale      Sale          @relation(fields: [saleId], references: [id])
-  productId Int
-  product   Product       @relation(fields: [productId], references: [id])
-  quantity  Decimal
-  price     Decimal
-  batchId   Int?
-  batch     PurchaseItem? @relation(fields: [batchId], references: [id])
+  id         Int           @id @default(autoincrement())
+  saleId     Int
+  sale       Sale          @relation(fields: [saleId], references: [id])
+  productId  Int
+  product    Product       @relation(fields: [productId], references: [id])
+  quantity   Decimal
+  price      Decimal
+  batchId    Int?
+  batch      PurchaseItem? @relation(fields: [batchId], references: [id])
+  isOverSale Boolean       @default(false)
 }
+
 
 model Customer {
   id            Int                   @id @default(autoincrement())
@@ -259,9 +315,13 @@ model CustomerPayment {
   id            Int      @id @default(autoincrement())
   customerId    Int
   customer      Customer @relation(fields: [customerId], references: [id])
+  shiftId       Int?
+  shift         Shift?   @relation(fields: [shiftId], references: [id])
   amount        Decimal
   paymentMethod String // cash, card, bank
   note          String?
+  saleId        Int?
+  sale          Sale?    @relation(fields: [saleId], references: [id])
   createdAt     DateTime @default(now())
 }
 

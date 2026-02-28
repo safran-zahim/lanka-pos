@@ -10,6 +10,9 @@ interface SettingsState {
     loyaltyEnabled: boolean;
     loyaltyEarnRate: number;
     loyaltyPointValue: number;
+    allowOverSelling: boolean;
+    enableDailyRegister: boolean;
+    enableCustomerCredit: boolean;
     toastEnabled: boolean;
     currencySymbol: string;
     currencyCode: string;
@@ -28,6 +31,9 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     loyaltyEnabled: false,
     loyaltyEarnRate: 0.1, // points per 1 currency unit (1 point per 10 currency units)
     loyaltyPointValue: 0.10, // currency value per point
+    allowOverSelling: false,
+    enableDailyRegister: false, // Default false: Users must opt-in to shift tracking
+    enableCustomerCredit: true, // Default true as per user request
     toastEnabled: true,
     currencySymbol: 'Rs.',
     currencyCode: 'LKR',
@@ -62,11 +68,14 @@ export const useSettingsStore = create<SettingsState>((set) => ({
                 loyaltyEnabled: settingsMap.loyaltyEnabled ?? true,
                 loyaltyEarnRate: settingsMap.loyaltyEarnRate ?? 0.1,
                 loyaltyPointValue: settingsMap.loyaltyPointValue ?? 0.10,
+                allowOverSelling: settingsMap.allowOverSelling ?? false,
+                enableDailyRegister: settingsMap.enableDailyRegister ?? false,
                 toastEnabled: settingsMap.toastEnabled ?? true,
                 currencySymbol: settingsMap.currencySymbol ?? 'Rs.',
                 currencyCode: settingsMap.currencyCode ?? 'LKR',
                 locale: settingsMap.locale ?? 'en-US',
-                timeZone: settingsMap.timeZone ?? systemTimeZone
+                timeZone: settingsMap.timeZone ?? systemTimeZone,
+                enableCustomerCredit: settingsMap.enableCustomerCredit ?? true
             });
             set({ loading: false });
         } catch (error) {
@@ -98,11 +107,14 @@ export const useSettingsStore = create<SettingsState>((set) => ({
             if (key === 'loyaltyEnabled') set({ loyaltyEnabled: value });
             if (key === 'loyaltyEarnRate') set({ loyaltyEarnRate: value });
             if (key === 'loyaltyPointValue') set({ loyaltyPointValue: value });
+            if (key === 'allowOverSelling') set({ allowOverSelling: value });
+            if (key === 'enableDailyRegister') set({ enableDailyRegister: value });
             if (key === 'toastEnabled') set({ toastEnabled: value });
             if (key === 'currencySymbol') set({ currencySymbol: value });
             if (key === 'currencyCode') set({ currencyCode: value });
             if (key === 'locale') set({ locale: value });
             if (key === 'timeZone') set({ timeZone: value });
+            if (key === 'enableCustomerCredit') set({ enableCustomerCredit: value });
         } catch (error) {
             console.error('Failed to update setting:', error);
             throw error;

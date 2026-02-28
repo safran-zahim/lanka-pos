@@ -5,12 +5,12 @@ import { Decimal } from 'decimal.js';
 
 const supplierSchema = z.object({
     name: z.string().min(1),
-    contactPerson: z.string().optional(),
-    email: z.string().email().optional().or(z.literal('')),
-    phone: z.string().optional(),
-    address: z.string().optional(),
-    taxId: z.string().optional(),
-    notes: z.string().optional(),
+    contactPerson: z.string().nullable().optional(),
+    email: z.string().email().nullable().optional().or(z.literal('')).or(z.literal(null)),
+    phone: z.string().nullable().optional(),
+    address: z.string().nullable().optional(),
+    taxId: z.string().nullable().optional(),
+    notes: z.string().nullable().optional(),
 });
 
 const purchaseItemSchema = z.object({

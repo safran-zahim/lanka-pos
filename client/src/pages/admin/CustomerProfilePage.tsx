@@ -18,6 +18,7 @@ export const CustomerProfilePage = () => {
     const [paymentAmount, setPaymentAmount] = useState('');
     const [paymentMethod, setPaymentMethod] = useState('cash');
     const [paymentNote, setPaymentNote] = useState('');
+    const [paymentSaleId, setPaymentSaleId] = useState<number | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const { addToast } = useToast();
     const { formatCurrency } = useCurrency();
@@ -65,7 +66,8 @@ export const CustomerProfilePage = () => {
                 body: JSON.stringify({
                     amount,
                     paymentMethod,
-                    note: paymentNote
+                    note: paymentNote,
+                    saleId: paymentSaleId || undefined
                 })
             });
 
@@ -179,6 +181,8 @@ export const CustomerProfilePage = () => {
                         <button
                             onClick={() => {
                                 setPaymentAmount(String(customer.totalDue));
+                                setPaymentNote('General debt repayment');
+                                setPaymentSaleId(null);
                                 setIsPaymentModalOpen(true);
                             }}
                             className="mt-2 w-full py-1.5 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-lg text-xs font-bold uppercase hover:bg-red-100 transition-colors border border-red-100 dark:border-red-900/30"
@@ -218,9 +222,11 @@ export const CustomerProfilePage = () => {
                                 <tr>
                                     <th className="py-2 text-left">Bill #</th>
                                     <th className="py-2 text-left">Date</th>
+                                    <th className="py-2 text-left">Method</th>
                                     <th className="py-2 text-right">Items</th>
-                                    <th className="py-2 text-right">Tax</th>
                                     <th className="py-2 text-right">Total</th>
+                                    <th className="py-2 text-right">Due</th>
+                                    <th className="py-2 text-center pl-4">Action</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -231,10 +237,33 @@ export const CustomerProfilePage = () => {
                                         onClick={() => navigate(`/admin/transactions/${t.id || t.transaction_id}`)}
                                     >
                                         <td className="py-2">#{t.id || t.transaction_id}</td>
-                                        <td className="py-2">{new Date(t.createdAt || t.timestamp).toLocaleString()}</td>
-                                        <td className="py-2 text-right">{transactionItemsMap.get(String(t.id || t.transaction_id))?.count || 0}</td>
-                                        <td className="py-2 text-right">{Number(t.tax || t.tax_amount || 0).toFixed(2)}</td>
-                                        <td className="py-2 text-right font-semibold text-gray-900 dark:text-white">{Number(t.total || t.total_amount || 0).toFixed(2)}</td>
+                                        <td className="py-2 text-xs">{new Date(t.createdAt || t.timestamp).toLocaleString()}</td>
+                                        <td className="py-2 capitalize">
+                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${t.paymentMethod === 'credit' ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30' : 'bg-gray-100 dark:bg-gray-700 text-gray-600'}`}>
+                                                {t.paymentMethod || 'cash'}
+                                            </span>
+                                        </td>
+                                        <td className="py-2 text-right font-medium">{transactionItemsMap.get(String(t.id || t.transaction_id))?.count || 0}</td>
+                                        <td className="py-2 text-right font-medium">{formatCurrency(Number(t.total || t.total_amount || 0))}</td>
+                                        <td className={`py-2 text-right font-bold ${Number(t.dueAmount || 0) > 0 ? 'text-red-500' : 'text-emerald-500'}`}>
+                                            {formatCurrency(Number(t.dueAmount || 0))}
+                                        </td>
+                                        <td className="py-2 text-right pl-4">
+                                            {Number(t.dueAmount || 0) > 0 && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setPaymentAmount(String(t.dueAmount));
+                                                        setPaymentNote(`Payment for Bill #${t.id || t.transaction_id}`);
+                                                        setPaymentSaleId(t.id || t.transaction_id);
+                                                        setIsPaymentModalOpen(true);
+                                                    }}
+                                                    className="px-2 py-1 bg-blue-600 text-white rounded text-[10px] font-bold uppercase hover:bg-blue-700 shadow-sm transition-all active:scale-95"
+                                                >
+                                                    Pay Bill
+                                                </button>
+                                            )}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -277,6 +306,7 @@ export const CustomerProfilePage = () => {
                         <thead className="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
                             <tr>
                                 <th className="py-2 text-left">Date</th>
+                                <th className="py-2 text-left">Bill #</th>
                                 <th className="py-2 text-left">Method</th>
                                 <th className="py-2 text-right">Amount</th>
                                 <th className="py-2 text-left pl-4">Note</th>
@@ -285,7 +315,14 @@ export const CustomerProfilePage = () => {
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                             {payments?.map(p => (
                                 <tr key={p.id} className="text-gray-700 dark:text-gray-300">
-                                    <td className="py-2">{new Date(p.createdAt).toLocaleString()}</td>
+                                    <td className="py-2 text-xs">{new Date(p.createdAt).toLocaleString()}</td>
+                                    <td className="py-2">
+                                        {p.saleId ? (
+                                            <span className="text-blue-600 dark:text-blue-400 font-medium">#{p.saleId}</span>
+                                        ) : (
+                                            <span className="text-gray-400">General</span>
+                                        )}
+                                    </td>
                                     <td className="py-2 capitalize">{p.paymentMethod}</td>
                                     <td className="py-2 text-right font-bold text-green-600">{formatCurrency(Number(p.amount))}</td>
                                     <td className="py-2 pl-4 text-xs italic text-gray-400">{p.note || '-'}</td>

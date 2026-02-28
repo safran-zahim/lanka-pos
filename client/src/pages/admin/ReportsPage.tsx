@@ -513,6 +513,7 @@ export const ReportsPage = () => {
                                         <th className="p-4 text-left">Date & Time</th>
                                         <th className="p-4 text-left">Customer</th>
                                         <th className="p-4 text-right">Total Amount</th>
+                                        <th className="p-4 text-right">Due Amount</th>
                                         <th className="p-4 text-center">Actions</th>
                                     </tr>
                                 </thead>
@@ -555,6 +556,9 @@ export const ReportsPage = () => {
                                                 </td>
                                                 <td className={`p-4 text-right font-bold ${isReturn ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
                                                     {formatCurrency(txn.total_amount)}
+                                                </td>
+                                                <td className={`p-4 text-right font-bold ${Number(txn.dueAmount || 0) > 0 ? 'text-red-500' : 'text-emerald-500'}`}>
+                                                    {formatCurrency(Number(txn.dueAmount || 0))}
                                                 </td>
                                                 <td className="p-4 text-center">
                                                     <button
@@ -728,6 +732,7 @@ export const ReportsPage = () => {
                                         <th className="p-4 text-left">Customer</th>
                                         <th className="p-4 text-center">Orders</th>
                                         <th className="p-4 text-right">Total Spend</th>
+                                        <th className="p-4 text-right">Outstanding Due</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -736,6 +741,9 @@ export const ReportsPage = () => {
                                             <td className="p-4 text-gray-900 dark:text-white font-medium">{c.name}</td>
                                             <td className="p-4 text-center text-gray-600 dark:text-gray-400">{c.count}</td>
                                             <td className="p-4 text-right font-bold text-gray-900 dark:text-white">{formatCurrency(c.total)}</td>
+                                            <td className={`p-4 text-right font-bold ${Number(customerMap.get(c.customer_id)?.totalDue || 0) > 0 ? 'text-red-500' : 'text-gray-400'}`}>
+                                                {formatCurrency(Number(customerMap.get(c.customer_id)?.totalDue || 0))}
+                                            </td>
                                         </tr>
                                     ))}
                                     {customerReport.length === 0 && (

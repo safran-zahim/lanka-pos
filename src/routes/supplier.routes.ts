@@ -7,14 +7,16 @@ import {
     deleteSupplier,
     createPurchase,
 } from '../controllers/supplierController';
+import { authenticate, requireActiveSubscription } from '../middleware/auth.middleware';
 
 const router = Router();
 
-router.get('/', getSuppliers);
-router.get('/:id', getSupplierById);
-router.post('/', createSupplier);
-router.put('/:id', updateSupplier);
-router.delete('/:id', deleteSupplier);
-router.post('/:id/purchase', createPurchase);
+router.get('/', authenticate, requireActiveSubscription, getSuppliers);
+router.get('/:id', authenticate, requireActiveSubscription, getSupplierById);
+router.post('/', authenticate, requireActiveSubscription, createSupplier);
+router.patch('/:id', authenticate, requireActiveSubscription, updateSupplier);
+router.put('/:id', authenticate, requireActiveSubscription, updateSupplier);
+router.delete('/:id', authenticate, requireActiveSubscription, deleteSupplier);
+router.post('/:id/purchase', authenticate, requireActiveSubscription, createPurchase);
 
 export default router;

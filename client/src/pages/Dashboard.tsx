@@ -26,6 +26,7 @@ export const Dashboard = () => {
     const [sales, setSales] = useState<any[]>([]);
     const [products, setProducts] = useState<any[]>([]);
     const [lowStockItems, setLowStockItems] = useState<any[]>([]);
+    const [shiftData, setShiftData] = useState<any>(null);
 
     useEffect(() => {
         if (!token) return;
@@ -59,15 +60,17 @@ export const Dashboard = () => {
 
         const loadOverview = async () => {
             try {
-                const [salesRes, productsRes, lowStockRes] = await Promise.all([
+                const [salesRes, productsRes, lowStockRes, shiftRes] = await Promise.all([
                     fetch(getApiUrl('/sales?limit=200&includeItems=true'), { headers: { Authorization: `Bearer ${token}` } }),
                     fetch(getApiUrl('/products'), { headers: { Authorization: `Bearer ${token}` } }),
-                    fetch(getApiUrl('/products/low-stock'), { headers: { Authorization: `Bearer ${token}` } })
+                    fetch(getApiUrl('/products/low-stock'), { headers: { Authorization: `Bearer ${token}` } }),
+                    fetch(getApiUrl('/shifts/active'), { headers: { Authorization: `Bearer ${token}` } })
                 ]);
 
                 if (salesRes.ok) setSales(await salesRes.json());
                 if (productsRes.ok) setProducts(await productsRes.json());
                 if (lowStockRes.ok) setLowStockItems(await lowStockRes.json());
+                if (shiftRes.ok) setShiftData(await shiftRes.json());
             } catch (error) {
                 console.error('Failed to load dashboard overview', error);
             }
@@ -177,20 +180,22 @@ export const Dashboard = () => {
                 </div>
 
                 <div
-                    onClick={() => navigate('/admin/transactions')}
+                    onClick={() => navigate('/pos')}
                     className="bg-gradient-to-br from-green-50 to-white dark:from-green-900/20 dark:to-gray-800 p-6 rounded-xl border border-green-100 dark:border-green-900/30 shadow-sm transition-colors relative overflow-hidden group cursor-pointer hover:shadow-md"
                 >
                     <div className="absolute right-0 top-0 w-24 h-24 bg-green-100 dark:bg-green-800/20 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
                     <div className="relative z-10">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-gray-600 dark:text-green-300 font-medium font-bold">Today's Sales</h3>
+                            <h3 className="text-gray-600 dark:text-green-300 font-medium font-bold">Register Drawer</h3>
                             <div className="p-2 bg-green-100 dark:bg-green-900/50 rounded-lg text-green-600 dark:text-green-400">
                                 <DollarSign size={24} />
                             </div>
                         </div>
-                        <p className="text-3xl font-bold text-gray-900 dark:text-white">{formatCurrency(displayedDailySales)}</p>
+                        <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                            {shiftData ? formatCurrency(shiftData.expectedCash) : 'Closed'}
+                        </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                            {displayedDailyTransactions} transactions today
+                            {shiftData ? 'Active shift estimated cash balance' : 'Open a register shift in POS'}
                         </p>
                         <p className="text-xs text-green-600 dark:text-green-400 mt-1 flex items-center gap-1">
                             <TrendingUp size={12} /> Month: {formatCurrency(displayedMonthlySales)}

@@ -54,8 +54,8 @@ export const PurchasePage = () => {
     const loadProducts = async () => {
         if (!token) return;
         try {
-            const productsRes = await fetch(getApiUrl('/products'), { 
-                headers: { Authorization: `Bearer ${token}` } 
+            const productsRes = await fetch(getApiUrl('/products'), {
+                headers: { Authorization: `Bearer ${token}` }
             });
             if (productsRes.ok) {
                 setProducts(await productsRes.json());
@@ -162,6 +162,9 @@ export const PurchasePage = () => {
                     date: date || undefined,
                     ref_number: refNo || undefined,
                     notes: notes || undefined,
+                    shipping: Number(shipping) || 0,
+                    discount: Number(discount) || 0,
+                    tax_amount: Number(totalTax) || 0,
                     items: purchaseItems
                 })
             });
@@ -286,10 +289,10 @@ export const PurchasePage = () => {
                                                 <div
                                                     key={p.id || p.product_id}
                                                     onClick={() => addItem(p)}
-                                                    className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer flex justify-between"
+                                                    className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-0"
                                                 >
-                                                    <span>{p.name}</span>
-                                                    <span className="text-gray-500 text-sm">{p.skuCode || p.sku_code}</span>
+                                                    <div className="font-bold text-gray-800 dark:text-white">{p.name}</div>
+                                                    <div className="text-xs text-gray-500 font-mono mt-0.5">{p.skuCode || p.sku_code}</div>
                                                 </div>
                                             ))}
                                             {filteredProducts?.length === 0 && (
@@ -512,7 +515,6 @@ export const PurchasePage = () => {
                 <AddProductModal
                     onClose={() => setShowAddProductModal(false)}
                     onSuccess={() => {
-                        addToast("Product added successfully!", 'success');
                         setShowAddProductModal(false);
                         loadProducts(); // Refresh products list
                     }}

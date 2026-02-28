@@ -33,9 +33,13 @@ export const createCategory = async (req: Request, res: Response) => {
         });
 
         res.status(201).json(category);
-    } catch (error) {
+    } catch (error: any) {
         if (error instanceof z.ZodError) {
-            res.status(400).json({ error: error.errors });
+            const formattedErrors = error.errors.map(err => ({
+                field: err.path.join('.'),
+                message: err.message
+            }));
+            res.status(400).json({ error: 'Validation failed', details: formattedErrors });
         } else {
             console.error("Error creating category:", error);
             res.status(500).json({ error: "Internal server error" });
@@ -66,6 +70,18 @@ export const deleteCategory = async (req: Request, res: Response) => {
         if (!Number.isFinite(id)) {
             return res.status(400).json({ error: "Invalid category id" });
         }
+
+        // Check for associated products
+        const productCount = await prisma.product.count({
+            where: { categoryId: id }
+        });
+
+        if (productCount > 0) {
+            return res.status(400).json({
+                error: `Cannot delete category: ${productCount} products are currently associated with it. Please reassign or delete the products first.`
+            });
+        }
+
         await prisma.category.delete({
             where: { id },
         });
@@ -92,7 +108,11 @@ export const updateCategory = async (req: Request, res: Response) => {
         res.json(category);
     } catch (error: any) {
         if (error instanceof z.ZodError) {
-            res.status(400).json({ error: error.errors });
+            const formattedErrors = error.errors.map(err => ({
+                field: err.path.join('.'),
+                message: err.message
+            }));
+            res.status(400).json({ error: 'Validation failed', details: formattedErrors });
         } else if (error.code === 'P2025') {
             res.status(404).json({ error: 'Category not found' });
         } else {
@@ -106,12 +126,12 @@ export const updateCategory = async (req: Request, res: Response) => {
 export const createSubCategory = async (req: Request, res: Response) => {
     try {
         const data = subCategorySchema.parse(req.body);
-        
+
         // Check if category exists
         const category = await prisma.category.findUnique({
             where: { id: data.categoryId }
         });
-        
+
         if (!category) {
             return res.status(404).json({ error: "Category not found" });
         }
@@ -138,9 +158,13 @@ export const createSubCategory = async (req: Request, res: Response) => {
         });
 
         res.status(201).json(subCategory);
-    } catch (error) {
+    } catch (error: any) {
         if (error instanceof z.ZodError) {
-            res.status(400).json({ error: error.errors });
+            const formattedErrors = error.errors.map(err => ({
+                field: err.path.join('.'),
+                message: err.message
+            }));
+            res.status(400).json({ error: 'Validation failed', details: formattedErrors });
         } else {
             console.error("Error creating subcategory:", error);
             res.status(500).json({ error: "Internal server error" });
@@ -155,7 +179,7 @@ export const getSubCategories = async (req: Request, res: Response) => {
         if (categoryIdParam && !Number.isFinite(categoryId)) {
             return res.status(400).json({ error: 'Invalid category id' });
         }
-        
+
         const subCategories = await prisma.subCategory.findMany({
             where: categoryId ? { categoryId } : undefined,
             orderBy: { name: 'asc' },
@@ -163,7 +187,7 @@ export const getSubCategories = async (req: Request, res: Response) => {
                 category: true
             }
         });
-        
+
         res.json(subCategories);
     } catch (error) {
         console.error("Error fetching subcategories:", error);
@@ -187,7 +211,11 @@ export const updateSubCategory = async (req: Request, res: Response) => {
         res.json(subCategory);
     } catch (error: any) {
         if (error instanceof z.ZodError) {
-            res.status(400).json({ error: error.errors });
+            const formattedErrors = error.errors.map(err => ({
+                field: err.path.join('.'),
+                message: err.message
+            }));
+            res.status(400).json({ error: 'Validation failed', details: formattedErrors });
         } else if (error.code === 'P2025') {
             res.status(404).json({ error: 'Subcategory not found' });
         } else {
@@ -203,11 +231,11 @@ export const deleteSubCategory = async (req: Request, res: Response) => {
         if (!Number.isFinite(id)) {
             return res.status(400).json({ error: "Invalid subcategory id" });
         }
-        
+
         await prisma.subCategory.delete({
             where: { id },
         });
-        
+
         res.status(204).send();
     } catch (error) {
         console.error("Error deleting subcategory:", error);

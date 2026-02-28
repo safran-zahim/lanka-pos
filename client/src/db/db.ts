@@ -115,7 +115,9 @@ export interface TransactionItem {
     quantity: number;
     price_at_sale: number;
     note?: string;
+    isOverSale?: boolean;
 }
+
 
 export interface ProductBatch {
     batch_id?: number;

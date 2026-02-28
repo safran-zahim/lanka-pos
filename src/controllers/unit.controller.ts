@@ -28,9 +28,13 @@ export const createUnit = async (req: Request, res: Response) => {
         });
 
         res.status(201).json(unit);
-    } catch (error) {
+    } catch (error: any) {
         if (error instanceof z.ZodError) {
-            res.status(400).json({ error: error.errors });
+            const formattedErrors = error.errors.map(err => ({
+                field: err.path.join('.'),
+                message: err.message
+            }));
+            res.status(400).json({ error: 'Validation failed', details: formattedErrors });
         } else {
             console.error("Error creating unit:", error);
             res.status(500).json({ error: "Internal server error" });
@@ -63,9 +67,17 @@ export const updateUnit = async (req: Request, res: Response) => {
             data
         });
         res.json(unit);
-    } catch (error) {
-        console.error("Error updating unit:", error);
-        res.status(500).json({ error: "Internal server error" });
+    } catch (error: any) {
+        if (error instanceof z.ZodError) {
+            const formattedErrors = error.errors.map(err => ({
+                field: err.path.join('.'),
+                message: err.message
+            }));
+            res.status(400).json({ error: 'Validation failed', details: formattedErrors });
+        } else {
+            console.error("Error updating unit:", error);
+            res.status(500).json({ error: "Internal server error" });
+        }
     }
 };
 
@@ -75,6 +87,18 @@ export const deleteUnit = async (req: Request, res: Response) => {
         if (!Number.isFinite(id)) {
             return res.status(400).json({ error: 'Invalid unit id' });
         }
+
+        // Check for associated products
+        const productCount = await prisma.product.count({
+            where: { unitId: id }
+        });
+
+        if (productCount > 0) {
+            return res.status(400).json({
+                error: `Cannot delete unit: ${productCount} products are currently associated with it. Please reassign or delete the products first.`
+            });
+        }
+
         await prisma.unit.delete({
             where: { id },
         });

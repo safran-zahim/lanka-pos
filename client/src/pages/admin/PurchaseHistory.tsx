@@ -38,7 +38,7 @@ export const PurchaseHistory = () => {
                         supplierName: p.supplier?.name || 'N/A',
                         timestamp: p.createdAt || p.timestamp
                     }));
-                    setPurchases(enriched.sort((a: any, b: any) => 
+                    setPurchases(enriched.sort((a: any, b: any) =>
                         new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
                     ));
                 }
@@ -60,7 +60,7 @@ export const PurchaseHistory = () => {
             id: Number.isFinite(resolvedId) ? resolvedId : null,
             ref_number: p.refNumber || p.ref_number || '-',
             supplierName: p.supplier?.name || p.supplierName || 'N/A',
-            timestamp: p.date || p.timestamp || p.createdAt,
+            timestamp: p.createdAt || p.date || p.timestamp,
             status: p.status || 'PENDING',
             total,
             paid,
@@ -138,16 +138,16 @@ export const PurchaseHistory = () => {
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead className="bg-gray-50 dark:bg-gray-900">
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ref No</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Ref No</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Supplier</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Payment</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">Payment</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Paid</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">Paid</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider text-orange-600">Due</th>
                         </tr>
                     </thead>
@@ -165,15 +165,16 @@ export const PurchaseHistory = () => {
                                 className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
                             >
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                                    {formatDateTime(new Date(bill.timestamp))}
+                                    <div className="md:hidden text-[10px] text-gray-400">{formatDateTime(new Date(bill.timestamp)).split(' ')[1]}</div>
+                                    {formatDateTime(new Date(bill.timestamp)).split(' ')[0]}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden md:table-cell">
                                     {bill.ref_number || '-'}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 font-medium">
                                     {bill.supplierName}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm hidden sm:table-cell">
                                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${bill.due > 0 ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30' : 'bg-green-100 text-green-600 dark:bg-green-900/30'}`}>
                                         {bill.due > 0 ? 'Partial/Due' : 'Paid'}
                                     </span>
@@ -181,7 +182,7 @@ export const PurchaseHistory = () => {
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900 dark:text-white">
                                     {formatCurrency(bill.total)}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-green-600">
+                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-green-600 hidden lg:table-cell">
                                     {formatCurrency(bill.paid)}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-orange-600">

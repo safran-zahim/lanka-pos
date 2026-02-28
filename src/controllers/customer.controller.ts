@@ -203,7 +203,8 @@ export const getCustomerPointsHistory = async (req: Request, res: Response) => {
 const paymentSchema = z.object({
     amount: z.number().positive(),
     paymentMethod: z.string(),
-    note: z.string().optional()
+    note: z.string().optional(),
+    saleId: z.number().optional()
 });
 
 export const processPayment = async (req: Request, res: Response) => {
@@ -223,17 +224,101 @@ export const processPayment = async (req: Request, res: Response) => {
                 }
             });
 
-            // Create payment record
-            const payment = await tx.customerPayment.create({
-                data: {
-                    customerId: id,
-                    amount: new Decimal(data.amount),
-                    paymentMethod: data.paymentMethod,
-                    note: data.note
-                }
-            });
+            // Get active shift for staff
+            const staffId = (req as any).user?.id;
+            let currentShiftId: number | undefined;
+            if (staffId) {
+                const shift = await tx.shift.findFirst({
+                    where: { staffId: staffId, status: 'OPEN' }
+                });
+                if (shift) currentShiftId = shift.id;
+            }
 
-            return { updatedCustomer, payment };
+            let remainingAmount = new Decimal(data.amount);
+            const createdPayments = [];
+
+            // 1. If specific saleId is provided, pay that first
+            if (data.saleId) {
+                const sale = await tx.sale.findUnique({ where: { id: data.saleId } });
+                if (sale && sale.customerId === id && sale.dueAmount && new Decimal(sale.dueAmount.toString()).gt(0)) {
+                    const toPay = Decimal.min(remainingAmount, new Decimal(sale.dueAmount.toString()));
+                    await tx.sale.update({
+                        where: { id: sale.id },
+                        data: { dueAmount: { decrement: toPay } }
+                    });
+                    const payment = await tx.customerPayment.create({
+                        data: {
+                            customerId: id,
+                            saleId: sale.id,
+                            amount: toPay,
+                            paymentMethod: data.paymentMethod,
+                            note: data.note || `Payment for Bill #${sale.id}`,
+                            shiftId: currentShiftId
+                        }
+                    });
+                    createdPayments.push(payment);
+                    remainingAmount = remainingAmount.minus(toPay);
+                }
+            }
+
+            // 2. Distribute remaining amount via FIFO if any
+            if (remainingAmount.gt(0)) {
+                const unpaidSales = await tx.sale.findMany({
+                    where: {
+                        customerId: id,
+                        dueAmount: { gt: 0 }
+                    },
+                    orderBy: { createdAt: 'asc' }
+                });
+
+                for (const sale of unpaidSales) {
+                    if (remainingAmount.lte(0)) break;
+                    const saleDue = new Decimal(sale.dueAmount?.toString() || '0');
+                    if (saleDue.lte(0)) continue;
+
+                    const toPay = Decimal.min(remainingAmount, saleDue);
+
+                    await tx.sale.update({
+                        where: { id: sale.id },
+                        data: { dueAmount: { decrement: toPay } }
+                    });
+
+                    const payment = await tx.customerPayment.create({
+                        data: {
+                            customerId: id,
+                            saleId: sale.id,
+                            amount: toPay,
+                            paymentMethod: data.paymentMethod,
+                            note: data.note || (data.saleId ? `Overage from Bill #${data.saleId}` : 'General debt repayment')
+                        }
+                    });
+                    createdPayments.push(payment);
+                    remainingAmount = remainingAmount.minus(toPay);
+                }
+
+                // 3. If still remaining (customer overpaid or no bills found), create a general record
+                if (remainingAmount.gt(0)) {
+                    const payment = await tx.customerPayment.create({
+                        data: {
+                            customerId: id,
+                            amount: remainingAmount,
+                            paymentMethod: data.paymentMethod,
+                            note: (data.note || '') + ' (Excess payment/Unallocated)'
+                        }
+                    });
+                    createdPayments.push(payment);
+                }
+            }
+
+            // Update shift total if cash
+            if (currentShiftId && data.paymentMethod === 'cash') {
+                await tx.shift.update({
+                    where: { id: currentShiftId },
+                    data: { totalCustomerPayments: { increment: new Decimal(data.amount) } }
+                });
+            }
+
+            return { updatedCustomer, payments: createdPayments };
         });
 
         res.json(result);

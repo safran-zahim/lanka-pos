@@ -26,9 +26,13 @@ export const createBrand = async (req: Request, res: Response) => {
         });
 
         res.status(201).json(brand);
-    } catch (error) {
+    } catch (error: any) {
         if (error instanceof z.ZodError) {
-            res.status(400).json({ error: error.errors });
+            const formattedErrors = error.errors.map(err => ({
+                field: err.path.join('.'),
+                message: err.message
+            }));
+            res.status(400).json({ error: 'Validation failed', details: formattedErrors });
         } else {
             console.error("Error creating brand:", error);
             res.status(500).json({ error: "Internal server error" });
@@ -61,9 +65,17 @@ export const updateBrand = async (req: Request, res: Response) => {
             data
         });
         res.json(brand);
-    } catch (error) {
-        console.error("Error updating brand:", error);
-        res.status(500).json({ error: "Internal server error" });
+    } catch (error: any) {
+        if (error instanceof z.ZodError) {
+            const formattedErrors = error.errors.map(err => ({
+                field: err.path.join('.'),
+                message: err.message
+            }));
+            res.status(400).json({ error: 'Validation failed', details: formattedErrors });
+        } else {
+            console.error("Error updating brand:", error);
+            res.status(500).json({ error: "Internal server error" });
+        }
     }
 };
 
@@ -73,6 +85,18 @@ export const deleteBrand = async (req: Request, res: Response) => {
         if (!Number.isFinite(id)) {
             return res.status(400).json({ error: 'Invalid brand id' });
         }
+
+        // Check for associated products
+        const productCount = await prisma.product.count({
+            where: { brandId: id }
+        });
+
+        if (productCount > 0) {
+            return res.status(400).json({
+                error: `Cannot delete brand: ${productCount} products are currently associated with it. Please reassign or delete the products first.`
+            });
+        }
+
         await prisma.brand.delete({
             where: { id },
         });

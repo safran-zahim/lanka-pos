@@ -21,30 +21,28 @@ async function main() {
 
     // Create Staff Users
     const users = [
-        { id: 1, name: 'SuperAdmin', role: 'super_admin', password: 'admin123' },
-        { id: 2, name: 'Admin', role: 'admin', password: 'admin123' },
-        { id: 3, name: 'Manager', role: 'manager', password: 'manager123' },
-        { id: 4, name: 'Cashier', role: 'cashier', password: 'cashier123' }
+        { id: 1, name: 'superadmin', role: 'super_admin', password: 'admin123' },
+        { id: 2, name: 'admin', role: 'admin', password: 'admin123' },
+        { id: 3, name: 'manager', role: 'manager', password: 'manager123' },
+        { id: 4, name: 'cashier', role: 'cashier', password: 'cashier123' }
     ];
 
     for (const user of users) {
-        const exists = await prisma.staff.findUnique({ 
-            where: { id: user.id } 
+        await prisma.staff.upsert({
+            where: { id: user.id },
+            update: {
+                name: user.name,
+                role: user.role,
+                password: user.password
+            },
+            create: {
+                id: user.id,
+                name: user.name,
+                role: user.role,
+                password: user.password
+            }
         });
-
-        if (!exists) {
-            await prisma.staff.create({
-                data: {
-                    id: user.id,
-                    name: user.name,
-                    role: user.role,
-                    password: user.password
-                }
-            });
-            console.log(`${user.role} created: ${user.name} / ${user.password} (ID: ${user.id})`);
-        } else {
-            console.log(`${user.name} already exists (ID: ${user.id})`);
-        }
+        console.log(`Staff updated/created: ${user.name} (Role: ${user.role}, ID: ${user.id})`);
     }
 
     // Update AppConfig to use plan

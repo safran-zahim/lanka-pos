@@ -36,7 +36,11 @@ export const updateSetting = async (req: Request, res: Response) => {
         res.json(setting);
     } catch (error: any) {
         if (error instanceof z.ZodError) {
-            res.status(400).json({ error: error.errors });
+            const formattedErrors = error.errors.map(err => ({
+                field: err.path.join('.'),
+                message: err.message
+            }));
+            res.status(400).json({ error: 'Validation failed', details: formattedErrors });
         } else {
             console.error('Failed to update setting', error);
             res.status(500).json({ error: 'Internal server error' });

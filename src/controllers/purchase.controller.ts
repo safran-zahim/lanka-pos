@@ -25,6 +25,9 @@ const purchaseSchema = z.object({
     date: z.string().optional(),
     ref_number: z.string().optional(),
     notes: z.string().optional(),
+    shipping: z.number().nonnegative().optional(),
+    discount: z.number().nonnegative().optional(),
+    tax_amount: z.number().nonnegative().optional(),
     items: z.array(purchaseItemSchema)
 });
 
@@ -50,15 +53,15 @@ export const createPurchase = async (req: Request, res: Response) => {
             });
 
             if (!product) {
-                return res.status(400).json({ 
-                    error: `Product with ID ${item.product_id} not found` 
+                return res.status(400).json({
+                    error: `Product with ID ${item.product_id} not found`
                 });
             }
 
             // Check if product is inactive
             if (product.isActive === false) {
-                return res.status(400).json({ 
-                    error: `Product "${product.name}" is inactive and cannot be purchased. Please activate the product first.` 
+                return res.status(400).json({
+                    error: `Product "${product.name}" is inactive and cannot be purchased. Please activate the product first.`
                 });
             }
 
@@ -66,8 +69,8 @@ export const createPurchase = async (req: Request, res: Response) => {
             if (product.unit && !product.unit.allowDecimal) {
                 const hasDecimals = !Number.isInteger(item.quantity);
                 if (hasDecimals) {
-                    return res.status(400).json({ 
-                        error: `Product "${product.name}" uses unit "${product.unit.name}" which does not accept decimal quantities. Please enter a whole number.` 
+                    return res.status(400).json({
+                        error: `Product "${product.name}" uses unit "${product.unit.name}" which does not accept decimal quantities. Please enter a whole number.`
                     });
                 }
             }
@@ -93,6 +96,9 @@ export const createPurchase = async (req: Request, res: Response) => {
             const purchaseData: any = {
                 totalAmount: totalAmountValue,
                 paidAmount: paidAmountValue,
+                shipping: new Decimal(data.shipping || 0),
+                discount: new Decimal(data.discount || 0),
+                taxAmount: new Decimal(data.tax_amount || 0),
                 status: resolvedStatus,
                 date: purchaseDate,
                 items: {
@@ -104,7 +110,7 @@ export const createPurchase = async (req: Request, res: Response) => {
                     }))
                 }
             };
-            
+
             if (data.supplier_id) {
                 purchaseData.supplierId = data.supplier_id;
             }
@@ -243,13 +249,24 @@ export const addPurchasePayment = async (req: Request, res: Response) => {
                 }
             });
 
+            // Get active shift for staff
+            const staffId = (req as any).user?.id;
+            let currentShiftId: number | undefined;
+            if (staffId) {
+                const shift = await tx.shift.findFirst({
+                    where: { staffId: staffId, status: 'OPEN' }
+                });
+                if (shift) currentShiftId = shift.id;
+            }
+
             const payment = await tx.purchasePayment.create({
                 data: {
                     purchaseId: updatedPurchase.id,
                     supplierId: updatedPurchase.supplierId,
                     amount,
                     method: data.method,
-                    paidAt
+                    paidAt,
+                    shiftId: currentShiftId
                 }
             });
 
@@ -261,9 +278,21 @@ export const addPurchasePayment = async (req: Request, res: Response) => {
                     description: `Purchase #${updatedPurchase.id} payment`,
                     supplierId: updatedPurchase.supplierId,
                     purchaseId: updatedPurchase.id,
-                    paymentId: payment.id
+                    paymentId: payment.id,
+                    shiftId: currentShiftId,
+                    paymentMethod: data.method
                 }
             });
+
+            // Update the Active Shift's drawer balance if paid in cash
+            if (data.method.toLowerCase() === 'cash' && currentShiftId) {
+                await tx.shift.update({
+                    where: { id: currentShiftId },
+                    data: {
+                        totalSupplierPayments: { increment: amount }
+                    }
+                });
+            }
 
             return updatedPurchase;
         });

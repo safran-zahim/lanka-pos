@@ -5,7 +5,7 @@ import {
     ShoppingCart, X, Check, Save, Clock, ArrowLeft, ArrowRight,
     PauseCircle, LayoutDashboard, History, Menu, Award, Users,
     AlertCircle, RotateCcw, UserPlus, StickyNote, Edit2, Percent,
-    CreditCard as CardIcon
+    CreditCard as CardIcon, Wallet, DollarSign
 } from 'lucide-react';
 import { useCartStore, type CartItem } from '../store/useCartStore';
 import { useAuthStore } from '../store/useAuthStore';
@@ -21,6 +21,9 @@ import { EditCartItemModal } from '../components/EditCartItemModal';
 import { EditTaxModal } from '../components/EditTaxModal';
 import { ReturnModal } from '../components/ReturnModal';
 import { SelectBatchModal } from '../components/SelectBatchModal';
+import { RegisterManager } from '../components/RegisterManager';
+import { ActiveRegisterModal } from '../components/ActiveRegisterModal';
+import { POSCashPanel } from '../components/POSCashPanel';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useCurrency } from '../hooks/useCurrency';
 import { getApiUrl } from '../config/api';
@@ -29,11 +32,16 @@ export const POS = () => {
     const { items, addItem, removeItem, updateQuantity, subtotal, total, tax, discount, roundOffDiscount, pointsRedeemed, manualDiscountMode, manualDiscountValue, toggleRedeemPoints, clearCart, customer, setCustomer, setManualDiscount, updateItem } = useCartStore();
     const { user, token } = useAuthStore();
     const { addToast } = useToast();
-    const { taxRate, taxEnabled, loyaltyEnabled, loyaltyEarnRate, loadSettings, updateSetting } = useSettingsStore();
+    const { taxRate, taxEnabled, loyaltyEnabled, loyaltyEarnRate, loadSettings, updateSetting, allowOverSelling, enableDailyRegister, enableCustomerCredit } = useSettingsStore();
     const { currencySymbol, formatCurrency } = useCurrency();
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string>('All');
     const [isProcessing, setIsProcessing] = useState(false);
+
+    // Register State
+    const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+    const [showActiveRegister, setShowActiveRegister] = useState(false);
+    const [showCashPanel, setShowCashPanel] = useState(false);
 
     // Customer State
     const [showCustomerModal, setShowCustomerModal] = useState(false);
@@ -252,15 +260,39 @@ export const POS = () => {
     );
 
     // Filter products
-    const filteredProducts = products?.filter(p => {
-        const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            p.sku_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (p.barcode && p.barcode.includes(searchQuery));
-        const matchesCategory = selectedCategory === 'All' || p.category_id === selectedCategory;
-        const matchesBrand = selectedBrand === 'All' || p.brand_id === selectedBrand;
+    const filteredProducts = useMemo(() => {
+        if (!products) return [];
+        const normalizedQuery = searchQuery.toLowerCase().trim();
+        if (!normalizedQuery) {
+            return products.filter(p => {
+                const matchesCategory = selectedCategory === 'All' || p.category_id === selectedCategory;
+                const matchesBrand = selectedBrand === 'All' || p.brand_id === selectedBrand;
+                return matchesCategory && matchesBrand;
+            });
+        }
 
-        return matchesSearch && matchesCategory && matchesBrand;
-    });
+        // 1. Check for exact barcode/SKU match first
+        const exactMatch = products.find(p =>
+            p.barcode === normalizedQuery ||
+            p.sku_code.toLowerCase() === normalizedQuery
+        );
+
+        if (exactMatch) {
+            // Check if exact match satisfies category/brand filters OR if searching by code we ignore filters
+            return [exactMatch];
+        }
+
+        // 2. Fallback to normal filtering
+        return products.filter(p => {
+            const matchesSearch = p.name.toLowerCase().includes(normalizedQuery) ||
+                p.sku_code.toLowerCase().includes(normalizedQuery) ||
+                (p.barcode && p.barcode.includes(normalizedQuery));
+            const matchesCategory = selectedCategory === 'All' || p.category_id === selectedCategory;
+            const matchesBrand = selectedBrand === 'All' || p.brand_id === selectedBrand;
+
+            return matchesSearch && matchesCategory && matchesBrand;
+        });
+    }, [products, searchQuery, selectedCategory, selectedBrand]);
 
     // Filter customers
     const filteredCustomers = customers?.filter(c =>
@@ -349,7 +381,7 @@ export const POS = () => {
         const currentCartQty = cartQtyByProduct.get(product.product_id) || 0;
         const totalStockAvailable = Number(product.stock_quantity || 0) - currentCartQty;
 
-        if (totalStockAvailable <= 0) {
+        if (totalStockAvailable <= 0 && !allowOverSelling) {
             addToast('Product out of stock', 'error');
             return;
         }
@@ -391,6 +423,11 @@ export const POS = () => {
         );
 
         if (availableBatches.length === 0) {
+            if (allowOverSelling) {
+                // If over-selling is enabled, add it without a batch
+                addItem({ ...product, retail_price: product.retail_price, batch_id: undefined });
+                return;
+            }
             addToast('Product out of stock', 'error');
             return;
         }
@@ -421,7 +458,7 @@ export const POS = () => {
         }
     }, [showReturnLookup]);
 
-    const handlePayment = async (paymentDetails?: { cash: number, card: number }, method: string = 'cash') => {
+    const handlePayment = async (paymentDetails?: { cash: number, card: number }, method: string = 'cash', customDiscount: number = 0) => {
         if (items.length === 0) return;
         if (!user) {
             addToast("No user logged in!", 'error');
@@ -458,14 +495,14 @@ export const POS = () => {
 
                 for (const [key, qty] of qtyByBatch.entries()) {
                     const remaining = remainingByBatch.get(key) ?? 0;
-                    if (qty > remaining) {
+                    if (qty > remaining && !allowOverSelling) {
                         addToast('Batch stock is not enough for this item', 'error');
                         return;
                     }
                 }
             }
 
-            const finalTotal = total + tax - roundOffDiscount;
+            const finalTotal = total + tax - roundOffDiscount - customDiscount;
             const pointsEarned = customer && loyaltyEnabled ? Math.floor(finalTotal * loyaltyEarnRate) : 0;
             const pointsRedeemedValue = customer && loyaltyEnabled ? pointsRedeemed : 0;
 
@@ -492,7 +529,7 @@ export const POS = () => {
                     totals: {
                         subtotal,
                         tax,
-                        discount,
+                        discount: discount + customDiscount,
                         grand_total: finalTotal,
                         round_off_discount: roundOffDiscount
                     },
@@ -519,7 +556,7 @@ export const POS = () => {
                 tax_amount: Number(sale.tax || 0),
                 discount: Number(sale.discount || 0),
                 round_off_discount: Number(sale.roundOffDiscount || 0),
-                payment_method: (sale.paymentMethod || (paymentDetails ? 'split' : 'cash')),
+                payment_method: (sale.paymentMethod || method || (paymentDetails ? 'split' : 'cash')),
                 status: 'completed',
                 type: 'sale',
                 payment_details: paymentDetails ? {
@@ -534,8 +571,18 @@ export const POS = () => {
                 quantity: item.quantity,
                 price_at_sale: Number(item.price || 0),
                 note: '',
+                isOverSale: item.isOverSale || false,
                 name: productMap.get(item.productId)?.name || 'Unknown Product'
             })));
+
+            // Staff-only notification if any over-sold items
+            const overSoldItems = (sale.items || []).filter((item: any) => item.isOverSale);
+            if (overSoldItems.length > 0) {
+                const names = overSoldItems
+                    .map((item: any) => productMap.get(item.productId)?.name || 'Unknown Product')
+                    .join(', ');
+                addToast(`⚠️ Over-sold (no stock): ${names}. Please restock.`, 'error');
+            }
 
             if (token) {
                 try {
@@ -573,10 +620,11 @@ export const POS = () => {
                 }
             }
 
-            // Clear cart and customer immediately after successful payment
+            // Clear cart, customer, and local stock caches immediately after successful payment
             clearCart();
             setCustomer(null);
-            setProductBatches({}); // Clear batch cache to ensure fresh data on next sale
+            setBatchRemainingByKey({}); // Fix: Force batch stock fetch logic to pull fresh DB values on next scan
+            setProductBatches({}); // Clear old cache format just in case
             addToast("Payment successful!", 'success');
 
         } catch (error) {
@@ -672,6 +720,25 @@ export const POS = () => {
 
     return (
         <div className="flex w-full h-full relative flex-row bg-gray-100 dark:bg-gray-900 overflow-hidden">
+            {enableDailyRegister && !isRegisterOpen && (
+                <div className="absolute inset-0 bg-white/60 dark:bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
+                    <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl flex flex-col items-center max-w-md text-center border border-gray-200 dark:border-gray-700 animate-in fade-in zoom-in duration-300">
+                        <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mb-4">
+                            <Wallet size={32} />
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Register Closed</h2>
+                        <p className="text-gray-500 dark:text-gray-400 mb-6">
+                            You must open a register shift before you can process sales or accept payments.
+                        </p>
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl transition-colors w-full shadow-lg shadow-blue-600/30"
+                        >
+                            Open Register Now
+                        </button>
+                    </div>
+                </div>
+            )}
             {/* LEFT PANEL: PRODUCTS (60%) */}
             <div className="w-[60%] flex flex-col h-full border-r border-gray-200 dark:border-gray-700 order-1">
                 {/* Search & Categories - Fixed Height Header */}
@@ -775,8 +842,29 @@ export const POS = () => {
                 {/* Customer Header - Fixed Height */}
                 <div className="h-16 px-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white">Current Sale</h2>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                         {items.length > 0 && <span className="text-sm text-gray-500 dark:text-gray-400">{items.reduce((acc, i) => acc + i.quantity, 0)} Items</span>}
+                        {enableDailyRegister && (
+                            <button
+                                onClick={() => setShowActiveRegister(true)}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${isRegisterOpen
+                                    ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/50'
+                                    : 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 border-red-200 dark:border-red-800 animate-pulse'
+                                    }`}
+                                title={isRegisterOpen ? 'Register Open — click to view' : 'Register closed'}
+                            >
+                                <Wallet size={13} />
+                                {isRegisterOpen ? 'Register' : 'Open Register'}
+                            </button>
+                        )}
+                        <button
+                            onClick={() => setShowCashPanel(true)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded-lg border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                            title="Petty Cash & Expenses"
+                        >
+                            <DollarSign size={13} />
+                            Cash
+                        </button>
                         <button
                             onClick={() => setShowReturnLookup(true)}
                             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-300 rounded-lg border border-orange-200 dark:border-orange-800 hover:bg-orange-100 dark:hover:bg-orange-900/50 transition-colors"
@@ -1012,6 +1100,25 @@ export const POS = () => {
                         </div>
                     </div>
 
+                    {/* Total Discount Row (NEW) */}
+                    <div className="mb-4">
+                        <button
+                            onClick={() => setShowDiscountModal(true)}
+                            className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-600 group"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-lg group-hover:scale-110 transition-transform">
+                                    <Tag size={18} />
+                                </div>
+                                <div className="text-left">
+                                    <p className="text-sm font-bold text-gray-900 dark:text-white">Apply Bill Discount</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">Coupon or manual discount</p>
+                                </div>
+                            </div>
+                            <Plus size={18} className="text-gray-400 group-hover:text-blue-500" />
+                        </button>
+                    </div>
+
                     {/* Action Buttons */}
                     <div className="grid grid-cols-4 gap-2">
                         <button
@@ -1051,15 +1158,17 @@ export const POS = () => {
                             <span className="text-[10px] uppercase font-bold mt-1">{pointsRedeemed > 0 ? 'Remove' : 'Points'}</span>
                         </button>
 
-                        <button
-                            onClick={() => handlePayment(undefined, 'credit')}
-                            disabled={isProcessing || items.length === 0 || !customer}
-                            className="flex flex-col items-center justify-center py-2 bg-amber-600 dark:bg-amber-700 text-white rounded-lg hover:bg-amber-700 dark:hover:bg-amber-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95"
-                            title={!customer ? "Register customer for credit sales" : "Payment on credit"}
-                        >
-                            <Users size={20} />
-                            <span className="text-[10px] uppercase font-bold mt-1">Credit</span>
-                        </button>
+                        {enableCustomerCredit && (
+                            <button
+                                onClick={() => handlePayment(undefined, 'credit')}
+                                disabled={isProcessing || items.length === 0 || !customer}
+                                className="flex flex-col items-center justify-center py-2 bg-amber-600 dark:bg-amber-700 text-white rounded-lg hover:bg-amber-700 dark:hover:bg-amber-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95"
+                                title={!customer ? "Register customer for credit sales" : "Payment on credit"}
+                            >
+                                <Users size={20} />
+                                <span className="text-[10px] uppercase font-bold mt-1">Credit</span>
+                            </button>
+                        )}
 
                         <button
                             onClick={() => setShowSplitPaymentModal(true)}
@@ -1149,8 +1258,10 @@ export const POS = () => {
             {showDiscountModal && (
                 <DiscountModal
                     subtotal={subtotal}
-                    onConfirm={(discount) => {
-                        setManualDiscount(discount);
+                    total={total + tax - roundOffDiscount}
+                    currentDiscount={discount}
+                    onConfirm={(d) => {
+                        setManualDiscount(d);
                         setShowDiscountModal(false);
                     }}
                     onClose={() => setShowDiscountModal(false)}
@@ -1296,6 +1407,24 @@ export const POS = () => {
                         addToast('Return processed', 'success');
                     }}
                 />
+            )}
+
+            {enableDailyRegister && (
+                <ActiveRegisterModal
+                    isOpen={showActiveRegister}
+                    onClose={() => setShowActiveRegister(false)}
+                    onRegisterClosed={() => setIsRegisterOpen(false)}
+                />
+            )}
+
+            {enableDailyRegister && (
+                <RegisterManager
+                    onRegisterStatusKnown={(open) => setIsRegisterOpen(open)}
+                />
+            )}
+
+            {showCashPanel && (
+                <POSCashPanel onClose={() => setShowCashPanel(false)} />
             )}
         </div>
     );

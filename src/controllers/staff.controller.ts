@@ -52,7 +52,7 @@ export const createStaff = async (req: Request, res: Response) => {
 
         const staff = await prisma.staff.create({
             data: {
-                name: data.name,
+                name: data.name.toLowerCase(),
                 role: data.role,
                 password: data.password,
                 hourlyRate: data.hourly_rate !== undefined ? new Decimal(data.hourly_rate) : null
@@ -63,7 +63,11 @@ export const createStaff = async (req: Request, res: Response) => {
         res.status(201).json(staff);
     } catch (error: any) {
         if (error instanceof z.ZodError) {
-            res.status(400).json({ error: error.errors });
+            const formattedErrors = error.errors.map(err => ({
+                field: err.path.join('.'),
+                message: err.message
+            }));
+            res.status(400).json({ error: 'Validation failed', details: formattedErrors });
         } else {
             res.status(500).json({ error: 'Internal server error' });
         }
@@ -79,6 +83,9 @@ export const updateStaff = async (req: Request, res: Response) => {
         const data = staffUpdateSchema.parse(req.body);
 
         const updateData: any = { ...data };
+        if (data.name) {
+            updateData.name = data.name.toLowerCase();
+        }
         if (data.hourly_rate !== undefined) {
             updateData.hourlyRate = new Decimal(data.hourly_rate);
             delete updateData.hourly_rate;
@@ -93,7 +100,11 @@ export const updateStaff = async (req: Request, res: Response) => {
         res.json(staff);
     } catch (error: any) {
         if (error instanceof z.ZodError) {
-            res.status(400).json({ error: error.errors });
+            const formattedErrors = error.errors.map(err => ({
+                field: err.path.join('.'),
+                message: err.message
+            }));
+            res.status(400).json({ error: 'Validation failed', details: formattedErrors });
         } else if (error.code === 'P2025') {
             res.status(404).json({ error: 'Staff not found' });
         } else {
@@ -179,7 +190,8 @@ export const clockIn = async (req: Request, res: Response) => {
         const shift = await prisma.shift.create({
             data: {
                 staffId: staff_id,
-                cashStart: cash_drawer_balance,
+                startingCash: cash_drawer_balance,
+                status: 'OPEN',
                 startTime: new Date(),
             },
         });

@@ -94,12 +94,21 @@ export const UnitManager = ({ onUnitCreated }: UnitManagerProps = {}) => {
 
     const handleDelete = async (id: string) => {
         if (confirm('Are you sure you want to delete this unit?')) {
-            if (!token) return;
-            await fetch(getApiUrl(`/units/${id}`), {
-                method: 'DELETE',
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setUnits((prev) => prev.filter((unit) => unit.id !== id));
+            try {
+                if (!token) throw new Error('Missing auth token');
+                const response = await fetch(getApiUrl(`/units/${id}`), {
+                    method: 'DELETE',
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!response.ok) {
+                    const errorPayload = await response.json().catch(() => ({}));
+                    throw new Error(errorPayload.error || 'Failed to delete unit');
+                }
+                setUnits((prev) => prev.filter((unit) => (unit.id || unit.unit_id) !== id));
+            } catch (error: any) {
+                console.error('Delete unit error:', error);
+                alert(error.message || 'Failed to delete unit');
+            }
         }
     };
 

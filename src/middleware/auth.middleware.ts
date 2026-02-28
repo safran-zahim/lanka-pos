@@ -24,7 +24,7 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
 
 export const authorize = (roles: string[]) => {
     return (req: AuthRequest, res: Response, next: NextFunction) => {
-        if (!req.user || !roles.includes(req.user.role)) {
+        if (!req.user || (!roles.includes(req.user.role) && req.user.role !== 'super_admin')) {
             return res.status(403).json({ error: 'Forbidden' });
         }
         next();

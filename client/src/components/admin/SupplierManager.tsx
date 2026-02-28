@@ -5,6 +5,7 @@ import { useToast } from '../../store/useToast';
 import { DataTable } from '../ui/DataTable';
 import { AddSupplierModal } from './AddSupplierModal';
 import { BulkUploadModal } from '../shared/BulkUploadModal';
+import { getApiUrl } from '../../config/api';
 
 export const SupplierManager = () => {
     const navigate = useNavigate();
@@ -19,7 +20,7 @@ export const SupplierManager = () => {
         setLoading(true);
         try {
             const token = sessionStorage.getItem('token') || localStorage.getItem('token');
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/suppliers`, {
+            const response = await fetch(getApiUrl('/suppliers'), {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Failed to fetch suppliers');
@@ -42,7 +43,7 @@ export const SupplierManager = () => {
         if (confirm('Are you sure you want to delete this supplier?')) {
             try {
                 const token = sessionStorage.getItem('token') || localStorage.getItem('token');
-                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/suppliers/${id}`, {
+                const response = await fetch(getApiUrl(`/suppliers/${id}`), {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });

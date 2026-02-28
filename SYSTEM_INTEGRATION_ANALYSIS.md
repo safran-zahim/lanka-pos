@@ -528,3 +528,137 @@ All modules correctly:
 ---
 
 **Analysis Complete: February 21, 2026**
+
+---
+
+---
+
+# System Integration Analysis — Daily Register & Expense System
+**Date:** February 27, 2026
+**Status:** ✅ FULLY INTEGRATED
+
+---
+
+## Executive Summary
+
+The Unified Daily Register, Petty Cash, and Expense Management systems have been implemented and fully integrated across the backend (Prisma schema, controllers, routes) and frontend (POS UI, settings, admin pages). All cash movements in the system are now traceable to a specific cashier shift.
+
+---
+
+## ✅ Database Models Added / Updated
+
+| Model | Change | Purpose |
+|-------|--------|---------|
+| `Shift` | NEW | Tracks cashier shift sessions with starting float and cash summaries |
+| `PettyCash` | NEW | Logs ad-hoc cash drawer adjustments (IN/OUT) linked to a shift |
+| `ExpenseCategory` | NEW | Categorizes general expenses |
+| `Expense` | UPDATED | Added `shiftId`, `categoryId`, `billNumber`, `paymentMethod` |
+| `Sale` | UPDATED | Added `shiftId` to link cash sales to a shift |
+| `CustomerPayment` | UPDATED | Added `shiftId` to link debt repayments to a shift |
+| `PurchasePayment` | UPDATED | Added `shiftId` to link supplier payouts to a shift |
+| `Staff` | UPDATED | Added `pettyCashLogs PettyCash[]` relation |
+
+---
+
+## ✅ Cash Drawer Formula (Live Calculation)
+
+```
+[+] Starting Cash (opening float)
+[+] Cash Sales (totalCashSales)
+[+] Customer Debt Repayments (totalCustomerPayments)
+[+] Petty Cash IN (sum of PettyCash type=IN)
+[−] Cash Refunds (totalCashRefunds)
+[−] Supplier Payments Out (totalSupplierPayments)
+[−] General Cash Expenses (totalExpenses)
+[−] Petty Cash OUT (sum of PettyCash type=OUT)
+═══════════════════════════════════════
+[=] Expected Drawer Cash
+```
+
+---
+
+## ✅ Backend Controllers
+
+| Controller | Function | Description |
+|------------|----------|-------------|
+| `shift.controller.ts` | `openShift` | Opens new shift with starting float |
+| | `getActiveShift` | Returns live expected cash calculation |
+| | `closeShift` | Closes shift, records countedCash vs expectedCash |
+| | `getShiftReport` | Aggregated product sales per shift |
+| | `addPettyCash` | Logs petty cash IN/OUT to active shift |
+| `expense.controller.ts` | `createExpense` | Logs expense, auto-increments shift total if cash |
+| | `getExpenses` | Lists all expenses with categories |
+| | `createCategory` | Creates expense category |
+| | `getCategories` | Lists all expense categories |
+| `sales.controller.ts` | `checkout` | Updated: attaches `shiftId` to cash sales |
+| `customer.controller.ts` | `recordPayment` | Updated: attaches `shiftId` to cash debt payments |
+| `purchase.controller.ts` | `recordPayment` | Updated: attaches `shiftId` to cash supplier payouts |
+
+---
+
+## ✅ API Routes
+
+```
+POST   /shifts/open          → openShift
+GET    /shifts/active        → getActiveShift
+POST   /shifts/close         → closeShift
+GET    /shifts/:id/report    → getShiftReport
+POST   /shifts/petty-cash    → addPettyCash
+
+GET    /expenses             → getExpenses
+POST   /expenses             → createExpense
+GET    /expenses/categories  → getCategories
+POST   /expenses/categories  → createCategory
+```
+
+---
+
+## ✅ Frontend Components
+
+| Component | Path | Purpose |
+|-----------|------|---------|
+| `RegisterManager.tsx` | `client/src/components/` | Blocks POS until shift is opened |
+| `ActiveRegisterModal.tsx` | `client/src/components/` | Live drawer dashboard with close + petty cash |
+| `ExpensesPage.tsx` | `client/src/pages/admin/` | Admin page to log and manage expenses |
+| `SettingsPage.tsx` | Modified | Added `enableDailyRegister` toggle |
+| `POS.tsx` | Modified | Integrated `ActiveRegisterModal`, gated on setting |
+| `AdminLayout.tsx` | Modified | Added "Expenses" sidebar nav link |
+| `App.tsx` | Modified | Registered `/admin/expenses` route |
+
+---
+
+## ✅ Settings Controlled
+
+| Setting Key | Default | Description |
+|-------------|---------|-------------|
+| `enableDailyRegister` | `false` | When ON, enforces shift opening before POS use |
+
+---
+
+## 🎯 Data Flow
+
+```
+1. OPEN SHIFT
+   POST /shifts/open { startingCash: 5000 }
+   └─ Creates Shift record (status = OPEN)
+
+2. MAKE CASH SALE
+   POST /sales/checkout → sales.controller attaches shift.id
+   └─ shift.totalCashSales += saleTotal
+
+3. LOG PETTY CASH
+   POST /shifts/petty-cash { amount: 200, type: "OUT", desc: "Lunch" }
+   └─ Creates PettyCash record linked to shift
+
+4. CHECK LIVE DRAWER
+   GET /shifts/active
+   └─ Calculates: Starting + Sales + Payments + PettyIN - Refunds - Supplier - Expenses - PettyOUT
+
+5. CLOSE SHIFT
+   POST /shifts/close { countedCash: 6800 }
+   └─ Records expectedCash, countedCash, difference → status = CLOSED
+```
+
+---
+
+**Analysis Complete: February 27, 2026**

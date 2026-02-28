@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Save } from 'lucide-react';
+import { getApiUrl } from '../../config/api';
 import { useToast } from '../../store/useToast';
 
 interface Supplier {
@@ -10,6 +11,8 @@ interface Supplier {
     phone?: string;
     email?: string;
     address?: string;
+    taxId?: string;
+    notes?: string;
 }
 
 interface AddSupplierModalProps {
@@ -39,13 +42,19 @@ export const AddSupplierModal: React.FC<AddSupplierModalProps> = ({ isOpen, onCl
         setLoading(true);
 
         try {
-            const url = supplier?.id
-                ? `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/suppliers/${supplier.id}`
-                : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/suppliers`;
+            const isEditing = !!supplier?.id;
+            const url = isEditing
+                ? getApiUrl(`/suppliers/${supplier.id}`)
+                : getApiUrl('/suppliers');
 
-            const method = supplier?.id ? 'PATCH' : 'POST';
+            const method = isEditing ? 'PATCH' : 'POST';
 
             const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+
+            // Clean up read-only or nested fields that shouldn't be sent back
+            const { id, supplier_id, ...cleanData } = formData as any;
+            if (cleanData._count) delete cleanData._count;
+            if (cleanData.purchases) delete cleanData.purchases;
 
             const response = await fetch(url, {
                 method,
@@ -53,7 +62,7 @@ export const AddSupplierModal: React.FC<AddSupplierModalProps> = ({ isOpen, onCl
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(cleanData)
             });
 
             if (!response.ok) {
@@ -137,6 +146,28 @@ export const AddSupplierModal: React.FC<AddSupplierModalProps> = ({ isOpen, onCl
                             onChange={e => setFormData({ ...formData, address: e.target.value })}
                             placeholder="Enter address"
                         />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tax ID</label>
+                            <input
+                                type="text"
+                                className="w-full p-2.5 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                value={formData.taxId || ''}
+                                onChange={e => setFormData({ ...formData, taxId: e.target.value })}
+                                placeholder="Business tax ID"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
+                            <input
+                                type="text"
+                                className="w-full p-2.5 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                value={formData.notes || ''}
+                                onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                                placeholder="Internal notes"
+                            />
+                        </div>
                     </div>
 
                     <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">

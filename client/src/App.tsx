@@ -23,6 +23,7 @@ import { ReceiptSettingsPage } from './pages/admin/ReceiptSettingsPage';
 import { HelpPage } from './pages/admin/HelpPage';
 import { ReportsPage } from './pages/admin/ReportsPage';
 import { SubscriptionPlans } from './pages/admin/SubscriptionPlans';
+import { ExpensesPage } from './pages/admin/ExpensesPage';
 import { ThemeProvider } from './components/ThemeProvider';
 import { ToastContainer } from './components/ui/ToastContainer';
 import { useSettingsStore } from './store/useSettingsStore';
@@ -88,6 +89,7 @@ function App() {
               <Route path="/admin/purchases/new" element={<PurchasePage />} />
               <Route path="/admin/purchases/:id" element={<PurchaseDetailPage />} />
               <Route path="/admin/low-stock" element={<LowStockReport />} />
+              <Route path="/admin/expenses" element={<ExpensesPage />} />
               <Route path="/admin/settings" element={<SettingsPage />} />
               <Route path="/admin/receipts" element={<ReceiptSettingsPage />} />
               <Route path="/admin/reports" element={<ReportsPage />} />

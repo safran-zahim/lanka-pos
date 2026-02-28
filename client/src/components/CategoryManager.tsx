@@ -32,9 +32,9 @@ export const CategoryManager = ({ onClose, onCategoryCreated }: CategoryManagerP
                 if (!response.ok) throw new Error('Failed to load categories');
                 const payload = await response.json();
                 setCategories(payload || []);
-                
+
                 // Flatten all subcategories from all categories
-                const allSubs = (payload || []).flatMap((cat: any) => 
+                const allSubs = (payload || []).flatMap((cat: any) =>
                     (cat.subCategories || []).map((sub: any) => ({
                         id: Number(sub.id),
                         name: sub.name,
@@ -104,7 +104,7 @@ export const CategoryManager = ({ onClose, onCategoryCreated }: CategoryManagerP
                 addToast('Category deleted', 'success');
             } catch (error) {
                 console.error("Error deleting category:", error);
-                addToast("Failed to delete category.", 'error');
+                addToast(error instanceof Error ? error.message : "Failed to delete category.", 'error');
             }
         }
     };
@@ -118,24 +118,24 @@ export const CategoryManager = ({ onClose, onCategoryCreated }: CategoryManagerP
                 addToast('Missing auth token', 'error');
                 return;
             }
-            
+
             const response = await fetch(getApiUrl('/categories/subcategories'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`
                 },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     name: newSubCategoryName.trim(),
                     categoryId: selectedCategory.id
                 })
             });
-            
+
             if (!response.ok) {
                 const errorPayload = await response.json().catch(() => ({}));
                 throw new Error(errorPayload.error || 'Failed to add subcategory');
             }
-            
+
             const created = await response.json();
             setSubCategories((prev) => [...prev, created]);
             setNewSubCategoryName('');
@@ -153,22 +153,22 @@ export const CategoryManager = ({ onClose, onCategoryCreated }: CategoryManagerP
                     addToast('Missing auth token', 'error');
                     return;
                 }
-                
+
                 const response = await fetch(getApiUrl(`/categories/subcategories/${id}`), {
                     method: 'DELETE',
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                
+
                 if (!response.ok) {
                     const errorPayload = await response.json().catch(() => ({}));
                     throw new Error(errorPayload.error || 'Failed to delete subcategory');
                 }
-                
+
                 setSubCategories((prev) => prev.filter((sub) => sub.id !== id));
                 addToast('Subcategory deleted', 'success');
             } catch (error) {
                 console.error("Error deleting subcategory:", error);
-                addToast("Failed to delete subcategory.", 'error');
+                addToast(error instanceof Error ? error.message : "Failed to delete subcategory.", 'error');
             }
         }
     };
@@ -290,8 +290,8 @@ export const CategoryManager = ({ onClose, onCategoryCreated }: CategoryManagerP
                                     onClick={() => Number(editingCategoryId) !== Number(category.id) && handleCategorySelect(category)}
                                     className={`
                                         flex justify-between items-center p-4 rounded-lg cursor-pointer transition-all group
-                                        ${selectedCategory && Number(selectedCategory.id) === Number(category.id) 
-                                            ? 'bg-blue-100 dark:bg-blue-900/40 border-2 border-blue-500 dark:border-blue-600 shadow-md' 
+                                        ${selectedCategory && Number(selectedCategory.id) === Number(category.id)
+                                            ? 'bg-blue-100 dark:bg-blue-900/40 border-2 border-blue-500 dark:border-blue-600 shadow-md'
                                             : 'bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm'}
                                     `}
                                 >

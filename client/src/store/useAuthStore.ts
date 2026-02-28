@@ -24,6 +24,7 @@ export const useAuthStore = create<AuthState>()(
             logout: () => {
                 localStorage.removeItem('token');
                 sessionStorage.removeItem('token');
+                localStorage.removeItem('pos-cart-storage'); // Clear cart data
                 set({ user: null, token: null });
             },
         }),

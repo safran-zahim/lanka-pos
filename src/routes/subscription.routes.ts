@@ -9,6 +9,7 @@ router.patch('/status', authenticate, authorize(['admin', 'super_admin']), updat
 
 router.post('/plans', authenticate, authorize(['super_admin']), createPlan);
 router.get('/plans', authenticate, authorize(['admin', 'super_admin']), getPlans);
+router.patch('/plans/:id', authenticate, authorize(['super_admin']), updatePlan);
 router.put('/plans/:id', authenticate, authorize(['super_admin']), updatePlan);
 
 export default router;

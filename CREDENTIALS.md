@@ -15,9 +15,9 @@ These accounts exist in your local browser database (IndexedDB) and work even wi
 
 | Role | Username | Password |
 |------|----------|----------|
-| **Admin** | `admin` | `admin123` |
-| **Manager** | `manager` | `manager123` |
-| **Cashier** | `cashier` | `cashier123` |
+| **Admin** | `Admin` | `admin123` |
+| **Manager** | `Manager` | `manager123` |
+| **Cashier** | `Cashier` | `cashier123` |
 
 > [!CAUTION]
 > **Change these passwords immediately** after deploying to production!

@@ -5,7 +5,7 @@ import { useToast } from '../../store/useToast';
 import { BrandingPage } from './BrandingPage';
 
 export const SettingsPage = () => {
-    const { taxRate, taxEnabled, roundOffEnabled, roundOffDecimals, loyaltyEnabled, loyaltyEarnRate, loyaltyPointValue, toastEnabled, currencySymbol, currencyCode, locale, timeZone, loadSettings, updateSetting, loading } = useSettingsStore();
+    const { taxRate, taxEnabled, roundOffEnabled, roundOffDecimals, loyaltyEnabled, loyaltyEarnRate, loyaltyPointValue, toastEnabled, currencySymbol, currencyCode, locale, timeZone, loadSettings, updateSetting, loading, allowOverSelling, enableDailyRegister, enableCustomerCredit } = useSettingsStore();
     const { addToast } = useToast();
     const [rateInput, setRateInput] = useState('');
     const [taxEnabledInput, setTaxEnabledInput] = useState(false);
@@ -19,6 +19,9 @@ export const SettingsPage = () => {
     const [currencyCodeInput, setCurrencyCodeInput] = useState('LKR');
     const [localeInput, setLocaleInput] = useState('en-US');
     const [timeZoneInput, setTimeZoneInput] = useState('UTC');
+    const [allowOverSellingInput, setAllowOverSellingInput] = useState(false);
+    const [enableDailyRegisterInput, setEnableDailyRegisterInput] = useState(false);
+    const [enableCustomerCreditInput, setEnableCustomerCreditInput] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [brandingSaving, setBrandingSaving] = useState(false);
     const [brandingSaveAction, setBrandingSaveAction] = useState<null | (() => Promise<void>)>(null);
@@ -49,7 +52,13 @@ export const SettingsPage = () => {
 
     useEffect(() => {
         setToastEnabledInput(toastEnabled);
-    }, [toastEnabled]); // Added effect for toastEnabled
+    }, [toastEnabled]);
+
+    useEffect(() => {
+        setAllowOverSellingInput(allowOverSelling);
+        setEnableDailyRegisterInput(enableDailyRegister);
+        setEnableCustomerCreditInput(enableCustomerCredit);
+    }, [allowOverSelling, enableDailyRegister, enableCustomerCredit]);
 
 
     useEffect(() => {
@@ -99,6 +108,9 @@ export const SettingsPage = () => {
             await updateSetting('loyaltyEnabled', loyaltyEnabledInput);
             await updateSetting('loyaltyEarnRate', earnRate);
             await updateSetting('loyaltyPointValue', pointValue);
+            await updateSetting('allowOverSelling', allowOverSellingInput);
+            await updateSetting('enableDailyRegister', enableDailyRegisterInput);
+            await updateSetting('enableCustomerCredit', enableCustomerCreditInput);
             await updateSetting('toastEnabled', toastEnabledInput); // Save toastEnabled
             await updateSetting('currencySymbol', currencySymbolInput.trim() || '$');
             await updateSetting('currencyCode', currencyCodeInput.trim().toUpperCase() || 'USD');
@@ -213,8 +225,8 @@ export const SettingsPage = () => {
                         const config = getSaveConfig();
                         const isBusy = activeTab === 'branding' ? brandingSaving : isSaving;
                         const colorClass = config.color === 'gray'
-                                ? 'bg-gray-300 text-gray-700 cursor-not-allowed'
-                                : 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20';
+                            ? 'bg-gray-300 text-gray-700 cursor-not-allowed'
+                            : 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20';
                         return (
                             <button
                                 onClick={config.onClick}
@@ -278,7 +290,59 @@ export const SettingsPage = () => {
                                             </div>
                                         </label>
                                     </div>
+                                    <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3">
+                                        <div>
+                                            <p className="font-semibold text-gray-800 dark:text-gray-200">Allow Over-Selling</p>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">Allow selling products even when stock is zero</p>
+                                        </div>
+                                        <label className="inline-flex items-center cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                className="sr-only"
+                                                checked={allowOverSellingInput}
+                                                onChange={(e) => setAllowOverSellingInput(e.target.checked)}
+                                            />
+                                            <div className={`w-11 h-6 rounded-full transition-colors ${allowOverSellingInput ? 'bg-orange-600' : 'bg-gray-300'}`}>
+                                                <div className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${allowOverSellingInput ? 'translate-x-5' : 'translate-x-1'}`} />
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3">
+                                        <div>
+                                            <p className="font-semibold text-gray-800 dark:text-gray-200">Enable Daily Register</p>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">Require cashiers to open a shift with a starting cash float before selling. Tracks all register cash movements.</p>
+                                        </div>
+                                        <label className="inline-flex items-center cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                className="sr-only"
+                                                checked={enableDailyRegisterInput}
+                                                onChange={(e) => setEnableDailyRegisterInput(e.target.checked)}
+                                            />
+                                            <div className={`w-11 h-6 rounded-full transition-colors ${enableDailyRegisterInput ? 'bg-blue-600' : 'bg-gray-300'}`}>
+                                                <div className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${enableDailyRegisterInput ? 'translate-x-5' : 'translate-x-1'}`} />
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3">
+                                        <div>
+                                            <p className="font-semibold text-gray-800 dark:text-gray-200">Enable Customer Credit</p>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">Allow customers to purchase items on credit. Requires customer selection.</p>
+                                        </div>
+                                        <label className="inline-flex items-center cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                className="sr-only"
+                                                checked={enableCustomerCreditInput}
+                                                onChange={(e) => setEnableCustomerCreditInput(e.target.checked)}
+                                            />
+                                            <div className={`w-11 h-6 rounded-full transition-colors ${enableCustomerCreditInput ? 'bg-amber-600' : 'bg-gray-300'}`}>
+                                                <div className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${enableCustomerCreditInput ? 'translate-x-5' : 'translate-x-1'}`} />
+                                            </div>
+                                        </label>
+                                    </div>
                                 </div>
+
 
                                 {/* TAX SECTION */}
                                 <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">

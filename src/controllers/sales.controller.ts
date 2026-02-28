@@ -29,6 +29,7 @@ const checkoutSchema = z.object({
         grand_total: z.number(),
         round_off_discount: z.number().optional()
     }),
+    note: z.string().optional(),
     loyalty: z.object({
         points_earned: z.number().int().nonnegative().optional(),
         points_redeemed: z.number().int().nonnegative().optional(),
@@ -60,6 +61,15 @@ export const checkout = async (req: Request, res: Response) => {
         }
 
         const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+            const oversellingSetting = await tx.setting.findUnique({ where: { key: 'allowOverSelling' } });
+            const allowOverSelling = oversellingSetting?.value === true;
+
+            // Get Active Shift
+            const activeShift = await tx.shift.findFirst({
+                where: { staffId: data.staff_id, status: 'OPEN' }
+            });
+            const shiftId = activeShift?.id;
+
             let parentSale: any = null;
             let saleCustomerId = data.customer_id;
             let returnSubtotal = new Decimal(0);
@@ -200,9 +210,10 @@ export const checkout = async (req: Request, res: Response) => {
                 const totalSold = Number(saleAgg._sum.quantity || 0);
                 const currentStock = totalPurchased - totalSold;
 
-                if (currentStock < item.quantity) {
+                if (currentStock < item.quantity && !allowOverSelling) {
                     throw new Error(`Insufficient stock for product ${item.product_id}`);
                 }
+
 
                 // Validate batch-specific stock if batch_id is provided
                 if (item.batch_id) {
@@ -218,7 +229,7 @@ export const checkout = async (req: Request, res: Response) => {
                         throw new Error(`Batch ${item.batch_id} does not belong to product ${item.product_id}`);
                     }
 
-                    // Calculate batch-specific stock using FIFO
+                    // Calculate batch-specific stock
                     const batchSales = await tx.saleItem.aggregate({
                         where: {
                             productId: item.product_id,
@@ -231,11 +242,167 @@ export const checkout = async (req: Request, res: Response) => {
                     const batchSold = Number(batchSales._sum.quantity || 0);
                     const batchAvailable = batchPurchased - batchSold;
 
-                    if (batchAvailable < item.quantity) {
+                    if (batchAvailable < item.quantity && !allowOverSelling) {
                         throw new Error(`Insufficient stock in batch ${item.batch_id}. Available: ${batchAvailable}, Requested: ${item.quantity}`);
+                    }
+
+                } else {
+                    // FIFO logic: automatically assign to batches if no batch_id provided
+                    const batches = await tx.purchaseItem.findMany({
+                        where: { productId: item.product_id },
+                        orderBy: { id: 'asc' } // Oldest first (FIFO)
+                    });
+
+                    let remainingToAssign = item.quantity;
+                    for (const batch of batches) {
+                        const batchSales = await tx.saleItem.aggregate({
+                            where: { productId: item.product_id, batchId: batch.id },
+                            _sum: { quantity: true }
+                        });
+                        const batchPurchased = Number(batch.quantity || 0);
+                        const batchSold = Number(batchSales._sum.quantity || 0);
+                        const batchAvailable = batchPurchased - batchSold;
+
+                        if (batchAvailable > 0) {
+                            const assignQty = Math.min(remainingToAssign, batchAvailable);
+                            console.log(`[FIFO Validation] Product ${item.product_id}: Assigning ${assignQty} to batch ${batch.id} (Available: ${batchAvailable})`);
+                            remainingToAssign -= assignQty;
+                            if (remainingToAssign <= 0) break;
+                        }
+                    }
+
+                    if (remainingToAssign > 0 && !allowOverSelling) {
+                        throw new Error(`Insufficient stock for product ${item.product_id} across all batches. Missing: ${remainingToAssign}`);
                     }
                 }
             }
+
+            // Implementation note: The above validation only checks availability.
+            // The item creation below needs to be updated to actually split items if they span multiple batches.
+            // Since the current schema and data structure expect a single batchId per SaleItem,
+            // if we use multiple batches for one cart item, we should create multiple SaleItem records.
+
+            const saleItemsData: any[] = [];
+            for (const item of data.items) {
+                if (item.batch_id || isReturn) {
+                    const key = `${item.product_id}-${item.batch_id || 'null'}`;
+                    let isItemOverSale = false;
+                    let batchAvailable = 0;
+
+                    if (item.quantity > 0 && !isReturn && item.batch_id) {
+                        const batchSales = await tx.saleItem.aggregate({
+                            where: { productId: item.product_id, batchId: item.batch_id },
+                            _sum: { quantity: true }
+                        });
+                        const batch = await tx.purchaseItem.findUnique({ where: { id: item.batch_id } });
+                        const batchPurchased = Number(batch?.quantity || 0);
+                        const batchSold = Number(batchSales._sum.quantity || 0);
+                        batchAvailable = Math.max(0, batchPurchased - batchSold);
+
+                        if (batchAvailable < item.quantity) {
+                            isItemOverSale = true;
+                        }
+                    }
+
+                    if (isItemOverSale && allowOverSelling) {
+                        const product = await tx.product.findUnique({ where: { id: item.product_id } });
+                        const latestPurchase = await tx.purchaseItem.findFirst({
+                            where: { productId: item.product_id },
+                            include: { purchase: { select: { date: true } } },
+                            orderBy: { purchase: { date: 'desc' } }
+                        });
+
+                        const fallbackPrice = latestPurchase?.retailPrice
+                            ? new Decimal(latestPurchase.retailPrice.toString())
+                            : (latestPurchase?.costPrice
+                                ? new Decimal(latestPurchase.costPrice.toString())
+                                : new Decimal(product?.price?.toString() || item.unit_price));
+
+                        if (batchAvailable > 0) {
+                            saleItemsData.push({
+                                productId: item.product_id,
+                                quantity: batchAvailable,
+                                price: new Decimal(item.unit_price),
+                                batchId: item.batch_id,
+                                isOverSale: false
+                            });
+                        }
+                        saleItemsData.push({
+                            productId: item.product_id,
+                            quantity: item.quantity - batchAvailable,
+                            price: fallbackPrice,
+                            batchId: null,
+                            isOverSale: true
+                        });
+                    } else {
+                        saleItemsData.push({
+                            productId: item.product_id,
+                            quantity: item.quantity,
+                            price: isReturn ? (returnUnitPrices.get(key) || new Decimal(item.unit_price)) : new Decimal(item.unit_price),
+                            batchId: item.batch_id,
+                            isOverSale: false
+                        });
+                    }
+                } else {
+                    // FIFO Assignment for creation
+                    let remainingToAssign = item.quantity;
+                    const batches = await tx.purchaseItem.findMany({
+                        where: { productId: item.product_id },
+                        orderBy: { id: 'asc' }
+                    });
+
+                    for (const batch of batches) {
+                        const batchSales = await tx.saleItem.aggregate({
+                            where: { productId: item.product_id, batchId: batch.id },
+                            _sum: { quantity: true }
+                        });
+                        const batchPurchased = Number(batch.quantity || 0);
+                        const batchSold = Number(batchSales._sum.quantity || 0);
+                        const batchAvailable = batchPurchased - batchSold;
+
+                        if (batchAvailable > 0) {
+                            const assignQty = Math.min(remainingToAssign, batchAvailable);
+                            console.log(`[FIFO Creation] Product ${item.product_id}: Splitting ${assignQty} into batch ${batch.id}`);
+                            saleItemsData.push({
+                                productId: item.product_id,
+                                quantity: assignQty,
+                                price: new Decimal(item.unit_price),
+                                batchId: batch.id,
+                                isOverSale: false
+                            });
+                            remainingToAssign -= assignQty;
+                            if (remainingToAssign <= 0) break;
+                        }
+                    }
+
+                    if (remainingToAssign > 0 && allowOverSelling) {
+                        console.log(`[Over-Selling] Product ${item.product_id}: Recording over-sale of ${remainingToAssign}`);
+
+                        const product = await tx.product.findUnique({ where: { id: item.product_id } });
+                        const latestPurchase = await tx.purchaseItem.findFirst({
+                            where: { productId: item.product_id },
+                            include: { purchase: { select: { date: true } } },
+                            orderBy: { purchase: { date: 'desc' } }
+                        });
+
+                        const fallbackPrice = latestPurchase?.retailPrice
+                            ? new Decimal(latestPurchase.retailPrice.toString())
+                            : (latestPurchase?.costPrice
+                                ? new Decimal(latestPurchase.costPrice.toString())
+                                : new Decimal(product?.price?.toString() || item.unit_price));
+
+                        saleItemsData.push({
+                            productId: item.product_id,
+                            quantity: remainingToAssign,
+                            price: fallbackPrice,
+                            batchId: null,
+                            isOverSale: true
+                        });
+                        remainingToAssign = 0;
+                    }
+                }
+            }
+
 
             const refundTotal = returnSubtotal.plus(refundTax).minus(refundDiscount).minus(refundRoundOff);
 
@@ -245,23 +412,18 @@ export const checkout = async (req: Request, res: Response) => {
                     staffId: data.staff_id,
                     customerId: saleCustomerId,
                     parentSaleId: isReturn ? data.parent_sale_id : undefined,
+                    shiftId: shiftId,
+                    paymentMethod: data.payment_method,
                     total: new Decimal(isReturn ? refundTotal.neg() : data.totals.grand_total),
                     subtotal: new Decimal(isReturn ? returnSubtotal.neg() : data.totals.subtotal),
                     tax: new Decimal(isReturn ? refundTax.neg() : data.totals.tax),
                     discount: new Decimal(isReturn ? refundDiscount.neg() : data.totals.discount),
                     roundOffDiscount: new Decimal(isReturn ? refundRoundOff.neg() : (data.totals.round_off_discount || 0)),
-                    paymentMethod: data.payment_method,
-                    paymentDetails: data.payment_details ? (data.payment_details as any) : Prisma.JsonNull,
+                    note: isReturn ? (data.note || `Refund for Bill #${data.parent_sale_id}`) : data.note,
+                    dueAmount: data.payment_method === 'credit' ? new Decimal(isReturn ? refundTotal.neg() : data.totals.grand_total) : 0,
+                    status: isReturn ? 'RETURNED' : 'COMPLETED',
                     items: {
-                        create: data.items.map(item => {
-                            const key = `${item.product_id}-${item.batch_id || 'null'}`;
-                            return {
-                                productId: item.product_id,
-                                quantity: item.quantity,
-                                price: isReturn ? (returnUnitPrices.get(key) || new Decimal(item.unit_price)) : new Decimal(item.unit_price),
-                                batchId: item.batch_id
-                            };
-                        })
+                        create: saleItemsData
                     }
                 },
                 include: {
@@ -307,6 +469,16 @@ export const checkout = async (req: Request, res: Response) => {
                         });
                     }
                 } else if (parentSale) {
+                    // Update original sale dueAmount if it was a credit sale
+                    if (parentSale.paymentMethod === 'credit') {
+                        await tx.sale.update({
+                            where: { id: parentSale.id },
+                            data: {
+                                dueAmount: { decrement: refundTotal }
+                            }
+                        });
+                    }
+
                     const earnEntries = await tx.customerPointLedger.findMany({
                         where: {
                             customerId: saleCustomerId,
@@ -368,6 +540,21 @@ export const checkout = async (req: Request, res: Response) => {
                 });
             }
 
+            // Update Shift Totals if payment method is cash
+            if (shiftId && data.payment_method === 'cash') {
+                if (isReturn) {
+                    await tx.shift.update({
+                        where: { id: shiftId },
+                        data: { totalCashRefunds: { increment: refundTotal } }
+                    });
+                } else {
+                    await tx.shift.update({
+                        where: { id: shiftId },
+                        data: { totalCashSales: { increment: new Decimal(data.totals.grand_total) } }
+                    });
+                }
+            }
+
             return sale;
         });
 
@@ -375,7 +562,11 @@ export const checkout = async (req: Request, res: Response) => {
 
     } catch (error: any) {
         if (error instanceof z.ZodError) {
-            res.status(400).json({ error: error.errors });
+            const formattedErrors = error.errors.map(err => ({
+                field: err.path.join('.'),
+                message: err.message
+            }));
+            res.status(400).json({ error: 'Validation failed', details: formattedErrors });
         } else if (error.message && error.message.includes('Parent sale not found')) {
             res.status(404).json({ error: error.message });
         } else if (error.message && error.message.includes('Return')) {
@@ -488,7 +679,11 @@ export const createHeldSale = async (req: Request, res: Response) => {
         res.status(201).json(heldSale);
     } catch (error: any) {
         if (error instanceof z.ZodError) {
-            res.status(400).json({ error: error.errors });
+            const formattedErrors = error.errors.map(err => ({
+                field: err.path.join('.'),
+                message: err.message
+            }));
+            res.status(400).json({ error: 'Validation failed', details: formattedErrors });
         } else {
             res.status(500).json({ error: 'Internal server error' });
         }
@@ -548,11 +743,38 @@ export const refundSale = async (req: Request, res: Response) => {
         // Safest is to Delete Sale to prevent double refund if no status field.
 
         await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-            const sale = await tx.sale.findUnique({ where: { id }, include: { items: true } });
-            if (!sale) throw new Error("Sale not found");
+            const sale = await tx.sale.findUnique({
+                where: { id },
+                include: { items: true }
+            });
 
-            // Delete the sale to "Void" it since we lack status field
-            await tx.sale.delete({ where: { id } });
+            if (!sale) throw new Error("Sale not found");
+            if (sale.status === 'VOIDED') throw new Error("Sale already voided");
+
+            // 1. Restore Stock for each item
+            // Note: Since we don't have a specific "Void" transaction in stock history yet,
+            // we will just rely on the fact that SaleItems are checked during stock aggregation.
+            // However, to truly VOID, we should either delete the SaleItems or mark them.
+            // Given the getProducts stock calculation (TotalPurchased - TotalSold),
+            // if we mark Sale as VOIDED, we must ensure getProducts query excludes VOIDED sales.
+
+            // 2. Mark as Voided
+            await tx.sale.update({
+                where: { id },
+                data: { status: 'VOIDED' }
+            });
+
+            // 3. If it was a credit sale, reverse the customer's due balance
+            if (sale.paymentMethod === 'credit' && sale.customerId) {
+                const totalRefund = new Decimal(sale.total.toString());
+                await tx.customer.update({
+                    where: { id: sale.customerId },
+                    data: {
+                        totalDue: { decrement: totalRefund },
+                        totalSpend: { decrement: totalRefund }
+                    }
+                });
+            }
         });
 
         res.json({ message: 'Sale voided successfully' });
@@ -606,11 +828,7 @@ export const getDailySummary = async (req: Request, res: Response) => {
             const saleTotal = new Decimal(sale.total.toString());
             totalSales = totalSales.plus(saleTotal);
 
-            if (sale.paymentMethod === 'split' && sale.paymentDetails) {
-                const details = sale.paymentDetails as any;
-                cashTotal = cashTotal.plus(new Decimal(details.cashAmount || 0));
-                cardTotal = cardTotal.plus(new Decimal(details.cardAmount || 0));
-            } else if (sale.paymentMethod === 'cash') {
+            if (sale.paymentMethod === 'cash') {
                 cashTotal = cashTotal.plus(saleTotal);
             } else if (sale.paymentMethod === 'card') {
                 cardTotal = cardTotal.plus(saleTotal);

@@ -11,7 +11,7 @@ app.use((req, res, next) => {
     next();
 });
 
-const allowedOrigins = ['http://localhost:4173', 'http://localhost:5173'];
+const allowedOrigins = ['http://localhost:4173', 'http://localhost:5173', 'http://localhost:5174'];
 app.use((req, res, next) => {
     const origin = req.headers.origin as string | undefined;
     if (origin && allowedOrigins.includes(origin)) {
@@ -46,6 +46,8 @@ import bulkRoutes from './routes/bulk.routes';
 import brandRoutes from './routes/brand.routes';
 import unitRoutes from './routes/unit.routes';
 import purchaseRoutes from './routes/purchase.routes';
+import expenseRoutes from './routes/expense.routes';
+import shiftRoutes from './routes/shift.routes';
 
 app.use('/auth', authRoutes);
 app.use('/staff', staffRoutes);
@@ -60,6 +62,8 @@ app.use('/bulk', bulkRoutes);
 app.use('/brands', brandRoutes);
 app.use('/units', unitRoutes);
 app.use('/purchases', purchaseRoutes);
+app.use('/expenses', expenseRoutes);
+app.use('/shifts', shiftRoutes);
 
 
 export default app;

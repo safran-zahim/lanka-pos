@@ -49,7 +49,7 @@ export const POSLayout: React.FC<{ children: React.ReactNode }> = ({ children })
 
     const handleLogout = () => {
         logout();
-        navigate('/login');
+        window.location.href = '/login';
     };
 
     return (

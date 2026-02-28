@@ -3,7 +3,7 @@ async function run() {
         const loginRes = await fetch('http://localhost:3000/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: 'admin', password: 'password123' })
+            body: JSON.stringify({ username: 'admin', password: 'admin123' })
         });
 
         const loginData = await loginRes.json();
@@ -15,7 +15,7 @@ async function run() {
             const loginRes2 = await fetch('http://localhost:3000/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: 'SuperAdmin', password: 'password123' })
+                body: JSON.stringify({ username: 'superadmin', password: 'admin123' })
             });
             const loginData2 = await loginRes2.json();
             if (!loginData2.token) {

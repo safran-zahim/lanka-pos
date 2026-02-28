@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Package, Users, LogOut, ShoppingCart, FileText, Truck, Settings, HelpCircle, Menu, X, AlertTriangle, BarChart3, Shield } from 'lucide-react';
+import { LayoutDashboard, Package, Users, LogOut, ShoppingCart, FileText, Truck, Settings, HelpCircle, Menu, X, AlertTriangle, BarChart3, Shield, Wallet } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { useToast } from '../store/useToast';
@@ -16,6 +16,7 @@ export const AdminLayout = () => {
     const addToast = useToast((state) => state.addToast);
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [time, setTime] = useState(new Date());
     const [settingsMap, setSettingsMap] = useState<Record<string, any>>({});
     useEffect(() => {
@@ -50,8 +51,8 @@ export const AdminLayout = () => {
 
     const handleLogout = () => {
         logout();
-        navigate('/login');
         addToast('Logged out successfully', 'success');
+        window.location.href = '/login';
     };
 
     const handleNavClick = () => {
@@ -69,6 +70,7 @@ export const AdminLayout = () => {
         { path: '/admin/suppliers', icon: <Truck size={20} />, label: 'Suppliers' },
         { path: '/admin/purchases', icon: <Package size={20} />, label: 'Purchases' },
         { path: '/admin/low-stock', icon: <AlertTriangle size={20} />, label: 'Low Stock' },
+        { path: '/admin/expenses', icon: <Wallet size={20} />, label: 'Expenses' },
         { path: '/admin/reports', icon: <BarChart3 size={20} />, label: 'Reports' },
         { path: '/admin/settings', icon: <Settings size={20} />, label: 'Settings' },
         { path: '/admin/receipts', icon: <FileText size={20} />, label: 'Receipts' },
@@ -121,16 +123,21 @@ export const AdminLayout = () => {
 
             {/* Sidebar */}
             <aside className={`
-                fixed md:static inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-transform duration-300 ease-in-out
-                ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+                fixed md:static inset-y-0 left-0 z-50 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-300 ease-in-out
+                ${isSidebarCollapsed ? 'md:w-20' : 'md:w-64'}
+                ${isMobileMenuOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0'}
             `}>
-                <div className="p-6 border-b border-gray-200 dark:border-gray-700 md:flex hidden justify-between items-center">
-                    <div>
+                <div className={`p-6 border-b border-gray-200 dark:border-gray-700 md:flex hidden justify-between items-center ${isSidebarCollapsed ? 'px-4' : ''}`}>
+                    <div className="overflow-hidden">
                         <div className="flex items-center gap-3">
-                            {brandLogo && <img src={brandLogo} alt="Logo" className="h-8 w-8 object-contain" />}
-                            <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-500">{brandName}</h1>
+                            {brandLogo && <img src={brandLogo} alt="Logo" className="h-8 w-8 object-contain shrink-0" />}
+                            {!isSidebarCollapsed && (
+                                <div className="animate-in fade-in slide-in-from-left-2 duration-300">
+                                    <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-500 truncate">{brandName}</h1>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">Admin Control Center</p>
+                                </div>
+                            )}
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Admin Control Center</p>
                     </div>
                 </div>
 
@@ -145,28 +152,49 @@ export const AdminLayout = () => {
                             key={item.path}
                             to={item.path}
                             onClick={handleNavClick}
+                            title={isSidebarCollapsed ? item.label : ''}
                             className={({ isActive }) =>
-                                `flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${isActive
+                                `flex items-center rounded-lg transition-all duration-200 ${isSidebarCollapsed ? 'justify-center p-3' : 'space-x-3 px-4 py-3'} ${isActive
                                     ? 'bg-blue-600 text-white'
                                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
                                 }`
                             }
                         >
-                            {item.icon}
-                            <span className="font-medium">{item.label}</span>
+                            <span className="shrink-0">{item.icon}</span>
+                            {!isSidebarCollapsed && (
+                                <span className="font-medium animate-in fade-in slide-in-from-left-2 duration-200">{item.label}</span>
+                            )}
                         </NavLink>
                     ))}
                 </nav>
 
+                {/* Collapse Toggle Button (Desktop Only) */}
+                <div className="hidden md:block p-4 border-t border-gray-200 dark:border-gray-700">
+                    <button
+                        onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                        className="w-full flex items-center justify-center p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                    >
+                        {isSidebarCollapsed ? <Menu size={20} /> : <X size={20} />}
+                    </button>
+                </div>
             </aside>
 
             {/* Main Content */}
             <main className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900 transition-colors duration-200 pt-16 md:pt-0">
                 {/* Desktop Header */}
                 <div className="hidden md:flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-                    <div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">Welcome</div>
-                        <div className="font-semibold text-gray-900 dark:text-white">{user?.username}</div>
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                            className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                        >
+                            <Menu size={20} />
+                        </button>
+                        <div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">Welcome</div>
+                            <div className="font-semibold text-gray-900 dark:text-white">{user?.username}</div>
+                        </div>
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="text-sm text-gray-500 dark:text-gray-400 font-mono">

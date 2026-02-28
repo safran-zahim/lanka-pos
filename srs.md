@@ -80,6 +80,8 @@ Lanka POS is a client-server application:
 - FR-5: The system shall support returns and voided sales.
 - FR-6: The system shall store sale items, quantities, and prices.
 - FR-7: The system shall compute tax, discount, and totals.
+- FR-26: The system shall support a Unified Daily Register to track starting cash float, cash sales, debts collected, and general expenses per shift.
+- FR-27: The system shall support tracking Petty Cash deposits and withdrawals from the active drawer.
 
 ### 3.3 Product and Inventory
 - FR-8: The system shall allow creating and updating products.
@@ -99,6 +101,7 @@ Lanka POS is a client-server application:
 ### 3.6 Reports and History
 - FR-16: The system shall provide transaction history views.
 - FR-17: The system shall provide sales summaries and performance data.
+- FR-28: The system shall provide end-of-shift reports calculating Expected Cash based on sales, expenses, petty cash, supplier payouts, and customer debt payments.
 
 ### 3.7 Subscription Handling
 - FR-18: The system shall store the current subscription plan and status.
