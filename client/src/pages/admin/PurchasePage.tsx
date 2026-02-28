@@ -334,8 +334,9 @@ export const PurchasePage = () => {
                                                 <input
                                                     type="number"
                                                     className="w-full bg-gray-50 dark:bg-gray-900 p-1.5 rounded text-center outline-none focus:ring-1 focus:ring-blue-500"
-                                                    value={item.qty}
-                                                    onChange={e => updateItem(index, 'qty', Number(e.target.value))}
+                                                    value={item.qty || ''}
+                                                    onFocus={e => e.target.select()}
+                                                    onChange={e => updateItem(index, 'qty', e.target.value === '' ? 0 : Number(e.target.value))}
                                                 />
                                             </td>
                                             <td className="p-3">
@@ -343,8 +344,9 @@ export const PurchasePage = () => {
                                                     type="number"
                                                     step="0.01"
                                                     className="w-full bg-gray-50 dark:bg-gray-900 p-1.5 rounded text-right outline-none focus:ring-1 focus:ring-blue-500"
-                                                    value={item.cost}
-                                                    onChange={e => updateItem(index, 'cost', Number(e.target.value))}
+                                                    value={item.cost || ''}
+                                                    onFocus={e => e.target.select()}
+                                                    onChange={e => updateItem(index, 'cost', e.target.value === '' ? 0 : Number(e.target.value))}
                                                 />
                                             </td>
                                             <td className="p-3">
@@ -352,16 +354,19 @@ export const PurchasePage = () => {
                                                     type="number"
                                                     step="0.01"
                                                     className="w-full bg-gray-50 dark:bg-gray-900 p-1.5 rounded text-right outline-none focus:ring-1 focus:ring-blue-500"
-                                                    value={item.retail_price}
-                                                    onChange={e => updateItem(index, 'retail_price', Number(e.target.value))}
+                                                    value={item.retail_price || ''}
+                                                    onFocus={e => e.target.select()}
+                                                    onChange={e => updateItem(index, 'retail_price', e.target.value === '' ? 0 : Number(e.target.value))}
                                                 />
                                             </td>
                                             <td className="p-3">
                                                 <input
                                                     type="number"
                                                     className="w-full bg-transparent text-center border-b border-transparent focus:border-blue-500 outline-none"
-                                                    value={item.tax}
-                                                    onChange={e => updateItem(index, 'tax', Number(e.target.value))}
+                                                    value={item.tax || ''}
+                                                    placeholder="0"
+                                                    onFocus={e => e.target.select()}
+                                                    onChange={e => updateItem(index, 'tax', e.target.value === '' ? 0 : Number(e.target.value))}
                                                 />
                                             </td>
                                             <td className="p-3 text-right font-medium">
@@ -411,8 +416,10 @@ export const PurchasePage = () => {
                                 <input
                                     type="number"
                                     className="w-20 text-right bg-gray-50 dark:bg-gray-900 p-1 rounded border border-gray-200 dark:border-gray-700 outline-none text-sm"
-                                    value={shipping}
-                                    onChange={e => setShipping(Number(e.target.value))}
+                                    value={shipping || ''}
+                                    placeholder="0"
+                                    onFocus={e => e.target.select()}
+                                    onChange={e => setShipping(e.target.value === '' ? 0 : Number(e.target.value))}
                                 />
                             </div>
                             <div className="flex justify-between items-center text-green-600 dark:text-green-400">
@@ -420,8 +427,10 @@ export const PurchasePage = () => {
                                 <input
                                     type="number"
                                     className="w-20 text-right bg-green-50 dark:bg-green-900/20 p-1 rounded border border-green-200 dark:border-green-800 outline-none text-sm"
-                                    value={discount}
-                                    onChange={e => setDiscount(Number(e.target.value))}
+                                    value={discount || ''}
+                                    placeholder="0"
+                                    onFocus={e => e.target.select()}
+                                    onChange={e => setDiscount(e.target.value === '' ? 0 : Number(e.target.value))}
                                 />
                             </div>
                         </div>
@@ -460,9 +469,10 @@ export const PurchasePage = () => {
                                     <input
                                         type="number"
                                         className="w-full p-2.5 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg outline-none font-bold text-blue-600 dark:text-blue-400"
-                                        value={paidAmount}
-                                        onChange={e => setPaidAmount(Number(e.target.value))}
-                                        placeholder="0.00"
+                                        value={paidAmount || ''}
+                                        onFocus={e => e.target.select()}
+                                        onChange={e => setPaidAmount(e.target.value === '' ? 0 : Number(e.target.value))}
+                                        placeholder="Enter amount"
                                     />
                                     <p className="text-[10px] text-gray-500 mt-1">Due: {formatCurrency(Math.max(0, grandTotal - paidAmount))}</p>
                                 </div>

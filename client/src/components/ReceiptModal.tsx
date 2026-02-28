@@ -89,7 +89,7 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
         const taxAmount = transaction.tax_amount || 0;
         const roundOff = transaction.round_off_discount || 0;
         const total = transaction.total_amount;
-        const taxPercent = taxEnabled && taxAmount > 0 ? ((taxAmount / subtotal) * 100).toFixed(2).replace(/\.00$/, '') : '0';
+        const taxPercent = taxEnabled && taxAmount > 0 ? ((taxAmount / itemsTotal) * 100).toFixed(2).replace(/\.00$/, '') : '0';
 
         const receiptText = `🧾 *${header}*\n${address}\n${phone ? `Tel: ${phone}` : ''}\n${email ? `Email: ${email}` : ''}\n\n*Invoice:* #${transaction.transaction_id}\n*Date:* ${formatDateTime(new Date(transaction.timestamp))}\n${customer?.name ? `*Customer:* ${customer.name}\n` : ''}\n*Items:*\n${items.map(item => `• ${item.quantity} × ${item.name} (${formatCurrency(item.price_at_sale * item.quantity)})`).join('\n')}\n\n*Summary:*\nSubtotal: ${formatCurrency(subtotal)}\n${discountAmount > 0 ? `Discount: -${formatCurrency(discountAmount)}\n` : ''}${taxEnabled && taxAmount > 0 ? `Tax (${taxPercent}%): ${formatCurrency(taxAmount)}\n` : ''}${roundOffEnabled && roundOff > 0 ? `Round Off: -${formatCurrency(roundOff)}\n` : ''}*Total: ${formatCurrency(total)}*\n\nPayment Method: ${transaction.payment_method.toUpperCase()}\n\n${footer || 'Thank you for your business!'}`;
 
@@ -296,7 +296,7 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                         </div>
                         {taxEnabled && transaction.tax_amount > 0 && (
                             <div className="flex justify-between">
-                                <span>Tax ({((transaction.tax_amount / (items.reduce((sum, item) => sum + (item.price_at_sale * item.quantity), 0) - (transaction.discount || 0))) * 100).toFixed(2)}%)</span>
+                                <span>Tax ({((transaction.tax_amount / items.reduce((sum, item) => sum + (item.price_at_sale * item.quantity), 0)) * 100).toFixed(2)}%)</span>
                                 <span>{formatCurrency(transaction.tax_amount)}</span>
                             </div>
                         )}
