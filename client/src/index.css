@@ -39,9 +39,6 @@
     background-color: white;
   }
 
-  #receipt-modal > * {
-    margin: 0 !important;
-  }
 
   /* Hide scrollbars during print */
   ::-webkit-scrollbar {
