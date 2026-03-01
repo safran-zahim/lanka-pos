@@ -3,7 +3,7 @@ import prisma from '../utils/prisma';
 import { generateToken } from '../utils/jwt';
 import { z } from 'zod';
 import { getAppConfig } from '../utils/appConfig';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 const loginSchema = z.object({
     username: z.string(),
