@@ -14,6 +14,7 @@ const checkoutItemSchema = z.object({
     quantity: z.number().refine((value) => value !== 0, { message: 'Quantity cannot be 0' }),
     unit_price: z.number().positive(),
     batch_id: optionalId.optional(),
+    note: z.string().optional(),
 });
 
 const checkoutSchema = z.object({
@@ -99,17 +100,17 @@ export const checkout = async (req: Request, res: Response) => {
                 for (const item of parentSale.items) {
                     const key = `${item.productId}-${item.batchId || 'null'}`;
                     const qty = parentQtyByProductBatch.get(key) || 0;
-                    parentQtyByProductBatch.set(key, qty + item.quantity);
+                    parentQtyByProductBatch.set(key, qty + Number(item.quantity));
 
                     const total = parentTotalByProductBatch.get(key) || new Decimal(0);
-                    parentTotalByProductBatch.set(key, total.plus(new Decimal(item.price).times(item.quantity)));
+                    parentTotalByProductBatch.set(key, total.plus(new Decimal(item.price.toString()).times(item.quantity.toString())));
 
                     // Also keep product-level totals for fallback
                     const prodQty = parentQtyByProduct.get(item.productId) || 0;
-                    parentQtyByProduct.set(item.productId, prodQty + item.quantity);
+                    parentQtyByProduct.set(item.productId, prodQty + Number(item.quantity));
 
                     const prodTotal = parentTotalByProduct.get(item.productId) || new Decimal(0);
-                    parentTotalByProduct.set(item.productId, prodTotal.plus(new Decimal(item.price).times(item.quantity)));
+                    parentTotalByProduct.set(item.productId, prodTotal.plus(new Decimal(item.price.toString()).times(item.quantity.toString())));
                 }
 
                 // Track returned quantities by product AND batch
@@ -117,7 +118,7 @@ export const checkout = async (req: Request, res: Response) => {
                 const returnedQtyByProduct = new Map<number, number>();
                 for (const returnSale of parentSale.returns || []) {
                     for (const item of returnSale.items || []) {
-                        const qty = Math.abs(item.quantity);
+                        const qty = Math.abs(Number(item.quantity));
                         const key = `${item.productId}-${item.batchId || 'null'}`;
                         returnedQtyByProductBatch.set(key, (returnedQtyByProductBatch.get(key) || 0) + qty);
                         returnedQtyByProduct.set(item.productId, (returnedQtyByProduct.get(item.productId) || 0) + qty);
@@ -323,7 +324,8 @@ export const checkout = async (req: Request, res: Response) => {
                                 quantity: batchAvailable,
                                 price: new Decimal(item.unit_price),
                                 batchId: item.batch_id,
-                                isOverSale: false
+                                isOverSale: false,
+                                note: item.note
                             });
                         }
                         saleItemsData.push({
@@ -331,7 +333,8 @@ export const checkout = async (req: Request, res: Response) => {
                             quantity: item.quantity - batchAvailable,
                             price: fallbackPrice,
                             batchId: null,
-                            isOverSale: true
+                            isOverSale: true,
+                            note: item.note
                         });
                     } else {
                         saleItemsData.push({
@@ -339,7 +342,8 @@ export const checkout = async (req: Request, res: Response) => {
                             quantity: item.quantity,
                             price: isReturn ? (returnUnitPrices.get(key) || new Decimal(item.unit_price)) : new Decimal(item.unit_price),
                             batchId: item.batch_id,
-                            isOverSale: false
+                            isOverSale: false,
+                            note: item.note
                         });
                     }
                 } else {
@@ -366,7 +370,8 @@ export const checkout = async (req: Request, res: Response) => {
                                 quantity: assignQty,
                                 price: new Decimal(item.unit_price),
                                 batchId: batch.id,
-                                isOverSale: false
+                                isOverSale: false,
+                                note: item.note
                             });
                             remainingToAssign -= assignQty;
                             if (remainingToAssign <= 0) break;
@@ -392,7 +397,8 @@ export const checkout = async (req: Request, res: Response) => {
                             quantity: remainingToAssign,
                             price: fallbackPrice,
                             batchId: null,
-                            isOverSale: true
+                            isOverSale: true,
+                            note: item.note
                         });
                         remainingToAssign = 0;
                     }

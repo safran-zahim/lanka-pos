@@ -70,7 +70,7 @@ export const getTransactions = async (req: Request, res: Response) => {
 
         // 3. Map Expenses (OUT)
         expenses.forEach(e => {
-            if ((e as any).paymentId) return; // Skip if it's linked to a purchase payment
+            if ((e as any).paymentId || (e as any).purchaseId) return; // Skip if it's linked to a purchase or payment
 
             transactions.push({
                 id: `EXP-${e.id}`,
