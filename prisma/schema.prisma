@@ -262,6 +262,7 @@ model SaleItem {
   batchId    Int?
   batch      PurchaseItem? @relation(fields: [batchId], references: [id])
   isOverSale Boolean       @default(false)
+  note       String?
 }
 
 

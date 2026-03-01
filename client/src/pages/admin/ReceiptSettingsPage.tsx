@@ -678,7 +678,10 @@ export const ReceiptSettingsPage = () => {
                                         )}
 
                                         <div className="text-center mt-auto">
-                                            <div className="text-[9px] opacity-80">{footer || 'Developed by Tap Lanka POS 0705083388'}</div>
+                                            <div className="text-[9px] opacity-80 mb-2">{footer || 'Thank you for your business!'}</div>
+                                            {developerFooterEnabled && (
+                                                <div className="text-[7px] opacity-40 uppercase tracking-tighter">{developerFooter || 'Developed by Tap Lanka POS 0705083388'}</div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
