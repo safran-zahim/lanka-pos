@@ -1,6 +1,7 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
+const fs = require('fs');
 
 let mainWindow;
 let backendProcess;
@@ -30,12 +31,40 @@ function createWindow() {
     });
 }
 
+function setupDatabase() {
+    if (app.isPackaged) {
+        const userDataPath = app.getPath('userData');
+        const dbDir = path.join(userDataPath, 'database');
+        const dbFile = path.join(dbDir, 'dev.db');
+
+        if (!fs.existsSync(dbDir)) {
+            fs.mkdirSync(dbDir, { recursive: true });
+        }
+
+        if (!fs.existsSync(dbFile)) {
+            const templateDbPath = path.join(process.resourcesPath, 'dev.db');
+            if (fs.existsSync(templateDbPath)) {
+                fs.copyFileSync(templateDbPath, dbFile);
+                console.log('Database initialized from template');
+            } else {
+                console.warn('Template database not found at:', templateDbPath);
+            }
+        }
+
+        return dbFile;
+    }
+
+    return path.join(__dirname, 'dev.db');
+}
+
 function startBackend() {
     const backendPath = path.join(__dirname, 'dist', 'app.js');
+    const dbPath = setupDatabase();
+
     const env = {
         ...process.env,
         PORT: process.env.PORT || '3000',
-        DATABASE_URL: process.env.DATABASE_URL || 'file:./dev.db',
+        DATABASE_URL: `file:${dbPath}`,
         JWT_SECRET: process.env.JWT_SECRET || 'change_me'
     };
 

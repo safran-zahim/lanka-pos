@@ -104,9 +104,10 @@ If you encounter errors related to `better-sqlite3` or `prisma` during the build
 - Check `electron-main.js`. In production, it loads `mainWindow.loadFile(...)`. Ensure `client/dist/index.html` exists and the path is correct.
 - Ensure `homepage` in `client/package.json` is set to `./` or configured correctly for Electron (file protocol).
 
-### Database Not Found in Production
-- The application looks for `dev.db` in the resource path. Ensure `extraResources` in `package.json` includes the database file if you intend to ship a pre-filled DB, or ensure the app logic creates one in `userData` directory on first launch (recommended for production apps to avoid permission issues in `Program Files`).
-
+### Database in Production
+- The application is now configured to copy `dev.db` from the installer's `extraResources` footprint into the user's `userData` directory (typically `AppData/Roaming/Lanka POS/database` on Windows).
+- This approach prevents read-only errors since `Program Files` is restricted, and ensures the database persists across app updates.
+- If you need to ship a new pre-filled database, just rebuild the app with the updated `dev.db` file. The app will only copy the template if one doesn't already exist in the user data folder.
 ## Configuration Reference (`package.json`)
 
 The build configuration is located in the `build` section of `package.json`:

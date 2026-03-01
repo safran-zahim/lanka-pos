@@ -24,6 +24,7 @@ import { SelectBatchModal } from '../components/SelectBatchModal';
 import { RegisterManager } from '../components/RegisterManager';
 import { ActiveRegisterModal } from '../components/ActiveRegisterModal';
 import { POSCashModal } from '../components/POSCashModal';
+import { PaymentModal } from '../components/PaymentModal';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useCurrency } from '../hooks/useCurrency';
 import { getApiUrl } from '../config/api';
@@ -56,6 +57,7 @@ export const POS = () => {
     const [showHoldModal, setShowHoldModal] = useState(false);
     const [showHeldSalesList, setShowHeldSalesList] = useState(false);
     const [showSplitPaymentModal, setShowSplitPaymentModal] = useState(false);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [showDiscountModal, setShowDiscountModal] = useState(false);
     const [checkoutNote, setCheckoutNote] = useState('');
     const [showCheckoutNote, setShowCheckoutNote] = useState(false);
@@ -1224,7 +1226,7 @@ export const POS = () => {
                         </button>
 
                         <button
-                            onClick={() => handlePayment()}
+                            onClick={() => setShowPaymentModal(true)}
                             disabled={isProcessing || items.length === 0}
                             className="col-span-2 flex flex-col items-center justify-center py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-green-600/30 transition-all active:scale-95"
                         >
@@ -1297,6 +1299,18 @@ export const POS = () => {
                         handlePayment(details);
                     }}
                     onClose={() => setShowSplitPaymentModal(false)}
+                />
+            )}
+
+            {/* Standard Payment Modal */}
+            {showPaymentModal && (
+                <PaymentModal
+                    total={total + tax - roundOffDiscount}
+                    onConfirm={(method, receivedAmount) => {
+                        setShowPaymentModal(false);
+                        handlePayment(undefined, method);
+                    }}
+                    onClose={() => setShowPaymentModal(false)}
                 />
             )}
 

@@ -441,8 +441,8 @@ export const SalesHistoryDashboard = () => {
                         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Daily Sales</h3>
                         </div>
-                        <div className="overflow-auto">
-                            <table className="w-full text-left border-collapse">
+                        <div className="overflow-x-auto overflow-y-auto w-full">
+                            <table className="w-full text-left border-collapse min-w-[600px]">
                                 <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
                                     <tr>
                                         <th className="p-4 font-medium text-gray-500 dark:text-gray-400">Date</th>
@@ -491,8 +491,8 @@ export const SalesHistoryDashboard = () => {
                         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Products Sold</h3>
                         </div>
-                        <div className="overflow-auto">
-                            <table className="w-full text-left border-collapse">
+                        <div className="overflow-x-auto overflow-y-auto w-full">
+                            <table className="w-full text-left border-collapse min-w-[600px]">
                                 <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
                                     <tr>
                                         <th className="p-4 font-medium text-gray-500 dark:text-gray-400">Product</th>
@@ -553,8 +553,8 @@ export const SalesHistoryDashboard = () => {
                                 <span className="text-sm text-gray-500 dark:text-gray-400">per page</span>
                             </div>
                         </div>
-                        <div className="overflow-auto">
-                            <table className="w-full text-left border-collapse">
+                        <div className="overflow-x-auto overflow-y-auto w-full">
+                            <table className="w-full text-left border-collapse min-w-[800px]">
                                 <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
                                     <tr>
                                         <th className="p-4 font-medium text-gray-500 dark:text-gray-400">ID</th>

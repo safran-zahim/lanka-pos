@@ -181,22 +181,22 @@ export const ActiveRegisterModal: React.FC<ActiveRegisterModalProps> = ({ isOpen
                             {!showCloseRegister && !showPettyCash && (
                                 <>
                                     {/* Dashboard Highlights */}
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                        <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 border border-gray-100 dark:border-gray-700/50">
-                                            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Expected Drawer</p>
-                                            <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{formatCurrency(shiftData.expectedCash)}</p>
+                                    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+                                        <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-3 lg:p-4 border border-gray-100 dark:border-gray-700/50 overflow-hidden">
+                                            <p className="text-xs lg:text-sm text-gray-500 dark:text-gray-400 font-medium truncate">Expected Drawer</p>
+                                            <p className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white mt-1 truncate" title={formatCurrency(shiftData.expectedCash)}>{formatCurrency(shiftData.expectedCash)}</p>
                                         </div>
-                                        <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 border border-green-100 dark:border-green-900/30">
-                                            <p className="text-sm text-green-700 dark:text-green-400 font-medium">Cash Sales</p>
-                                            <p className="text-xl font-bold text-green-900 dark:text-green-300 mt-1">+{formatCurrency(shiftData.totalCashSales)}</p>
+                                        <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-3 lg:p-4 border border-green-100 dark:border-green-900/30 overflow-hidden">
+                                            <p className="text-xs lg:text-sm text-green-700 dark:text-green-400 font-medium truncate">Cash Sales</p>
+                                            <p className="text-lg lg:text-xl font-bold text-green-900 dark:text-green-300 mt-1 truncate" title={`+${formatCurrency(shiftData.totalCashSales)}`}>+{formatCurrency(shiftData.totalCashSales)}</p>
                                         </div>
-                                        <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-4 border border-orange-100 dark:border-orange-900/30">
-                                            <p className="text-sm text-orange-700 dark:text-orange-400 font-medium">Cash Expenses</p>
-                                            <p className="text-xl font-bold text-orange-900 dark:text-orange-300 mt-1">-{formatCurrency(shiftData.totalExpenses)}</p>
+                                        <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-3 lg:p-4 border border-orange-100 dark:border-orange-900/30 overflow-hidden">
+                                            <p className="text-xs lg:text-sm text-orange-700 dark:text-orange-400 font-medium truncate">Cash Expenses</p>
+                                            <p className="text-lg lg:text-xl font-bold text-orange-900 dark:text-orange-300 mt-1 truncate" title={`-${formatCurrency(shiftData.totalExpenses)}`}>-{formatCurrency(shiftData.totalExpenses)}</p>
                                         </div>
-                                        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-100 dark:border-blue-900/30">
-                                            <p className="text-sm text-blue-700 dark:text-blue-400 font-medium">Starting Float</p>
-                                            <p className="text-xl font-bold text-blue-900 dark:text-blue-300 mt-1">{formatCurrency(shiftData.startingCash)}</p>
+                                        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 lg:p-4 border border-blue-100 dark:border-blue-900/30 overflow-hidden">
+                                            <p className="text-xs lg:text-sm text-blue-700 dark:text-blue-400 font-medium truncate">Starting Float</p>
+                                            <p className="text-lg lg:text-xl font-bold text-blue-900 dark:text-blue-300 mt-1 truncate" title={formatCurrency(shiftData.startingCash)}>{formatCurrency(shiftData.startingCash)}</p>
                                         </div>
                                     </div>
 

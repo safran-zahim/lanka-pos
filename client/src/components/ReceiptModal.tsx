@@ -252,122 +252,123 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                         </div>
                     )}
 
-                    <div className={`border-b ${isCreative || isBold ? 'border-black print:border-black' : 'border-dashed border-gray-400 print:border-gray-500'} my-4`}></div>
+                    <div className={`border-b-2 ${isCreative || isBold ? 'border-black print:border-black' : 'border-dashed border-gray-400 print:border-gray-500'} my-4`}></div>
 
-                    <div className="text-left text-xs space-y-1">
-                        <div className="flex justify-between">
-                            <span>Date/Time: {formatDateTime(new Date(transaction.timestamp))}</span>
+                    {/* Meta Information (Date, Time, Receipt #) */}
+                    <div className="grid grid-cols-2 gap-2 mb-4 opacity-80 text-xs">
+                        <div>Date: {formatDateTime(new Date(transaction.timestamp)).split(',')[0]}</div>
+                        <div className="text-right">Time: {formatDateTime(new Date(transaction.timestamp)).split(',')[1]?.trim() || ''}</div>
+                        <div>{transaction.type === 'return' ? 'Refund #: ' : 'Receipt: #'}R-{transaction.transaction_id}</div>
+                        <div className="text-right font-bold">Cashier: {user?.username || 'Admin'}</div>
+                    </div>
+                    {customer && (
+                        <div className="text-xs opacity-80 mb-2 font-bold">Customer: {customer.name}</div>
+                    )}
+                    {transaction.note && (
+                        <div className="mb-4 text-xs p-1 rounded border border-gray-200 dark:border-gray-700 font-bold italic">
+                            Note: {transaction.note}
                         </div>
-                        <div>{transaction.type === 'return' ? 'Refund' : 'Receipt'} #: {transaction.transaction_id}</div>
-                        <div>Cashier: {user?.username}</div>
-                        {customer && <div>Customer: {customer.name}</div>}
-                        {transaction.note && (
-                            <div className="mt-1 p-1 rounded border border-gray-200 dark:border-gray-700 font-bold italic">
-                                Note: {transaction.note}
+                    )}
+
+                    <div className={`border-b ${isCreative || isBold ? 'border-black print:border-black' : 'border-black print:border-black'} my-4`}></div>
+
+                    {/* Items List - Flex Layout Matching Live Preview */}
+                    <div className={`space-y-3 mb-6 ${isThermalCompact ? 'text-[10px]' : 'text-xs'}`}>
+                        {items.map((item, idx) => (
+                            <div key={idx} className="flex justify-between">
+                                <div className="flex-1 pr-2">
+                                    <div className="font-bold">{item.name}</div>
+                                    <div className="opacity-70">
+                                        {item.quantity} x {formatCurrency(item.price_at_sale)}
+                                    </div>
+                                    {item.note && (
+                                        <div className="text-[10px] opacity-60 mt-0.5">Note: {item.note}</div>
+                                    )}
+                                </div>
+                                <div className="font-bold">
+                                    {formatCurrency(item.price_at_sale * item.quantity)}
+                                </div>
                             </div>
-                        )}
+                        ))}
                     </div>
 
-                    <div className="border-b border-dashed border-gray-400 print:border-gray-500 my-4"></div>
+                    <div className={`border-b-2 ${isCreative ? 'border-black print:border-black' : 'border-black border-dashed print:border-black print:border-dashed'} my-4`}></div>
 
-                    <table className={`w-full text-left ${isThermalCompact ? 'text-[10px]' : 'text-xs'}`}>
-                        <thead>
-                            <tr className="border-b border-gray-300">
-                                <th className="py-1">Item</th>
-                                <th className="py-1 text-right">Qty</th>
-                                <th className="py-1 text-right">Price</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {items.map((item, idx) => (
-                                <tr key={idx}>
-                                    <td className="py-1">
-                                        <div>{item.name}</div>
-                                        {item.note && (
-                                            <div className="text-[10px] text-gray-500">Note: {item.note}</div>
-                                        )}
-                                    </td>
-                                    <td className="py-1 text-right">{item.quantity}</td>
-                                    <td className="py-1 text-right">{formatCurrency(item.price_at_sale * item.quantity)}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-
-                    <div className={`border-b ${isCreative || isBold ? 'border-black print:border-black' : 'border-dashed border-gray-400 print:border-gray-500'} my-4`}></div>
-
-                    <div className={`space-y-1 text-xs ${(isModern || isElegant || isBold) ? 'p-4 rounded-lg border border-gray-200' : ''}`}>
-                        <div className="flex justify-between">
+                    {/* Totals Section */}
+                    <div className={`space-y-1.5 text-right mb-6 text-xs ${(isModern || isElegant || isBold) ? 'bg-gray-50 rounded-xl p-4 border border-gray-200 print:border-gray-300' : ''}`}>
+                        <div className="flex justify-between opacity-80">
                             <span>Items Total</span>
                             <span>{formatCurrency(items.reduce((sum, item) => sum + (item.price_at_sale * item.quantity), 0))}</span>
                         </div>
                         {(transaction.discount ?? 0) > 0 && (
-                            <div className="flex justify-between text-green-700">
+                            <div className="flex justify-between text-green-700 font-medium">
                                 <span>Discount</span>
                                 <span>-{formatCurrency(transaction.discount!)}</span>
                             </div>
                         )}
-                        <div className="flex justify-between font-semibold">
+                        <div className="flex justify-between opacity-80 font-semibold">
                             <span>Subtotal</span>
                             <span>{formatCurrency(items.reduce((sum, item) => sum + (Number(item.price_at_sale) * Number(item.quantity)), 0) - (Number(transaction.discount || 0)))}</span>
                         </div>
                         {taxEnabled && transaction.tax_amount > 0 && (
-                            <div className="flex justify-between">
-                                <span>Tax ({((transaction.tax_amount / items.reduce((sum, item) => sum + (item.price_at_sale * item.quantity), 0)) * 100).toFixed(2)}%)</span>
+                            <div className="flex justify-between opacity-80">
+                                <span>Tax ({((transaction.tax_amount / items.reduce((sum, item) => sum + (item.price_at_sale * item.quantity), 0)) * 100).toFixed(2).replace(/\.00$/, '')}%)</span>
                                 <span>{formatCurrency(transaction.tax_amount)}</span>
                             </div>
                         )}
                         {roundOffEnabled && (transaction.round_off_discount ?? 0) > 0 && (
-                            <div className="flex justify-between text-green-700">
+                            <div className="flex justify-between text-green-700 font-medium">
                                 <span>Round Off</span>
                                 <span>-{formatCurrency(transaction.round_off_discount!)}</span>
                             </div>
                         )}
-                        <div className={`flex justify-between font-bold text-sm mt-2 pt-2 border-t border-gray-300 ${transaction.type === 'return' ? 'text-red-600' : ''}`}>
+                        <div className={`flex justify-between text-base font-black pt-1.5 mt-1 border-t border-black/10 ${transaction.type === 'return' ? 'text-red-600' : ''}`}>
                             <span>{transaction.type === 'return' ? 'REFUND TOTAL' : 'TOTAL'}</span>
                             <span>{formatCurrency(Number(transaction.total_amount || 0))}</span>
                         </div>
                     </div>
 
-                    <div className={`border-b ${isCreative || isBold ? 'border-black print:border-black' : 'border-dashed border-gray-400 print:border-gray-500'} my-4`}></div>
-
-                    <div className="text-xs">
+                    {/* Payment Info Box */}
+                    <div className={`p-3 text-left rounded-lg border ${isBold ? 'border-black bg-white print:border-black' : 'border-black/5 bg-gray-50 print:border-gray-200 print:bg-gray-50'} opacity-80 mb-6 text-[10px]`}>
                         <div className="flex justify-between mb-1">
-                            <span>{transaction.type === 'return' ? 'Refund Method:' : 'Payment Method:'}</span>
-                            <span className="capitalize font-medium">{transaction.payment_method}</span>
+                            <span className="font-bold">{transaction.type === 'return' ? 'Refund Method:' : 'Payment Method:'}</span>
+                            <span className="capitalize font-bold">{transaction.payment_method}</span>
                         </div>
+
                         {transaction.payment_method === 'split' && transaction.payment_details && (
-                            <div className="space-y-1 ml-4 border-l-2 border-gray-100 dark:border-gray-800 pl-2 my-1">
-                                <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                            <div className="space-y-1 ml-2 border-l-2 border-gray-200 pl-2 my-1">
+                                <div className="flex justify-between">
                                     <span>Cash Portion:</span>
                                     <span>{formatCurrency(Number(transaction.payment_details.cashAmount || 0))}</span>
                                 </div>
-                                <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                                <div className="flex justify-between">
                                     <span>Card Portion:</span>
                                     <span>{formatCurrency(Number(transaction.payment_details.cardAmount || 0))}</span>
                                 </div>
                             </div>
                         )}
+
                         {transaction.payment_method === 'credit' && (
-                            <div className="mt-2 p-2 bg-white rounded border border-black text-black">
-                                <p className="text-[10px] font-bold uppercase tracking-wider">
-                                    {transaction.type === 'return' ? 'Debt Reduction' : 'On Account (Credit)'}
-                                </p>
-                                <div className="flex justify-between mt-1 text-xs">
-                                    <span>{transaction.type === 'return' ? 'Amount Deduced:' : 'Current Charge:'}</span>
-                                    <span className="font-semibold">{formatCurrency(Math.abs(Number(transaction.total_amount || 0)))}</span>
+                            <div className="mt-2 space-y-1 border-t border-gray-200 pt-2">
+                                <div className="flex justify-between font-bold text-[9px] uppercase tracking-wider">
+                                    <span>{transaction.type === 'return' ? 'Debt Reduction' : 'On Account (Credit)'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span>{transaction.type === 'return' ? 'Amount Reduced:' : 'Current Charge:'}</span>
+                                    <span className="font-bold">{formatCurrency(Math.abs(Number(transaction.total_amount || 0)))}</span>
                                 </div>
                                 {customer && (
-                                    <div className="flex justify-between border-t border-black mt-1 pt-1 text-xs font-medium">
+                                    <div className="flex justify-between border-t border-gray-200 pt-1 mt-1 font-bold">
                                         <span>Outstanding Balance:</span>
                                         <span>{formatCurrency(Number(customer.total_due || 0))}</span>
                                     </div>
                                 )}
                             </div>
                         )}
+
                         {transaction.payment_details?.cashAmount && !transaction.payment_details.cardAmount && (
-                            <div className="flex justify-between">
-                                <span>{transaction.type === 'return' ? 'Cash Refunded:' : 'Cash Received:'}</span>
+                            <div className="flex justify-between mt-1 pt-1 border-t border-gray-200">
+                                <span>{transaction.type === 'return' ? 'Cash Refunded:' : 'Paid:'}</span>
                                 <span>{formatCurrency(Number(transaction.payment_details.cashAmount || 0))}</span>
                             </div>
                         )}
@@ -380,37 +381,30 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                     </div>
 
                     {showBarcode && (
-                        <>
-                            <div className={`border-b ${isCreative || isBold ? 'border-black print:border-black' : 'border-dashed border-gray-400 print:border-gray-500'} my-4`}></div>
-                            <div className="flex justify-center my-3">
-                                <div className="bg-gray-800 h-12 w-40 flex items-center justify-center">
-                                    <span className="text-white text-xs font-bold tracking-widest">|||||||||||</span>
-                                </div>
-                            </div>
-                            <div className="text-xs text-gray-600">#{String(transaction.transaction_id).padStart(8, '0')}</div>
-                        </>
+                        <div className="flex flex-col items-center gap-1 mb-6">
+                            <div className="w-full h-8 bg-black print:bg-black" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}></div>
+                            <div className="text-[9px] tracking-[0.2em]">#{String(transaction.transaction_id).padStart(8, '0')}</div>
+                        </div>
                     )}
 
-                    <div className={`border-b ${isCreative || isBold ? 'border-black print:border-black' : 'border-dashed border-gray-400 print:border-gray-500'} my-4`}></div>
+                    <div className="text-center mt-auto">
+                        <div className="text-[9px] opacity-80 mb-2 whitespace-pre-wrap">{footer || 'Thank you for your business!'}</div>
+                        {devFooterEnabled && (
+                            <div className="text-[7px] opacity-40 uppercase tracking-tighter">{devFooter || 'Developed by Tap Lanka POS 0705083388'}</div>
+                        )}
+                    </div>
 
-                    <p className="whitespace-pre-wrap text-[10px] text-center mt-4 font-sans opacity-80">{footer}</p>
+                    <div className="h-4 print:block hidden"></div> {/* Extra space for thermal printers */}
 
-                    {devFooterEnabled && (
-                        <p className="text-[8px] text-center mt-2 font-sans opacity-40 uppercase tracking-tighter">
-                            {devFooter}
-                        </p>
-                    )}
-                    <div className="h-8 print:block hidden"></div> {/* Extra space for thermal printers */}
-
-                    {/* Refund Notice */}
+                    {/* Refund Notice Banner */}
                     {transaction.type === 'return' && (
                         <div className="mt-4 p-3 bg-red-50 border border-red-300 rounded text-center">
-                            <p className="text-xs text-red-700 font-semibold">
+                            <p className="text-[10px] text-red-700 font-semibold">
                                 This is a REFUND receipt.
                             </p>
                             {transaction.parent_sale_id && (
-                                <p className="text-xs text-red-600 mt-1">
-                                    Refund processed for Sale #{transaction.parent_sale_id}
+                                <p className="text-[9px] text-red-600 mt-1">
+                                    Processed for Sale #{transaction.parent_sale_id}
                                 </p>
                             )}
                         </div>

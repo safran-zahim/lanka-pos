@@ -56,8 +56,8 @@ export const TransactionHistory = () => {
                 </div>
             </div>
 
-            <div className="flex-1 overflow-auto">
-                <table className="w-full text-left border-collapse">
+            <div className="flex-1 overflow-x-auto overflow-y-auto w-full">
+                <table className="w-full text-left border-collapse min-w-[600px]">
                     <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
                         <tr>
                             <th className="p-4 font-medium text-gray-500 dark:text-gray-400">ID</th>
