@@ -16,9 +16,11 @@ interface ReceiptModalProps {
     user?: User | null;
     autoPrint?: boolean;
     onClose: () => void;
+    developerFooter?: string;
+    developerFooterEnabled?: boolean;
 }
 
-export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, onClose }: ReceiptModalProps) => {
+export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, onClose, developerFooter: propDeveloperFooter, developerFooterEnabled: propDeveloperFooterEnabled }: ReceiptModalProps) => {
     const { sendReceipt, sending } = useDigitalReceipt();
     const { currencySymbol, formatCurrency } = useCurrency();
     const { formatDateTime } = useLocale();
@@ -132,16 +134,24 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
     const isThermalCompact = receiptTemplate === 'thermal-compact';
 
     // Content settings
-    const header = settings['companyName'] || settings['receiptHeader'] || APP_CONFIG.appName;
-    const address = settings['companyAddress'] || settings['receiptAddress'] || APP_CONFIG.company.address;
-    const phone = settings['companyPhone'] || settings['receiptPhone'] || APP_CONFIG.company.supportPhone;
-    const email = settings['companyEmail'] || settings['receiptEmail'] || '';
-    const footer = settings['receiptFooter'] || 'Developed by Tap Lanka POS 0705083388';
     const logoUrl = settings['companyLogo'] || settings['receiptLogo'] || '';
     const showLogo = Boolean(logoUrl) || settings['showLogo'] || false;
     const showTaxID = settings['showTaxID'] || false;
     const taxID = settings['taxID'] || '';
     const showBarcode = settings['showBarcode'] || false;
+
+    // Content settings
+    const header = settings['companyName'] || settings['receiptHeader'] || APP_CONFIG.appName;
+    const address = settings['companyAddress'] || settings['receiptAddress'] || APP_CONFIG.company.address;
+    const phone = settings['companyPhone'] || settings['receiptPhone'] || APP_CONFIG.company.supportPhone;
+    const email = settings['companyEmail'] || settings['receiptEmail'] || '';
+    const footer = settings['receiptFooter'] || 'Thank you for your business!';
+
+    // Developer Footer Logic
+    const devFooter = propDeveloperFooter || settings['developerFooter'] || 'Developed by Tap Lanka POS 0705083388';
+    const devFooterEnabled = propDeveloperFooterEnabled !== undefined
+        ? propDeveloperFooterEnabled
+        : (settings['developerFooterEnabled'] !== false);
 
     // Dynamic width based on receipt type
     const receiptWidth = receiptType === 'thermal'
@@ -152,7 +162,7 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
         ? (a4Orientation === 'portrait' ? 'min-h-[297mm]' : 'min-h-[210mm]')
         : '';
 
-    const printReceiptWidth = receiptType === 'thermal' ? 'print:w-[76mm]' : 'print:w-full';
+    const printReceiptWidth = receiptType === 'thermal' ? `print:w-[${thermalWidth}]` : 'print:w-full';
 
     return (
         <div id="receipt-modal" className="fixed inset-0 bg-black/80 flex items-center justify-center z-[200] print:bg-white print:static print:h-auto print:w-full print:flex print:items-start print:justify-center">
@@ -251,6 +261,11 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                         <div>{transaction.type === 'return' ? 'Refund' : 'Receipt'} #: {transaction.transaction_id}</div>
                         <div>Cashier: {user?.username}</div>
                         {customer && <div>Customer: {customer.name}</div>}
+                        {transaction.note && (
+                            <div className="mt-1 p-1 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 font-bold italic">
+                                Note: {transaction.note}
+                            </div>
+                        )}
                     </div>
 
                     <div className="border-b border-dashed border-gray-400 print:border-gray-500 my-4"></div>
@@ -378,7 +393,14 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
 
                     <div className={`border-b ${isCreative || isBold ? 'border-black print:border-black' : 'border-dashed border-gray-400 print:border-gray-500'} my-4`}></div>
 
-                    <p className="whitespace-pre-wrap text-xs">{footer}</p>
+                    <p className="whitespace-pre-wrap text-[10px] text-center mt-4 font-sans opacity-80">{footer}</p>
+
+                    {devFooterEnabled && (
+                        <p className="text-[8px] text-center mt-2 font-sans opacity-40 uppercase tracking-tighter">
+                            {devFooter}
+                        </p>
+                    )}
+                    <div className="h-8 print:block hidden"></div> {/* Extra space for thermal printers */}
 
                     {/* Refund Notice */}
                     {transaction.type === 'return' && (

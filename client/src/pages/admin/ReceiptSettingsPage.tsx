@@ -38,6 +38,8 @@ export const ReceiptSettingsPage = () => {
     const [enableWhatsAppShare, setEnableWhatsAppShare] = useState(true); // WhatsApp share button
     const [whatsappApiUrl, setWhatsappApiUrl] = useState('');
     const [whatsappApiKey, setWhatsappApiKey] = useState('');
+    const [developerFooter, setDeveloperFooter] = useState('Developed by Tap Lanka POS 0705083388');
+    const [developerFooterEnabled, setDeveloperFooterEnabled] = useState(true);
 
     useEffect(() => {
         loadSettings();
@@ -79,6 +81,8 @@ export const ReceiptSettingsPage = () => {
             if (settingsMap['enableWhatsAppShare'] !== undefined) setEnableWhatsAppShare(settingsMap['enableWhatsAppShare']);
             if (settingsMap['whatsappApiUrl']) setWhatsappApiUrl(settingsMap['whatsappApiUrl']);
             if (settingsMap['whatsappApiKey']) setWhatsappApiKey(settingsMap['whatsappApiKey']);
+            if (settingsMap['developerFooter']) setDeveloperFooter(settingsMap['developerFooter']);
+            if (settingsMap['developerFooterEnabled'] !== undefined) setDeveloperFooterEnabled(settingsMap['developerFooterEnabled']);
         };
         fetchSettings();
     }, [token]);
@@ -110,6 +114,8 @@ export const ReceiptSettingsPage = () => {
             await updateSetting('enableWhatsAppShare', enableWhatsAppShare);
             await updateSetting('whatsappApiUrl', whatsappApiUrl);
             await updateSetting('whatsappApiKey', whatsappApiKey);
+            await updateSetting('developerFooter', developerFooter);
+            await updateSetting('developerFooterEnabled', developerFooterEnabled);
 
             addToast('Receipt settings saved successfully!', 'success');
         } catch (error) {
@@ -120,13 +126,14 @@ export const ReceiptSettingsPage = () => {
         }
     };
 
-    const [activeTab, setActiveTab] = useState<'layout' | 'business' | 'appearance' | 'digital'>('layout');
+    const [activeTab, setActiveTab] = useState<'layout' | 'business' | 'appearance' | 'digital' | 'developer'>('layout');
 
     const tabs = [
         { id: 'layout', label: 'Layout & Size', icon: <Maximize2 size={18} /> },
         { id: 'business', label: 'Business Info', icon: <Printer size={18} /> },
         { id: 'appearance', label: 'Receipt Options', icon: <FileText size={18} /> },
         { id: 'digital', label: 'Digital & WhatsApp', icon: <MessageSquare size={18} /> },
+        ...(useAuthStore.getState().user?.role === 'admin' ? [{ id: 'developer', label: 'Super Admin', icon: <Maximize2 size={18} /> }] : [])
     ] as const;
 
     if (loading) {
@@ -203,7 +210,7 @@ export const ReceiptSettingsPage = () => {
                     {tabs.map(tab => (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
+                            onClick={() => setActiveTab(tab.id as any)}
                             className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === tab.id
                                 ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
                                 : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -497,6 +504,46 @@ export const ReceiptSettingsPage = () => {
                                     </div>
                                 </section>
                             )}
+
+                            {activeTab === 'developer' && (
+                                <section className="space-y-6 animate-fadeIn">
+                                    <div className="space-y-1">
+                                        <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white">Developer Settings</h2>
+                                        <p className="text-gray-500 dark:text-gray-400">Configure developer branding and features</p>
+                                    </div>
+
+                                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-6">
+                                        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/40 rounded-xl border border-gray-100 dark:border-gray-800">
+                                            <div>
+                                                <p className="font-bold text-gray-900 dark:text-white">Enable Developer Footer</p>
+                                                <p className="text-sm text-gray-500">Show developer credits at the bottom of receipts</p>
+                                            </div>
+                                            <label className="relative inline-flex items-center cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    className="sr-only peer"
+                                                    checked={developerFooterEnabled}
+                                                    onChange={(e) => setDeveloperFooterEnabled(e.target.checked)}
+                                                />
+                                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                                            </label>
+                                        </div>
+
+                                        {developerFooterEnabled && (
+                                            <div className="space-y-2 animate-fadeIn">
+                                                <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Developer Footer Text</label>
+                                                <input
+                                                    type="text"
+                                                    className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
+                                                    placeholder="Developed by..."
+                                                    value={developerFooter}
+                                                    onChange={(e) => setDeveloperFooter(e.target.value)}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                </section>
+                            )}
                         </div>
 
                         {/* PREVIEW COLUMN (Sticky) */}
@@ -630,10 +677,8 @@ export const ReceiptSettingsPage = () => {
                                             </div>
                                         )}
 
-                                        <div className="text-center space-y-1 mt-auto">
-                                            <div className="font-bold italic">{footer || 'Developed by Tap Lanka POS 0705083388'}</div>
-                                            <div className="text-[9px] opacity-50 uppercase tracking-widest">Powered by {APP_CONFIG.appName} - {APP_CONFIG.company.supportPhone}</div>
-
+                                        <div className="text-center mt-auto">
+                                            <div className="text-[9px] opacity-80">{footer || 'Developed by Tap Lanka POS 0705083388'}</div>
                                         </div>
                                     </div>
                                 </div>

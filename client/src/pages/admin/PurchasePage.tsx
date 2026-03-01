@@ -147,6 +147,10 @@ export const PurchasePage = () => {
                 retail_price: Number(item.retail_price)
             }));
 
+            const finalDate = date === new Date().toISOString().split('T')[0]
+                ? new Date().toISOString()
+                : date;
+
             const response = await fetch(getApiUrl('/purchases'), {
                 method: 'POST',
                 headers: {
@@ -159,7 +163,7 @@ export const PurchasePage = () => {
                     paid_amount: Number(paidAmount) || 0,
                     status: paymentStatus || 'PENDING',
                     payment_method: paymentStatus === 'due' ? undefined : paymentMethod,
-                    date: date || undefined,
+                    date: finalDate || undefined,
                     ref_number: refNo || undefined,
                     notes: notes || undefined,
                     shipping: Number(shipping) || 0,

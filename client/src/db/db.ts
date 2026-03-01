@@ -105,6 +105,7 @@ export interface Transaction {
         otherAmount?: number;
         notes?: string;
     };
+    note?: string;
 }
 
 export interface TransactionItem {

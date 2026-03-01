@@ -13,6 +13,8 @@ interface SettingsState {
     allowOverSelling: boolean;
     enableDailyRegister: boolean;
     enableCustomerCredit: boolean;
+    developerFooter: string;
+    developerFooterEnabled: boolean;
     toastEnabled: boolean;
     currencySymbol: string;
     currencyCode: string;
@@ -34,6 +36,8 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     allowOverSelling: false,
     enableDailyRegister: false, // Default false: Users must opt-in to shift tracking
     enableCustomerCredit: true, // Default true as per user request
+    developerFooter: 'Developed by Tap Lanka POS 0705083388',
+    developerFooterEnabled: true,
     toastEnabled: true,
     currencySymbol: 'Rs.',
     currencyCode: 'LKR',
@@ -75,7 +79,9 @@ export const useSettingsStore = create<SettingsState>((set) => ({
                 currencyCode: settingsMap.currencyCode ?? 'LKR',
                 locale: settingsMap.locale ?? 'en-US',
                 timeZone: settingsMap.timeZone ?? systemTimeZone,
-                enableCustomerCredit: settingsMap.enableCustomerCredit ?? true
+                enableCustomerCredit: settingsMap.enableCustomerCredit ?? true,
+                developerFooter: settingsMap.developerFooter ?? 'Developed by Tap Lanka POS 0705083388',
+                developerFooterEnabled: settingsMap.developerFooterEnabled ?? true
             });
             set({ loading: false });
         } catch (error) {
@@ -115,6 +121,8 @@ export const useSettingsStore = create<SettingsState>((set) => ({
             if (key === 'locale') set({ locale: value });
             if (key === 'timeZone') set({ timeZone: value });
             if (key === 'enableCustomerCredit') set({ enableCustomerCredit: value });
+            if (key === 'developerFooter') set({ developerFooter: value });
+            if (key === 'developerFooterEnabled') set({ developerFooterEnabled: value });
         } catch (error) {
             console.error('Failed to update setting:', error);
             throw error;

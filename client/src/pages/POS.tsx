@@ -32,7 +32,7 @@ export const POS = () => {
     const { items, addItem, removeItem, updateQuantity, subtotal, total, tax, discount, roundOffDiscount, pointsRedeemed, manualDiscountMode, manualDiscountValue, toggleRedeemPoints, clearCart, customer, setCustomer, setManualDiscount, updateItem } = useCartStore();
     const { user, token } = useAuthStore();
     const { addToast } = useToast();
-    const { taxRate, taxEnabled, loyaltyEnabled, loyaltyEarnRate, loadSettings, updateSetting, allowOverSelling, enableDailyRegister, enableCustomerCredit } = useSettingsStore();
+    const { taxRate, taxEnabled, loyaltyEnabled, loyaltyEarnRate, loadSettings, updateSetting, allowOverSelling, enableDailyRegister, enableCustomerCredit, developerFooter, developerFooterEnabled } = useSettingsStore();
     const { currencySymbol, formatCurrency } = useCurrency();
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -57,6 +57,8 @@ export const POS = () => {
     const [showHeldSalesList, setShowHeldSalesList] = useState(false);
     const [showSplitPaymentModal, setShowSplitPaymentModal] = useState(false);
     const [showDiscountModal, setShowDiscountModal] = useState(false);
+    const [checkoutNote, setCheckoutNote] = useState('');
+    const [showCheckoutNote, setShowCheckoutNote] = useState(false);
 
     // Price/Qty/Note Edit State
     const [editingItem, setEditingItem] = useState<CartItem | null>(null);
@@ -524,8 +526,10 @@ export const POS = () => {
                         product_id: item.product_id,
                         quantity: item.quantity,
                         unit_price: item.retail_price,
-                        batch_id: item.batch_id
+                        batch_id: item.batch_id,
+                        note: item.note
                     })),
+                    note: checkoutNote,
                     totals: {
                         subtotal,
                         tax,
@@ -562,18 +566,22 @@ export const POS = () => {
                 payment_details: paymentDetails ? {
                     cashAmount: paymentDetails.cash,
                     cardAmount: paymentDetails.card
-                } : undefined
+                } : undefined,
+                note: sale.note || checkoutNote
             });
 
-            setLastItems((sale.items || []).map((item: any) => ({
-                transaction_id: sale.id,
-                product_id: item.productId,
-                quantity: item.quantity,
-                price_at_sale: Number(item.price || 0),
-                note: '',
-                isOverSale: item.isOverSale || false,
-                name: productMap.get(item.productId)?.name || 'Unknown Product'
-            })));
+            setLastItems((sale.items || []).map((item: any) => {
+                const cartItem = items.find(i => String(i.product_id) === String(item.productId) && i.batch_id === item.batchId);
+                return {
+                    transaction_id: sale.id,
+                    product_id: item.productId,
+                    quantity: item.quantity,
+                    price_at_sale: Number(item.price || 0),
+                    note: item.note || cartItem?.note || '',
+                    isOverSale: item.isOverSale || false,
+                    name: productMap.get(item.productId)?.name || 'Unknown Product'
+                };
+            }));
 
             // Staff-only notification if any over-sold items
             const overSoldItems = (sale.items || []).filter((item: any) => item.isOverSale);
@@ -623,6 +631,7 @@ export const POS = () => {
             // Clear cart, customer, and local stock caches immediately after successful payment
             clearCart();
             setCustomer(null);
+            setCheckoutNote('');
             setBatchRemainingByKey({}); // Fix: Force batch stock fetch logic to pull fresh DB values on next scan
             setProductBatches({}); // Clear old cache format just in case
             addToast("Payment successful!", 'success');
@@ -981,7 +990,6 @@ export const POS = () => {
                                             {remainingLabel}
                                         </div>
                                     </div>
-                                    <div className="font-bold text-gray-900 dark:text-white">{formatCurrency(item.retail_price * item.quantity)}</div>
                                 </div>
 
                                 {item.note && (
@@ -1101,7 +1109,7 @@ export const POS = () => {
                     </div>
 
                     {/* Total Discount Row (NEW) */}
-                    <div className="mb-4">
+                    <div className="mb-4 space-y-2">
                         <button
                             onClick={() => setShowDiscountModal(true)}
                             className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-600 group"
@@ -1117,6 +1125,42 @@ export const POS = () => {
                             </div>
                             <Plus size={18} className="text-gray-400 group-hover:text-blue-500" />
                         </button>
+
+                        <button
+                            onClick={() => setShowCheckoutNote(prev => !prev)}
+                            className={`w-full flex items-center justify-between p-3 rounded-xl transition-colors border group ${checkoutNote || showCheckoutNote
+                                ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+                                : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                }`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className={`p-2 rounded-lg transition-transform group-hover:scale-110 ${checkoutNote || showCheckoutNote
+                                    ? 'bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-300'
+                                    : 'bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400'
+                                    }`}>
+                                    <StickyNote size={18} />
+                                </div>
+                                <div className="text-left">
+                                    <p className="text-sm font-bold text-gray-900 dark:text-white">Add Checkout Note</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        {checkoutNote ? `Note: ${checkoutNote.slice(0, 30)}${checkoutNote.length > 30 ? '...' : ''}` : 'Special instructions for this bill'}
+                                    </p>
+                                </div>
+                            </div>
+                            <Plus size={18} className={`${showCheckoutNote ? 'rotate-45' : ''} transition-transform text-gray-400 group-hover:text-blue-500`} />
+                        </button>
+
+                        {showCheckoutNote && (
+                            <div className="animate-in slide-in-from-top-2 duration-200">
+                                <textarea
+                                    value={checkoutNote}
+                                    onChange={(e) => setCheckoutNote(e.target.value)}
+                                    placeholder="Enter checkout note here..."
+                                    className="w-full bg-white dark:bg-gray-900 border border-blue-200 dark:border-blue-800 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none min-h-[80px]"
+                                    autoFocus
+                                />
+                            </div>
+                        )}
                     </div>
 
                     {/* Action Buttons */}
@@ -1223,6 +1267,8 @@ export const POS = () => {
                     customer={customer}
                     user={user}
                     onClose={handleReceiptClose}
+                    developerFooter={developerFooter}
+                    developerFooterEnabled={developerFooterEnabled}
                 />
             )}
 

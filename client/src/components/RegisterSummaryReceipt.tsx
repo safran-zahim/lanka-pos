@@ -68,6 +68,9 @@ export const RegisterSummaryReceipt = ({ shiftData, countedCash, variance, close
     const header = settings['companyName'] || settings['receiptHeader'] || APP_CONFIG.company.name;
     const address = settings['companyAddress'] || settings['receiptAddress'] || APP_CONFIG.company.address;
     const phone = settings['companyPhone'] || settings['receiptPhone'] || APP_CONFIG.company.supportPhone;
+    const footer = settings['receiptFooter'] || 'Thank you for your business!';
+    const devFooter = settings['developerFooter'] || 'Developed by Tap Lanka POS 0705083388';
+    const devFooterEnabled = settings['developerFooterEnabled'] !== false;
 
     const receiptType = settings['receiptType'] || 'thermal';
     const thermalWidth = settings['thermalWidth'] || '80mm';
@@ -196,11 +199,17 @@ export const RegisterSummaryReceipt = ({ shiftData, countedCash, variance, close
                     )}
                 </div>
 
-                <div className="text-center text-[10px] text-gray-500 mt-8 mb-4">
+                <div className="text-center text-[10px] text-gray-500 mt-8 mb-2 font-sans opacity-80">
                     <div className="mt-2 pt-2 border-t border-dashed border-gray-300">
-                        Powered by {APP_CONFIG.appName}
+                        {footer}
                     </div>
                 </div>
+
+                {devFooterEnabled && (
+                    <div className="text-[8px] text-center font-sans opacity-40 uppercase tracking-tighter mb-4">
+                        {devFooter}
+                    </div>
+                )}
             </div>
 
             <style>{`
