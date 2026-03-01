@@ -262,7 +262,7 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                         <div>Cashier: {user?.username}</div>
                         {customer && <div>Customer: {customer.name}</div>}
                         {transaction.note && (
-                            <div className="mt-1 p-1 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 font-bold italic">
+                            <div className="mt-1 p-1 rounded border border-gray-200 dark:border-gray-700 font-bold italic">
                                 Note: {transaction.note}
                             </div>
                         )}
@@ -296,7 +296,7 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
 
                     <div className={`border-b ${isCreative || isBold ? 'border-black print:border-black' : 'border-dashed border-gray-400 print:border-gray-500'} my-4`}></div>
 
-                    <div className={`space-y-1 text-xs ${(isModern || isElegant || isBold) ? 'bg-gray-50 p-4 rounded-lg border border-gray-200' : ''}`}>
+                    <div className={`space-y-1 text-xs ${(isModern || isElegant || isBold) ? 'p-4 rounded-lg border border-gray-200' : ''}`}>
                         <div className="flex justify-between">
                             <span>Items Total</span>
                             <span>{formatCurrency(items.reduce((sum, item) => sum + (item.price_at_sale * item.quantity), 0))}</span>
