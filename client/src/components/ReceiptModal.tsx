@@ -145,16 +145,18 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
 
     // Dynamic width based on receipt type
     const receiptWidth = receiptType === 'thermal'
-        ? (thermalWidth === '58mm' ? 'w-64' : 'w-96')
+        ? (thermalWidth === '58mm' ? 'w-64' : (thermalWidth === '76mm' ? 'w-[76mm]' : 'w-96'))
         : (a4Orientation === 'portrait' ? 'w-[210mm]' : 'w-[297mm]');
 
     const receiptHeight = receiptType === 'a4'
         ? (a4Orientation === 'portrait' ? 'min-h-[297mm]' : 'min-h-[210mm]')
         : '';
 
+    const printReceiptWidth = receiptType === 'thermal' ? 'print:w-[76mm]' : 'print:w-full';
+
     return (
-        <div id="receipt-modal" className="fixed inset-0 bg-black/80 flex items-center justify-center z-[200] print:bg-white print:static print:h-auto print:w-auto">
-            <div className={`bg-white text-black p-8 rounded-lg ${receiptWidth} ${receiptHeight} max-h-[90vh] overflow-y-auto print:w-full print:shadow-none print:p-0 print:max-h-none`}>
+        <div id="receipt-modal" className="fixed inset-0 bg-black/80 flex items-center justify-center z-[200] print:bg-white print:static print:h-auto print:w-full print:flex print:items-start print:justify-center">
+            <div className={`bg-white text-black p-8 rounded-lg ${receiptWidth} ${receiptHeight} max-h-[90vh] overflow-y-auto ${printReceiptWidth} print:shadow-none print:p-0 print:max-h-none print:mx-auto print:mt-0`}>
 
                 {/* Actions (Hidden on Print) */}
                 <div className="flex justify-between items-center mb-6 print:hidden">
@@ -174,14 +176,14 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                 )}
 
                 {/* Receipt Content */}
-                <div className={`text-sm space-y-2 ${isModern || isElegant || isBold ? 'font-sans' : 'font-mono'} ${isThermalCompact ? 'text-xs' : ''} ${isCreative ? 'border-2 border-black p-5 rounded-lg' : ''} ${isElegant ? 'border border-gray-200 rounded-2xl p-5' : ''} ${isBold ? 'border-2 border-black rounded-xl p-5' : ''}`}>
+                <div className={`text-sm space-y-2 print:border-box ${isModern || isElegant || isBold ? 'font-sans' : 'font-mono'} ${isThermalCompact ? 'text-xs' : ''} ${isCreative ? 'border-2 border-black print:border-black p-5 rounded-lg' : ''} ${isElegant ? 'border border-gray-200 print:border-gray-300 rounded-2xl p-5' : ''} ${isBold ? 'border-2 border-black print:border-black rounded-xl p-5' : ''}`}>
                     {(isModern || isBold) ? (
                         <div className="bg-blue-600 text-white rounded-xl p-4 flex items-center justify-between">
                             <div>
                                 <h1 className="text-xl font-bold">{header}</h1>
-                                <p className="text-[11px] opacity-90">{address}</p>
-                                {phone && <p className="text-[11px] opacity-90">Tel: {phone}</p>}
-                                {email && <p className="text-[11px] opacity-90">Email: {email}</p>}
+                                <p className="text-xs opacity-90">{address}</p>
+                                {phone && <p className="text-xs opacity-90">Tel: {phone}</p>}
+                                {email && <p className="text-xs opacity-90">Email: {email}</p>}
                             </div>
                             {showLogo && (
                                 logoUrl ? (
@@ -196,9 +198,9 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                             <div className="flex items-center justify-between">
                                 <div>
                                     <h1 className="text-xl font-bold tracking-wide">{header}</h1>
-                                    <p className="text-[11px] opacity-90">{address}</p>
-                                    {phone && <p className="text-[11px] opacity-90">Tel: {phone}</p>}
-                                    {email && <p className="text-[11px] opacity-90">Email: {email}</p>}
+                                    <p className="text-xs opacity-90">{address}</p>
+                                    {phone && <p className="text-xs opacity-90">Tel: {phone}</p>}
+                                    {email && <p className="text-xs opacity-90">Email: {email}</p>}
                                 </div>
                                 {showLogo && (
                                     logoUrl ? (
@@ -240,7 +242,7 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                         </div>
                     )}
 
-                    <div className={`border-b ${(isCreative || isBold) ? 'border-black' : 'border-dashed border-gray-400'} my-4`}></div>
+                    <div className={`border-b ${isCreative || isBold ? 'border-black print:border-black' : 'border-dashed border-gray-400 print:border-gray-500'} my-4`}></div>
 
                     <div className="text-left text-xs space-y-1">
                         <div className="flex justify-between">
@@ -251,7 +253,7 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                         {customer && <div>Customer: {customer.name}</div>}
                     </div>
 
-                    <div className="border-b border-dashed border-gray-400 my-4"></div>
+                    <div className="border-b border-dashed border-gray-400 print:border-gray-500 my-4"></div>
 
                     <table className={`w-full text-left ${isThermalCompact ? 'text-[10px]' : 'text-xs'}`}>
                         <thead>
@@ -277,7 +279,7 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                         </tbody>
                     </table>
 
-                    <div className={`border-b ${(isCreative || isBold) ? 'border-black' : 'border-dashed border-gray-400'} my-4`}></div>
+                    <div className={`border-b ${isCreative || isBold ? 'border-black print:border-black' : 'border-dashed border-gray-400 print:border-gray-500'} my-4`}></div>
 
                     <div className={`space-y-1 text-xs ${(isModern || isElegant || isBold) ? 'bg-gray-50 p-4 rounded-lg border border-gray-200' : ''}`}>
                         <div className="flex justify-between">
@@ -300,19 +302,19 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                                 <span>{formatCurrency(transaction.tax_amount)}</span>
                             </div>
                         )}
-                        {roundOffEnabled && transaction.round_off_discount && transaction.round_off_discount > 0 && (
+                        {roundOffEnabled && (transaction.round_off_discount ?? 0) > 0 && (
                             <div className="flex justify-between text-green-700">
                                 <span>Round Off</span>
-                                <span>-{formatCurrency(transaction.round_off_discount)}</span>
+                                <span>-{formatCurrency(transaction.round_off_discount!)}</span>
                             </div>
                         )}
-                        <div className={`flex justify-between font-bold text-base mt-2 pt-2 border-t border-gray-300 ${transaction.type === 'return' ? 'text-red-600' : ''}`}>
+                        <div className={`flex justify-between font-bold text-sm mt-2 pt-2 border-t border-gray-300 ${transaction.type === 'return' ? 'text-red-600' : ''}`}>
                             <span>{transaction.type === 'return' ? 'REFUND TOTAL' : 'TOTAL'}</span>
                             <span>{formatCurrency(Number(transaction.total_amount || 0))}</span>
                         </div>
                     </div>
 
-                    <div className={`border-b ${(isCreative || isBold) ? 'border-black' : 'border-dashed border-gray-400'} my-4`}></div>
+                    <div className={`border-b ${isCreative || isBold ? 'border-black print:border-black' : 'border-dashed border-gray-400 print:border-gray-500'} my-4`}></div>
 
                     <div className="text-xs">
                         <div className="flex justify-between mb-1">
@@ -336,12 +338,12 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                                 <p className="text-[10px] font-bold uppercase tracking-wider">
                                     {transaction.type === 'return' ? 'Debt Reduction' : 'On Account (Credit)'}
                                 </p>
-                                <div className="flex justify-between mt-1 text-[11px]">
+                                <div className="flex justify-between mt-1 text-xs">
                                     <span>{transaction.type === 'return' ? 'Amount Deduced:' : 'Current Charge:'}</span>
                                     <span className="font-semibold">{formatCurrency(Math.abs(Number(transaction.total_amount || 0)))}</span>
                                 </div>
                                 {customer && (
-                                    <div className="flex justify-between border-t border-black mt-1 pt-1 text-[11px] font-medium">
+                                    <div className="flex justify-between border-t border-black mt-1 pt-1 text-xs font-medium">
                                         <span>Outstanding Balance:</span>
                                         <span>{formatCurrency(Number(customer.total_due || 0))}</span>
                                     </div>
@@ -364,7 +366,7 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
 
                     {showBarcode && (
                         <>
-                            <div className={`border-b ${(isCreative || isBold) ? 'border-black' : 'border-dashed border-gray-400'} my-4`}></div>
+                            <div className={`border-b ${isCreative || isBold ? 'border-black print:border-black' : 'border-dashed border-gray-400 print:border-gray-500'} my-4`}></div>
                             <div className="flex justify-center my-3">
                                 <div className="bg-gray-800 h-12 w-40 flex items-center justify-center">
                                     <span className="text-white text-xs font-bold tracking-widest">|||||||||||</span>
@@ -374,7 +376,7 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                         </>
                     )}
 
-                    <div className={`border-b ${(isCreative || isBold) ? 'border-black' : 'border-dashed border-gray-400'} my-4`}></div>
+                    <div className={`border-b ${isCreative || isBold ? 'border-black print:border-black' : 'border-dashed border-gray-400 print:border-gray-500'} my-4`}></div>
 
                     <p className="whitespace-pre-wrap text-xs">{footer}</p>
 
@@ -439,9 +441,9 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                     @page {
                         size: ${receiptType === 'a4'
                     ? (a4Orientation === 'portrait' ? 'A4 portrait' : 'A4 landscape')
-                    : (thermalWidth === '58mm' ? '58mm auto' : '80mm auto')
+                    : (thermalWidth === '76mm' ? '76mm auto' : (thermalWidth === '58mm' ? '58mm auto' : '80mm auto'))
                 };
-                        margin: ${receiptType === 'a4' ? '10mm' : '0'};
+                        margin: ${receiptType === 'a4' ? '10mm' : '2px'};
                     }
                     body {
                         print-color-adjust: exact;

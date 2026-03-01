@@ -18,7 +18,7 @@ export const ReceiptSettingsPage = () => {
     // Receipt Type & Size Settings
     const [receiptType, setReceiptType] = useState<'thermal' | 'a4'>('thermal');
     const [receiptTemplate, setReceiptTemplate] = useState('thermal-classic');
-    const [thermalWidth, setThermalWidth] = useState<'58mm' | '80mm'>('80mm');
+    const [thermalWidth, setThermalWidth] = useState<'58mm' | '76mm' | '80mm'>('80mm');
     const [a4Orientation, setA4Orientation] = useState<'portrait' | 'landscape'>('portrait');
 
     // Receipt Content Settings
@@ -141,7 +141,7 @@ export const ReceiptSettingsPage = () => {
     }
 
     const previewWidth = receiptType === 'thermal'
-        ? (thermalWidth === '58mm' ? 'w-64' : 'w-80')
+        ? (thermalWidth === '58mm' ? 'w-64' : (thermalWidth === '76mm' ? 'w-[76mm]' : 'w-80'))
         : (a4Orientation === 'portrait' ? 'w-96' : 'w-[500px]');
 
     const thermalTemplates = [
@@ -269,10 +269,11 @@ export const ReceiptSettingsPage = () => {
                                                 <select
                                                     className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
                                                     value={thermalWidth}
-                                                    onChange={(e) => setThermalWidth(e.target.value as '58mm' | '80mm')}
+                                                    onChange={(e) => setThermalWidth(e.target.value as '58mm' | '76mm' | '80mm')}
                                                 >
                                                     <option value="58mm">58mm (Narrow / Compact)</option>
-                                                    <option value="80mm">80mm (Standard POS)</option>
+                                                    <option value="76mm">76mm (Standard Thermal)</option>
+                                                    <option value="80mm">80mm (Wide POS)</option>
                                                 </select>
                                             </div>
                                         )}
