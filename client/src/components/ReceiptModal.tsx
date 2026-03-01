@@ -156,7 +156,7 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
 
     return (
         <div id="receipt-modal" className="fixed inset-0 bg-black/80 flex items-center justify-center z-[200] print:bg-white print:static print:h-auto print:w-full print:flex print:items-start print:justify-center">
-            <div className={`bg-white text-black p-8 rounded-lg ${receiptWidth} ${receiptHeight} max-h-[90vh] overflow-y-auto ${printReceiptWidth} print:shadow-none print:p-0 print:max-h-none print:mx-auto print:mt-0`}>
+            <div className={`bg-white text-black p-8 rounded-lg ${receiptWidth} ${receiptHeight} max-h-[90vh] overflow-y-auto ${printReceiptWidth} print:shadow-none print:p-0 print:pt-0 print:pb-12 print:max-h-none print:mx-auto print:mt-0`}>
 
                 {/* Actions (Hidden on Print) */}
                 <div className="flex justify-between items-center mb-6 print:hidden">
