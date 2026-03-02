@@ -1,21 +1,24 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, CreditCard, Banknote, DollarSign } from 'lucide-react';
+import { X, CreditCard, Banknote, DollarSign, Users } from 'lucide-react';
 import { useCurrency } from '../hooks/useCurrency';
 
 interface PaymentModalProps {
     total: number;
-    onConfirm: (method: 'cash' | 'card', receivedAmount: number) => void;
+    enableCustomerCredit?: boolean;
+    hasCustomer?: boolean;
+    onConfirm: (method: 'cash' | 'card' | 'credit', receivedAmount: number) => void;
     onClose: () => void;
 }
 
-export const PaymentModal: React.FC<PaymentModalProps> = ({ total, onConfirm, onClose }) => {
+export const PaymentModal: React.FC<PaymentModalProps> = ({ total, enableCustomerCredit, hasCustomer, onConfirm, onClose }) => {
     const { formatCurrency, currencySymbol } = useCurrency();
-    const [method, setMethod] = useState<'cash' | 'card'>('cash');
+    const [method, setMethod] = useState<'cash' | 'card' | 'credit'>('cash');
     const [receivedAmountStr, setReceivedAmountStr] = useState<string>('');
 
     // Pre-fill received amount if switching to Card, as card usually is exact amount
+    // Pre-fill received amount if switching to Card or Credit, as they are typically exact amounts
     useEffect(() => {
-        if (method === 'card') {
+        if (method === 'card' || method === 'credit') {
             setReceivedAmountStr(total.toFixed(2));
         } else {
             setReceivedAmountStr(''); // Reset for cash to force entry
@@ -79,29 +82,44 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, onConfirm, on
                     </div>
 
                     {/* Payment Method Selector */}
-                    <div className="grid grid-cols-2 gap-3 mb-6">
+                    <div className={`grid gap-3 mb-6 ${enableCustomerCredit ? 'grid-cols-3' : 'grid-cols-2'}`}>
                         <button
                             type="button"
                             onClick={() => setMethod('cash')}
-                            className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all font-semibold ${method === 'cash'
-                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
-                                    : 'border-gray-200 dark:border-gray-700 text-gray-500 hover:border-blue-300 dark:hover:border-blue-800'
+                            className={`flex flex-col items-center justify-center gap-1 p-3 rounded-xl border-2 transition-all font-semibold ${method === 'cash'
+                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                                : 'border-gray-200 dark:border-gray-700 text-gray-500 hover:border-blue-300 dark:hover:border-blue-800'
                                 }`}
                         >
                             <Banknote size={20} />
-                            Cash
+                            <span>Cash</span>
                         </button>
                         <button
                             type="button"
                             onClick={() => setMethod('card')}
-                            className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all font-semibold ${method === 'card'
-                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
-                                    : 'border-gray-200 dark:border-gray-700 text-gray-500 hover:border-blue-300 dark:hover:border-blue-800'
+                            className={`flex flex-col items-center justify-center gap-1 p-3 rounded-xl border-2 transition-all font-semibold ${method === 'card'
+                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                                : 'border-gray-200 dark:border-gray-700 text-gray-500 hover:border-blue-300 dark:hover:border-blue-800'
                                 }`}
                         >
                             <CreditCard size={20} />
-                            Card
+                            <span>Card</span>
                         </button>
+                        {enableCustomerCredit && (
+                            <button
+                                type="button"
+                                onClick={() => setMethod('credit')}
+                                disabled={!hasCustomer}
+                                className={`flex flex-col items-center justify-center gap-1 p-3 rounded-xl border-2 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed ${method === 'credit'
+                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                                    : 'border-gray-200 dark:border-gray-700 text-gray-500 hover:border-blue-300 dark:hover:border-blue-800'
+                                    }`}
+                                title={!hasCustomer ? "Select a customer first to use Credit" : "Pay on Credit"}
+                            >
+                                <Users size={20} />
+                                <span>Credit</span>
+                            </button>
+                        )}
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-5">

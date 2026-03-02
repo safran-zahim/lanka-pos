@@ -15,7 +15,7 @@ interface RegisterSummaryReceiptProps {
 
 export const RegisterSummaryReceipt = ({ shiftData, countedCash, variance, closeNote, onClose }: RegisterSummaryReceiptProps) => {
     const { formatCurrency } = useCurrency();
-    const { formatDateTime } = useLocale();
+    const { formatDate, formatTime } = useLocale();
     const token = useAuthStore((state) => state.token);
     const [settings, setSettings] = useState<Record<string, any>>({});
     const [loadingSettings, setLoadingSettings] = useState(true);
@@ -167,17 +167,17 @@ export const RegisterSummaryReceipt = ({ shiftData, countedCash, variance, close
                 <div className="mb-4 space-y-1 text-xs">
                     <div className="flex justify-between">
                         <span className="text-gray-600">Opened:</span>
-                        <span>{formatDateTime(new Date(shiftData.startTime))}</span>
+                        <span>{formatDate(new Date(shiftData.startTime))} {formatTime(new Date(shiftData.startTime))}</span>
                     </div>
                     {shiftData.endTime && (
                         <div className="flex justify-between">
                             <span className="text-gray-600">Closed:</span>
-                            <span>{formatDateTime(new Date(shiftData.endTime))}</span>
+                            <span>{formatDate(new Date(shiftData.endTime))} {formatTime(new Date(shiftData.endTime))}</span>
                         </div>
                     )}
                     <div className="flex justify-between">
                         <span className="text-gray-600">Printed:</span>
-                        <span>{formatDateTime(new Date())}</span>
+                        <span>{formatDate(new Date())} {formatTime(new Date())}</span>
                     </div>
                 </div>
 

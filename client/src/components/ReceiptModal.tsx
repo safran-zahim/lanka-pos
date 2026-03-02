@@ -11,7 +11,7 @@ import { APP_CONFIG } from '../config/appConfig';
 
 interface ReceiptModalProps {
     transaction: Transaction;
-    items: (TransactionItem & { name: string })[];
+    items: (TransactionItem & { name: string; description?: string; image?: string })[];
     customer?: Customer | null;
     user?: User | null;
     autoPrint?: boolean;
@@ -23,7 +23,7 @@ interface ReceiptModalProps {
 export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, onClose, developerFooter: propDeveloperFooter, developerFooterEnabled: propDeveloperFooterEnabled }: ReceiptModalProps) => {
     const { sendReceipt, sending } = useDigitalReceipt();
     const { currencySymbol, formatCurrency } = useCurrency();
-    const { formatDateTime } = useLocale();
+    const { formatDate, formatTime, formatDateTime } = useLocale();
     const token = useAuthStore((state) => state.token);
     const [settings, setSettings] = useState<Record<string, any>>({});
     const [loadingSettings, setLoadingSettings] = useState(true);
@@ -256,8 +256,8 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
 
                     {/* Meta Information (Date, Time, Receipt #) */}
                     <div className="grid grid-cols-2 gap-2 mb-4 opacity-80 text-xs">
-                        <div>Date: {formatDateTime(new Date(transaction.timestamp)).split(',')[0]}</div>
-                        <div className="text-right">Time: {formatDateTime(new Date(transaction.timestamp)).split(',')[1]?.trim() || ''}</div>
+                        <div>Date: {formatDate(new Date(transaction.timestamp))}</div>
+                        <div className="text-right">Time: {formatTime(new Date(transaction.timestamp))}</div>
                         <div>{transaction.type === 'return' ? 'Refund #: ' : 'Receipt: #'}R-{transaction.transaction_id}</div>
                         <div className="text-right font-bold">Cashier: {user?.username || 'Admin'}</div>
                     </div>
@@ -266,26 +266,29 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                     )}
                     {transaction.note && (
                         <div className="mb-4 text-xs p-1 rounded border border-gray-200 dark:border-gray-700 font-bold italic">
-                            Note: {transaction.note}
+                            {transaction.note}
                         </div>
                     )}
 
                     <div className={`border-b ${isCreative || isBold ? 'border-black print:border-black' : 'border-black print:border-black'} my-4`}></div>
 
                     {/* Items List - Flex Layout Matching Live Preview */}
-                    <div className={`space-y-3 mb-6 ${isThermalCompact ? 'text-[10px]' : 'text-xs'}`}>
+                    <div className={`space-y-4 mb-6 ${isThermalCompact ? 'text-[10px]' : 'text-xs'}`}>
                         {items.map((item, idx) => (
-                            <div key={idx} className="flex justify-between">
+                            <div key={idx} className="flex gap-2">
                                 <div className="flex-1 pr-2">
                                     <div className="font-bold">{item.name}</div>
+                                    {item.description && (
+                                        <div className="text-[10px] opacity-70 mb-0.5 line-clamp-2">{item.description}</div>
+                                    )}
                                     <div className="opacity-70">
                                         {item.quantity} x {formatCurrency(item.price_at_sale)}
                                     </div>
                                     {item.note && (
-                                        <div className="text-[10px] opacity-60 mt-0.5">Note: {item.note}</div>
+                                        <div className="text-[10px] opacity-60 mt-0.5 italic">{item.note}</div>
                                     )}
                                 </div>
-                                <div className="font-bold">
+                                <div className="font-bold flex-shrink-0">
                                     {formatCurrency(item.price_at_sale * item.quantity)}
                                 </div>
                             </div>
@@ -296,16 +299,19 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
 
                     {/* Totals Section */}
                     <div className={`space-y-1.5 text-right mb-6 text-xs ${(isModern || isElegant || isBold) ? 'bg-gray-50 rounded-xl p-4 border border-gray-200 print:border-gray-300' : ''}`}>
-                        <div className="flex justify-between opacity-80">
-                            <span>Items Total</span>
-                            <span>{formatCurrency(items.reduce((sum, item) => sum + (item.price_at_sale * item.quantity), 0))}</span>
-                        </div>
-                        {(transaction.discount ?? 0) > 0 && (
-                            <div className="flex justify-between text-green-700 font-medium">
-                                <span>Discount</span>
-                                <span>-{formatCurrency(transaction.discount!)}</span>
-                            </div>
-                        )}
+                        {/* Only show "Items Total" if there is a discount line under it to show the math clearly. Otherwise just show Subtotal. */}
+                        {(transaction.discount ?? 0) > 0 ? (
+                            <>
+                                <div className="flex justify-between opacity-80">
+                                    <span>Items Total</span>
+                                    <span>{formatCurrency(items.reduce((sum, item) => sum + (item.price_at_sale * item.quantity), 0))}</span>
+                                </div>
+                                <div className="flex justify-between text-green-700 font-medium">
+                                    <span>Discount</span>
+                                    <span>-{formatCurrency(transaction.discount!)}</span>
+                                </div>
+                            </>
+                        ) : null}
                         <div className="flex justify-between opacity-80 font-semibold">
                             <span>Subtotal</span>
                             <span>{formatCurrency(items.reduce((sum, item) => sum + (Number(item.price_at_sale) * Number(item.quantity)), 0) - (Number(transaction.discount || 0)))}</span>
@@ -322,9 +328,9 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                                 <span>-{formatCurrency(transaction.round_off_discount!)}</span>
                             </div>
                         )}
-                        <div className={`flex justify-between text-base font-black pt-1.5 mt-1 border-t border-black/10 ${transaction.type === 'return' ? 'text-red-600' : ''}`}>
-                            <span>{transaction.type === 'return' ? 'REFUND TOTAL' : 'TOTAL'}</span>
-                            <span>{formatCurrency(Number(transaction.total_amount || 0))}</span>
+                        <div className={`flex justify-between items-center text-base font-black pt-1.5 mt-1 border-t border-black/10 ${transaction.type === 'return' ? 'text-red-600' : ''}`}>
+                            <span className="whitespace-nowrap">{transaction.type === 'return' ? 'REFUND TOTAL' : 'TOTAL'}</span>
+                            <span className="whitespace-nowrap">{formatCurrency(transaction.type === 'return' ? Math.abs(Number(transaction.total_amount || 0)) : Number(transaction.total_amount || 0))}</span>
                         </div>
                     </div>
 
@@ -409,13 +415,6 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                             )}
                         </div>
                     )}
-
-                    {receiptType === 'a4' && (
-                        <div className="mt-8 text-xs text-gray-500">
-                            <p>Powered by {APP_CONFIG.appName} - {APP_CONFIG.company.supportPhone}</p>
-                            <p>{new Date().toLocaleString()}</p>
-                        </div>
-                    )}
                 </div>
 
                 {/* Print & Digital Actions */}
@@ -467,6 +466,6 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                     }
                 }
             `}</style>
-        </div>
+        </div >
     );
 };
