@@ -5,7 +5,7 @@ import {
     ShoppingCart, X, Check, Save, Clock, ArrowLeft, ArrowRight,
     PauseCircle, LayoutDashboard, History, Menu, Award, Users,
     AlertCircle, RotateCcw, UserPlus, StickyNote, Edit2, Percent,
-    CreditCard as CardIcon, Wallet, DollarSign
+    CreditCard as CardIcon, Wallet, DollarSign, Printer
 } from 'lucide-react';
 import { useCartStore, type CartItem } from '../store/useCartStore';
 import { useAuthStore } from '../store/useAuthStore';
@@ -15,7 +15,7 @@ import { CustomerModal } from '../components/admin/CustomerModal';
 import { ReceiptModal } from '../components/ReceiptModal';
 import { HoldSaleModal } from '../components/HoldSaleModal';
 import { HeldSalesList } from '../components/HeldSalesList';
-import { SplitPaymentModal } from '../components/SplitPaymentModal';
+import { UnifiedCheckoutModal } from '../components/UnifiedCheckoutModal';
 import { DiscountModal } from '../components/DiscountModal';
 import { EditCartItemModal } from '../components/EditCartItemModal';
 import { EditTaxModal } from '../components/EditTaxModal';
@@ -24,7 +24,6 @@ import { SelectBatchModal } from '../components/SelectBatchModal';
 import { RegisterManager } from '../components/RegisterManager';
 import { ActiveRegisterModal } from '../components/ActiveRegisterModal';
 import { POSCashModal } from '../components/POSCashModal';
-import { PaymentModal } from '../components/PaymentModal';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useCurrency } from '../hooks/useCurrency';
 import { getApiUrl } from '../config/api';
@@ -56,8 +55,7 @@ export const POS = () => {
     // Hold Sale State
     const [showHoldModal, setShowHoldModal] = useState(false);
     const [showHeldSalesList, setShowHeldSalesList] = useState(false);
-    const [showSplitPaymentModal, setShowSplitPaymentModal] = useState(false);
-    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [showCheckoutModal, setShowCheckoutModal] = useState(false);
     const [showDiscountModal, setShowDiscountModal] = useState(false);
     const [checkoutNote, setCheckoutNote] = useState('');
     const [showCheckoutNote, setShowCheckoutNote] = useState(false);
@@ -192,8 +190,8 @@ export const POS = () => {
     const refetchSales = async () => {
         if (!token) return;
         try {
-            const headers = { Authorization: `Bearer ${token} ` };
-            const salesRes = await fetch(getApiUrl('/sales?limit=50'), { headers });
+            const headers = { Authorization: `Bearer ${token}` };
+            const salesRes = await fetch(getApiUrl('/sales?limit=50&includeItems=true'), { headers });
             if (salesRes.ok) {
                 const salesPayload = await salesRes.json();
                 setRecentSales(Array.isArray(salesPayload) ? salesPayload : salesPayload.data || []);
@@ -462,7 +460,36 @@ export const POS = () => {
         }
     }, [showReturnLookup]);
 
-    const handlePayment = async (paymentDetails?: { cash: number, card: number }, method: string = 'cash', customDiscount: number = 0, receivedAmountFromModal?: number) => {
+    const handlePrintFromHistory = (e: React.MouseEvent, txn: any) => {
+        e.stopPropagation();
+        setLastTransaction({
+            transaction_id: txn.id || txn.transaction_id,
+            user_id: user?.user_id || user?.username || String(txn.staffId || 'system'),
+            customer_id: txn.customerId || txn.customer_id,
+            timestamp: new Date(txn.createdAt || txn.timestamp),
+            total_amount: Number(txn.total || txn.total_amount || 0),
+            tax_amount: Number(txn.tax || txn.tax_amount || 0),
+            discount: Number(txn.discount || 0),
+            round_off_discount: Number(txn.roundOffDiscount || txn.round_off_discount || 0),
+            payment_method: txn.paymentMethod || txn.payment_method || 'cash',
+            payment_details: txn.paymentDetails || txn.payment_details,
+            status: txn.status || 'completed',
+            type: txn.type || (txn.parentSaleId ? 'return' : 'sale'),
+            note: txn.note
+        });
+
+        const txnItems = txn.items || [];
+        setLastItems(txnItems.map((item: any) => ({
+            transaction_id: txn.id,
+            product_id: item.productId || item.product_id,
+            quantity: item.quantity,
+            price_at_sale: Number(item.price || item.unit_price || item.price_at_sale || 0),
+            note: item.note,
+            name: item.product?.name || item.name || 'Unknown Product'
+        })));
+    };
+
+    const handlePayment = async (paymentDetails?: { cash: number, card: number, credit?: number }, method: string = 'cash', customDiscount: number = 0, receivedAmountFromModal?: number) => {
         if (items.length === 0) return;
         if (!user) {
             addToast("No user logged in!", 'error');
@@ -522,8 +549,9 @@ export const POS = () => {
                     payment_method: paymentDetails ? 'split' : method,
                     payment_details: paymentDetails ? {
                         cashAmount: paymentDetails.cash,
-                        cardAmount: paymentDetails.card
-                    } : (method === 'cash' && receivedAmountFromModal !== undefined ? { cashAmount: receivedAmountFromModal } : undefined),
+                        cardAmount: paymentDetails.card,
+                        creditAmount: paymentDetails.credit
+                    } : ((method === 'cash' || method === 'credit') && receivedAmountFromModal !== undefined ? { cashAmount: receivedAmountFromModal } : undefined),
                     items: items.map(item => ({
                         product_id: item.product_id,
                         quantity: item.quantity,
@@ -567,8 +595,9 @@ export const POS = () => {
                 type: 'sale',
                 payment_details: paymentDetails ? {
                     cashAmount: paymentDetails.cash,
-                    cardAmount: paymentDetails.card
-                } : (method === 'cash' && receivedAmountFromModal !== undefined ? { cashAmount: receivedAmountFromModal } : undefined),
+                    cardAmount: paymentDetails.card,
+                    creditAmount: paymentDetails.credit
+                } as any : (method === 'cash' && receivedAmountFromModal !== undefined ? { cashAmount: receivedAmountFromModal } : undefined),
                 note: sale.note || checkoutNote
             });
 
@@ -1219,21 +1248,12 @@ export const POS = () => {
 
 
                         <button
-                            onClick={() => setShowSplitPaymentModal(true)}
+                            onClick={() => setShowCheckoutModal(true)}
                             disabled={isProcessing || items.length === 0}
-                            className="flex flex-col items-center justify-center py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95"
-                        >
-                            <CardIcon size={20} />
-                            <span className="text-[10px] uppercase font-bold mt-1">Split</span>
-                        </button>
-
-                        <button
-                            onClick={() => setShowPaymentModal(true)}
-                            disabled={isProcessing || items.length === 0}
-                            className="col-span-2 flex flex-col items-center justify-center py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-green-600/30 transition-all active:scale-95"
+                            className="col-span-3 flex flex-col items-center justify-center py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-green-600/30 transition-all active:scale-95"
                         >
                             <CreditCard size={24} className="mb-0.5" />
-                            <span className="text-xs uppercase font-extrabold">{isProcessing ? 'Processing...' : 'Pay Now'}</span>
+                            <span className="text-xs uppercase font-extrabold">{isProcessing ? 'Processing...' : 'Checkout'}</span>
                         </button>
                     </div>
                 </div>
@@ -1292,29 +1312,28 @@ export const POS = () => {
                 />
             )}
 
-            {/* Split Payment Modal */}
-            {showSplitPaymentModal && (
-                <SplitPaymentModal
+            {/* Unified Checkout Modal */}
+            {showCheckoutModal && (
+                <UnifiedCheckoutModal
                     total={total + tax - roundOffDiscount}
-                    onConfirm={(details) => {
-                        setShowSplitPaymentModal(false);
-                        handlePayment(details);
-                    }}
-                    onClose={() => setShowSplitPaymentModal(false)}
-                />
-            )}
-
-            {/* Standard Payment Modal */}
-            {showPaymentModal && (
-                <PaymentModal
-                    total={total + tax - roundOffDiscount}
+                    customer={customer}
                     enableCustomerCredit={enableCustomerCredit}
-                    hasCustomer={!!customer}
-                    onConfirm={(method, receivedAmount) => {
-                        setShowPaymentModal(false);
-                        handlePayment(undefined, method, 0, receivedAmount);
+                    onConfirm={(method, details) => {
+                        setShowCheckoutModal(false);
+                        const changeAmount = details.changeReturn || 0;
+                        const totalReceived = details.cashAmount + details.cardAmount + details.creditAmount;
+
+                        if (method === 'split') {
+                            handlePayment({
+                                cash: details.cashAmount,
+                                card: details.cardAmount,
+                                credit: details.creditAmount
+                            }, 'split', 0, totalReceived);
+                        } else {
+                            handlePayment(undefined, method, 0, totalReceived);
+                        }
                     }}
-                    onClose={() => setShowPaymentModal(false)}
+                    onClose={() => setShowCheckoutModal(false)}
                 />
             )}
 
@@ -1432,7 +1451,7 @@ export const POS = () => {
                                     const saleId = String(txn.id || txn.transaction_id || '');
                                     const customerName = customers?.find(c => String(c.customer_id) === String(txn.customerId || txn.customer_id))?.name;
                                     return (
-                                        <button
+                                        <div
                                             key={saleId}
                                             onClick={() => {
                                                 setSelectedReturnSaleId(saleId);
@@ -1440,14 +1459,23 @@ export const POS = () => {
                                                 setShowReturnLookup(false);
                                                 setReturnSearch('');
                                             }}
-                                            className="w-full text-left p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center justify-between"
+                                            className="w-full text-left p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center justify-between cursor-pointer"
                                         >
                                             <div>
                                                 <div className="font-semibold text-gray-900 dark:text-white">#{saleId} • {customerName || 'Walk-in'}</div>
                                                 <div className="text-xs text-gray-500 dark:text-gray-400">{new Date(txn.createdAt || txn.timestamp).toLocaleString()}</div>
                                             </div>
-                                            <div className="font-bold text-gray-900 dark:text-white">{formatCurrency(Number(txn.total || txn.total_amount || 0))}</div>
-                                        </button>
+                                            <div className="flex items-center gap-4">
+                                                <div className="font-bold text-gray-900 dark:text-white">{formatCurrency(Number(txn.total || txn.total_amount || 0))}</div>
+                                                <button
+                                                    onClick={(e) => handlePrintFromHistory(e, txn)}
+                                                    className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
+                                                    title="Print Receipt"
+                                                >
+                                                    <Printer size={18} />
+                                                </button>
+                                            </div>
+                                        </div>
                                     );
                                 })}
                             </div>

@@ -10,8 +10,9 @@ import { CategoryManagerPanel } from '../../components/admin/settings/CategoryMa
 import { DataTable, type Column } from '../../components/ui/DataTable';
 import { db, type Product } from '../../db/db';
 import { BulkUploadModal } from '../../components/shared/BulkUploadModal';
-import { Upload } from 'lucide-react';
+import { Upload, Download } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
+import * as XLSX from 'xlsx';
 import { useToast } from '../../store/useToast';
 import { getApiUrl } from '../../config/api';
 
@@ -29,6 +30,45 @@ export const ProductList = () => {
     const [loading, setLoading] = useState(true);
     const [togglingProductId, setTogglingProductId] = useState<string | number | null>(null);
     const [showInactive, setShowInactive] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
+
+    const handleExport = async () => {
+        if (!token) return;
+        setIsExporting(true);
+        try {
+            const response = await fetch(getApiUrl('/bulk/products/export'), {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Failed to export products');
+            const result = await response.json();
+            const data = result.data;
+
+            if (!data || data.length === 0) {
+                addToast('No products found to export', 'info');
+                return;
+            }
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(data);
+            XLSX.utils.book_append_sheet(wb, ws, 'Products');
+            const dateStr = new Date().toISOString().split('T')[0];
+            const wbData = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([wbData], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'Products_Master_Data_' + dateStr + '.xlsx';
+            document.body.appendChild(link);
+            link.click();
+            setTimeout(function () { document.body.removeChild(link); URL.revokeObjectURL(url); }, 100);
+
+            addToast('Export successful', 'success');
+        } catch (error) {
+            console.error('Export failed', error);
+            addToast('Failed to export products', 'error');
+        } finally {
+            setIsExporting(false);
+        }
+    };
 
     const loadProducts = async () => {
         if (!token) return;
@@ -291,8 +331,8 @@ export const ProductList = () => {
                         }}
                         disabled={togglingProductId === row.product_id}
                         className={`p-2 rounded-lg transition-colors ${row.isActive === false
-                                ? 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50'
-                                : 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/50'
+                            ? 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50'
+                            : 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/50'
                             } disabled:opacity-50 disabled:cursor-not-allowed`}
                         title={row.isActive === false ? 'Mark as Active' : 'Mark as Inactive'}
                     >
@@ -317,55 +357,66 @@ export const ProductList = () => {
                     Products
                 </h1>
                 <div className="flex gap-3">
-                    {activeTab === 'products' && (
-                        <>
+                    {/* Placeholder for future header actions if needed */}
+                </div>
+            </div>
+
+            <div className="flex flex-wrap lg:flex-nowrap justify-between items-end gap-3 mb-6">
+                <div className="flex flex-wrap gap-2">
+                    {tabs.map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${activeTab === tab.id
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                }`}
+                        >
+                            {tab.icon}
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+            {activeTab === 'products' && (
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                            <input
+                                type="checkbox"
+                                id="showInactive"
+                                checked={showInactive}
+                                onChange={(e) => setShowInactive(e.target.checked)}
+                                className="rounded border-gray-300 dark:border-gray-600"
+                            />
+                            <label htmlFor="showInactive" className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                                Show inactive products
+                            </label>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            <button
+                                onClick={handleExport}
+                                disabled={isExporting}
+                                className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 h-9 px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all shadow-sm disabled:opacity-50 text-sm"
+                            >
+                                <Download size={16} />
+                                {isExporting ? 'Exporting...' : 'Bulk Export'}
+                            </button>
                             <button
                                 onClick={() => setIsBulkModalOpen(true)}
-                                className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-sm"
+                                className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 h-9 px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all shadow-sm text-sm"
                             >
-                                <Upload size={20} />
+                                <Upload size={16} />
                                 Bulk Import
                             </button>
                             <button
                                 onClick={() => setIsAddModalOpen(true)}
-                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-md hover:shadow-lg transition-all"
+                                className="bg-blue-600 hover:bg-blue-700 text-white h-9 px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-md hover:shadow-lg transition-all text-sm"
                             >
-                                <Plus size={20} />
+                                <Plus size={16} />
                                 Add Product
                             </button>
-                        </>
-                    )}
-                </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2 mb-6">
-                {tabs.map(tab => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${activeTab === tab.id
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
-                            }`}
-                    >
-                        {tab.icon}
-                        {tab.label}
-                    </button>
-                ))}
-            </div>
-            {activeTab === 'products' && (
-                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div className="mb-4 flex items-center gap-3">
-                        <input
-                            type="checkbox"
-                            id="showInactive"
-                            checked={showInactive}
-                            onChange={(e) => setShowInactive(e.target.checked)}
-                            className="rounded border-gray-300 dark:border-gray-600"
-                        />
-                        <label htmlFor="showInactive" className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
-                            Show inactive products
-                        </label>
+                        </div>
                     </div>
                     <DataTable
                         data={filteredProducts}

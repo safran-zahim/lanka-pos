@@ -37,7 +37,8 @@ const checkoutSchema = z.object({
     }).optional(),
     payment_details: z.object({
         cashAmount: z.number().optional(),
-        cardAmount: z.number().optional()
+        cardAmount: z.number().optional(),
+        creditAmount: z.number().optional()
     }).optional()
 });
 
@@ -284,7 +285,7 @@ export const checkout = async (req: Request, res: Response) => {
 
             const saleItemsData: any[] = [];
             for (const item of data.items) {
-                if (item.batch_id || isReturn) {
+                if (item.batch_id !== undefined && item.batch_id !== null || isReturn) {
                     const key = `${item.product_id}-${item.batch_id || 'null'}`;
                     let isItemOverSale = false;
                     let batchAvailable = 0;
@@ -408,6 +409,14 @@ export const checkout = async (req: Request, res: Response) => {
 
             const refundTotal = returnSubtotal.plus(refundTax).minus(refundDiscount).minus(refundRoundOff);
 
+            // Extract credit amount specifically for dueAmount logic
+            let creditAmount = 0;
+            if (data.payment_method === 'credit') {
+                creditAmount = isReturn ? refundTotal.neg().toNumber() : data.totals.grand_total;
+            } else if (data.payment_method === 'split' && data.payment_details?.creditAmount) {
+                creditAmount = isReturn ? refundTotal.neg().toNumber() : data.payment_details.creditAmount;
+            }
+
             // 2. Create Sale Record
             const sale = await tx.sale.create({
                 data: {
@@ -422,8 +431,9 @@ export const checkout = async (req: Request, res: Response) => {
                     discount: new Decimal(isReturn ? refundDiscount.neg() : data.totals.discount),
                     roundOffDiscount: new Decimal(isReturn ? refundRoundOff.neg() : (data.totals.round_off_discount || 0)),
                     note: isReturn ? (data.note || `Refund for Bill #${data.parent_sale_id}`) : data.note,
-                    dueAmount: data.payment_method === 'credit' ? new Decimal(isReturn ? refundTotal.neg() : data.totals.grand_total) : 0,
+                    dueAmount: new Decimal(creditAmount), // This handles 'credit' and 'split' with credit portion
                     status: isReturn ? 'RETURNED' : 'COMPLETED',
+                    paymentDetails: data.payment_details || undefined,
                     items: {
                         create: saleItemsData
                     }
@@ -485,7 +495,7 @@ export const checkout = async (req: Request, res: Response) => {
                         where: {
                             customerId: saleCustomerId,
                             type: 'EARN',
-                            reference: parentSale.id
+                            reference: String(parentSale.id)
                         }
                     });
                     const totalEarnedPoints = earnEntries.reduce((sum, entry) => sum + entry.points, 0);
@@ -512,7 +522,7 @@ export const checkout = async (req: Request, res: Response) => {
                                 customerId: saleCustomerId,
                                 points: -pointsToDeduct,
                                 type: 'ADJUST',
-                                reference: parentSale.id,
+                                reference: String(parentSale.id),
                                 balanceAfter: updatedCustomer.pointsBalance
                             }
                         });
@@ -527,7 +537,10 @@ export const checkout = async (req: Request, res: Response) => {
 
                 const currentDue = new Decimal(customer.totalDue.toString());
                 const creditLimit = new Decimal(customer.creditLimit.toString());
-                const newGrandTotal = new Decimal(data.totals.grand_total);
+                // Use calculated refundTotal for returns to ensure trust, otherwise use grand_total
+                const upfrontCash = data.payment_details?.cashAmount || 0;
+                const creditAmountForSale = Math.max(0, data.totals.grand_total - upfrontCash);
+                const newGrandTotal = isReturn ? refundTotal.neg() : new Decimal(creditAmountForSale);
 
                 // For sales (positive), check limit. For returns (negative), skip check.
                 if (newGrandTotal.gt(0) && currentDue.plus(newGrandTotal).gt(creditLimit)) {
@@ -542,17 +555,25 @@ export const checkout = async (req: Request, res: Response) => {
                 });
             }
 
-            // Update Shift Totals if payment method is cash
-            if (shiftId && data.payment_method === 'cash') {
-                if (isReturn) {
+            // Update Shift Totals if payment method is cash or if there is upfront cash for credit
+            if (shiftId) {
+                if (data.payment_method === 'cash') {
+                    if (isReturn) {
+                        await tx.shift.update({
+                            where: { id: shiftId },
+                            data: { totalCashRefunds: { increment: refundTotal } }
+                        });
+                    } else {
+                        await tx.shift.update({
+                            where: { id: shiftId },
+                            data: { totalCashSales: { increment: new Decimal(data.totals.grand_total) } }
+                        });
+                    }
+                } else if (data.payment_method === 'credit' && !isReturn && data.payment_details?.cashAmount) {
+                    // Record partial upfront cash for a credit sale
                     await tx.shift.update({
                         where: { id: shiftId },
-                        data: { totalCashRefunds: { increment: refundTotal } }
-                    });
-                } else {
-                    await tx.shift.update({
-                        where: { id: shiftId },
-                        data: { totalCashSales: { increment: new Decimal(data.totals.grand_total) } }
+                        data: { totalCashSales: { increment: new Decimal(data.payment_details.cashAmount) } }
                     });
                 }
             }

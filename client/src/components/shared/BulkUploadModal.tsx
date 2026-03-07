@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Upload, FileSpreadsheet, AlertCircle, CheckCircle } from 'lucide-react';
+import { X, Upload, FileSpreadsheet, AlertCircle, CheckCircle, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 interface BulkUploadModalProps {
@@ -71,6 +71,8 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClos
                     if (type === 'products') {
                         if (['name', 'productname', 'itemname', 'title'].includes(normalizedKey)) newRow.name = row[key];
                         else if (['sku', 'skucode', 'code', 'itemcode'].includes(normalizedKey)) newRow.skuCode = String(row[key]);
+                        else if (['barcode', 'barcodenumber', 'barcodevalue'].includes(normalizedKey)) newRow.barcode = String(row[key]);
+                        else if (['barcodetype', 'barcodeformat', 'codetype'].includes(normalizedKey)) newRow.barcodeType = String(row[key]);
                         else if (['category', 'categoryname', 'cat'].includes(normalizedKey)) newRow.category_id = row[key];
                         else if (['subcategory', 'subcat', 'subcategoryname'].includes(normalizedKey)) newRow.sub_category_id = row[key];
                         else if (['unit', 'unitname', 'uom'].includes(normalizedKey)) newRow.unit_id = row[key];
@@ -149,13 +151,25 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClos
 
     const handleDownloadSample = () => {
         const headers = type === 'products'
-            ? ['Name', 'SKU', 'Category', 'BarcodeType', 'Unit', 'Brand', 'Description', 'RetailPrice', 'CostPrice', 'AlertQty']
+            ? ['Name', 'SKU', 'Barcode', 'BarcodeType', 'Category', 'SubCategory', 'Brand', 'Unit', 'RetailPrice', 'AlertQty', 'Description']
             : ['Name', 'Phone', 'Email', 'Address', 'City', 'LoyaltyPoints'];
 
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.aoa_to_sheet([headers]);
         XLSX.utils.book_append_sheet(wb, ws, "Sample");
-        XLSX.writeFile(wb, `${type}_sample.xlsx`);
+
+        // Standard approach to generate Excel file in browser
+        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        const dataBlob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+        const url = window.URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `${type}_sample.xlsx`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
     };
 
     return (
@@ -172,14 +186,7 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClos
                 </div>
 
                 <div className="p-6 space-y-6">
-                    <div className="flex justify-end">
-                        <button
-                            onClick={handleDownloadSample}
-                            className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-1"
-                        >
-                            <FileSpreadsheet size={16} /> Download Sample Template
-                        </button>
-                    </div>
+                    {/* Removed top-right sample button to align in footer */}
 
                     {/* File Drop / Select */}
                     <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
@@ -220,17 +227,25 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClos
                         </div>
                     )}
 
-                    <div className="flex justify-end gap-3">
-                        <button onClick={onClose} className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
-                            Cancel
-                        </button>
+                    <div className="flex justify-between items-center gap-3">
                         <button
-                            onClick={handleUpload}
-                            disabled={!file || uploading}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                            onClick={handleDownloadSample}
+                            className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-1 transition-colors"
                         >
-                            {uploading ? 'Importing...' : 'Start Import'}
+                            <Download size={16} /> Download Sample Template
                         </button>
+                        <div className="flex gap-3">
+                            <button onClick={onClose} className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleUpload}
+                                disabled={!file || uploading}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {uploading ? 'Importing...' : 'Start Import'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

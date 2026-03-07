@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { X, RefreshCcw } from 'lucide-react';
+import { X, RefreshCcw, Printer } from 'lucide-react';
 import type { Transaction, TransactionItem, Customer } from '../db/db';
 import { useAuthStore } from '../store/useAuthStore';
 import { ReceiptModal } from './ReceiptModal';
@@ -71,7 +71,7 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
     const [refundNote, setRefundNote] = useState('');
 
     useEffect(() => {
-        if (sale?.paymentMethod === 'credit' || sale?.paymentMethod?.toLowerCase() === 'credit') {
+        if (sale?.paymentMethod && sale.paymentMethod.toLowerCase() === 'credit') {
             setRefundMethod('credit');
         } else {
             setRefundMethod('cash');
@@ -189,6 +189,34 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
             refundTotal: totalVal
         };
     }, [items, sale, saleSubtotal, taxEnabled]);
+
+    const handlePrintOriginal = () => {
+        if (!sale) return;
+        setReceiptTransaction({
+            transaction_id: sale.id,
+            user_id: user?.user_id || user?.username || 'system',
+            customer_id: sale.customerId || undefined,
+            timestamp: new Date(sale.createdAt),
+            total_amount: Number(sale.total || 0),
+            tax_amount: Number(sale.tax || 0),
+            discount: Number(sale.discount || 0),
+            round_off_discount: Number(sale.roundOffDiscount || 0),
+            payment_method: (sale.paymentMethod || 'cash') as any,
+            payment_details: sale.paymentDetails,
+            status: 'completed',
+            type: 'sale',
+            note: 'Original Sale Reprint'
+        });
+
+        setReceiptItems((sale.items || []).map((item: any) => ({
+            transaction_id: sale.id,
+            product_id: item.productId,
+            quantity: Math.abs(item.quantity),
+            price_at_sale: Number(item.price || 0),
+            note: item.note,
+            name: item.product?.name || 'Unknown Product'
+        })));
+    };
 
     const handleToggleSelect = (index: number) => {
         const newItems = [...items];
@@ -321,9 +349,20 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                             <p className="text-xs text-gray-500 dark:text-gray-400">Transaction #{saleId}</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white">
-                        <X size={22} />
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={handlePrintOriginal}
+                            className="flex items-center gap-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
+                            disabled={!sale}
+                            title="Print Original Receipt"
+                        >
+                            <Printer size={16} />
+                            <span className="hidden sm:inline">Print Receipt</span>
+                        </button>
+                        <button onClick={onClose} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white">
+                            <X size={22} />
+                        </button>
+                    </div>
                 </div>
 
                 <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-4 gap-4 bg-white dark:bg-gray-800">
@@ -412,7 +451,8 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                                     <td className="p-3 font-medium text-gray-900 dark:text-white">{item.name}</td>
                                     <td className="p-3 text-right text-gray-600 dark:text-gray-300">{formatCurrency(item.price)}</td>
                                     <td className="p-3 text-center text-xs text-gray-500 dark:text-gray-400">
-                                        {item.batchDate || 'N/A'}
+                                        {item.batchId ? `Batch #${item.batchId}` : 'N/A'}<br />
+                                        <span className="text-[10px]">{item.batchDate || ''}</span>
                                     </td>
                                     <td className="p-3 text-center text-gray-500 dark:text-gray-400">{item.max_qty}</td>
                                     <td className="p-3 text-center">

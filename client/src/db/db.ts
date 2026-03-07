@@ -102,6 +102,7 @@ export interface Transaction {
     payment_details?: {
         cashAmount?: number;
         cardAmount?: number;
+        creditAmount?: number;
         otherAmount?: number;
         notes?: string;
     };
