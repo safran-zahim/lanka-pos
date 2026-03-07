@@ -71,8 +71,11 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
             }
         }
         setAutoPrinted(true);
-        setTimeout(() => handlePrint(), 0);
-    }, [autoPrint, autoPrinted, loadingSettings]);
+        const printTimer = setTimeout(() => {
+            window.print();
+        }, 300);
+        return () => clearTimeout(printTimer);
+    }, [autoPrint, autoPrinted, loadingSettings, transaction.transaction_id]);
 
     const handleSendDigital = async () => {
         if (!customer?.phone) return;
@@ -242,8 +245,8 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
 
                     {/* REFUND INDICATOR */}
                     {transaction.type === 'return' && (
-                        <div className="bg-red-100 border-2 border-red-500 rounded-lg p-3 my-4 text-center">
-                            <div className="text-red-700 font-bold text-lg">⚠️ REFUND RECEIPT ⚠️</div>
+                        <div className="bg-red-50 border-2 border-red-500 rounded-lg p-2 my-4 text-center">
+                            <div className="text-red-700 font-bold text-xs">⚠️ REFUND RECEIPT ⚠️</div>
                             {transaction.parent_sale_id && (
                                 <div className="text-red-600 text-xs mt-1">
                                     Original Sale: #{transaction.parent_sale_id}
@@ -333,9 +336,9 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                                 <span>-{formatCurrency(transaction.round_off_discount!)}</span>
                             </div>
                         )}
-                        <div className={`flex justify-between items-center text-base font-black pt-1.5 mt-1 border-t border-black/10 ${transaction.type === 'return' ? 'text-red-600' : ''}`}>
-                            <span className="whitespace-nowrap">{transaction.type === 'return' ? 'REFUND TOTAL' : 'TOTAL'}</span>
-                            <span className="whitespace-nowrap">{formatCurrency(transaction.type === 'return' ? Math.abs(Number(transaction.total_amount || 0)) : Number(transaction.total_amount || 0))}</span>
+                        <div className={`flex justify-between items-center ${transaction.type === 'return' ? 'text-sm font-bold pt-1.5 mt-1 border-t border-black/10 text-red-600' : 'text-base font-black pt-1.5 mt-1 border-t border-black/10'}`}>
+                            <span className="whitespace-nowrap uppercase">{transaction.type === 'return' ? 'Refund Total' : 'Total'}</span>
+                            <span className="whitespace-nowrap font-bold">{formatCurrency(transaction.type === 'return' ? Math.abs(Number(transaction.total_amount || 0)) : Number(transaction.total_amount || 0))}</span>
                         </div>
                     </div>
 

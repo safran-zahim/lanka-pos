@@ -957,3 +957,27 @@ export const getMonthlySummary = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+export const updateSaleNote = async (req: Request, res: Response) => {
+    try {
+        const id = Number(req.params.id);
+        const { note } = req.body;
+
+        if (!Number.isFinite(id)) {
+            return res.status(400).json({ error: 'Invalid sale id' });
+        }
+
+        const sale = await prisma.sale.update({
+            where: { id },
+            data: { note }
+        });
+
+        res.json(sale);
+    } catch (error: any) {
+        if (error.code === 'P2025') {
+            return res.status(404).json({ error: 'Sale not found' });
+        }
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};

@@ -184,7 +184,7 @@ export const ActiveRegisterModal: React.FC<ActiveRegisterModalProps> = ({ isOpen
                                     <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
                                         <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-3 lg:p-4 border border-gray-100 dark:border-gray-700/50 overflow-hidden">
                                             <p className="text-xs lg:text-sm text-gray-500 dark:text-gray-400 font-medium truncate">Expected Drawer</p>
-                                            <p className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white mt-1 truncate" title={formatCurrency(shiftData.expectedCash)}>{formatCurrency(shiftData.expectedCash)}</p>
+                                            <p className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white mt-1 truncate" title={formatCurrency(shiftData.liveExpectedCash)}>{formatCurrency(shiftData.liveExpectedCash)}</p>
                                         </div>
                                         <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-3 lg:p-4 border border-green-100 dark:border-green-900/30 overflow-hidden">
                                             <p className="text-xs lg:text-sm text-green-700 dark:text-green-400 font-medium truncate">Cash Sales</p>
@@ -238,7 +238,7 @@ export const ActiveRegisterModal: React.FC<ActiveRegisterModalProps> = ({ isOpen
                                             </div>
                                             <div className="flex justify-between px-4 py-4 bg-gray-50 dark:bg-gray-900/50 font-bold border-t-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">
                                                 <span>Calculated Expected Drawer</span>
-                                                <span className="text-lg">{formatCurrency(shiftData.expectedCash)}</span>
+                                                <span className="text-lg">{formatCurrency(shiftData.liveExpectedCash)}</span>
                                             </div>
                                         </div>
                                     </div>

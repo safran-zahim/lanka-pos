@@ -230,3 +230,21 @@ export const bulkImportCustomers = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+export const bulkUpdateProductStatus = async (req: Request, res: Response) => {
+    try {
+        const { ids, isActive } = req.body;
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ error: 'ids must be a non-empty array' });
+        }
+        const numericIds = ids.map(Number).filter(id => !isNaN(id));
+        const result = await prisma.product.updateMany({
+            where: { id: { in: numericIds } },
+            data: { isActive: Boolean(isActive) }
+        });
+        res.json({ message: `Updated ${result.count} products`, count: result.count });
+    } catch (error) {
+        console.error('Bulk status update error:', error);
+        res.status(500).json({ error: 'Failed to update product statuses' });
+    }
+};

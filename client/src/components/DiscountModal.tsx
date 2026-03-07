@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Tag, Percent, DollarSign, Trash2, Calculator } from 'lucide-react';
+import { X, Tag, Percent, DollarSign, Trash2 } from 'lucide-react';
 import { useCurrency } from '../hooks/useCurrency';
 
 interface DiscountModalProps {
@@ -25,25 +25,11 @@ export const DiscountModal = ({
     const { currencySymbol, formatCurrency } = useCurrency();
     const [mode, setMode] = useState<'amount' | 'percent'>('percent');
     const [value, setValue] = useState<string>('');
-    const [cashReceived, setCashReceived] = useState<string>('');
-
     const numValue = parseFloat(value) || 0;
     const discountPreview =
         mode === 'percent'
             ? (subtotal * numValue) / 100
             : numValue;
-
-    const totalAfterDiscount = Math.max(0, total - (mode === 'percent'
-        ? (subtotal * numValue) / 100 - (subtotal * 0) / 100  // net change from current
-        : 0));
-
-    // Simpler: just show what the new total would be
-    const newTotal = Math.max(0, total - discountPreview + (mode === 'percent'
-        ? (subtotal * (parseFloat('0') || 0)) / 100
-        : 0));
-
-    const cashNum = parseFloat(cashReceived) || 0;
-    const changeDue = cashNum > total ? cashNum - total : 0;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -182,55 +168,6 @@ export const DiscountModal = ({
                         </button>
                     </div>
                 </form>
-
-                {/* Divider */}
-                <div className="border-t border-dashed border-gray-200 dark:border-gray-700 my-4" />
-
-                {/* Cash Calculator */}
-                <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-1.5">
-                        <Calculator size={13} />
-                        Cash Calculator
-                    </p>
-
-                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 space-y-3 border border-gray-200 dark:border-gray-600">
-                        <div className="flex justify-between text-sm">
-                            <span className="text-gray-500 dark:text-gray-400">Bill Total (After Discount)</span>
-                            <span className="font-bold text-gray-900 dark:text-white">{formatCurrency(newTotal)}</span>
-                        </div>
-
-                        <div>
-                            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-                                Cash Received ({currencySymbol})
-                            </label>
-                            <input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                className="w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-2 rounded-lg focus:ring-2 focus:ring-green-500 outline-none border border-gray-300 dark:border-gray-600 font-semibold"
-                                value={cashReceived}
-                                onChange={(e) => setCashReceived(e.target.value)}
-                                placeholder={`Enter cash received`}
-                            />
-                        </div>
-
-                        <div className={`flex justify-between text-sm font-bold rounded-lg p-2 ${(parseFloat(cashReceived) || 0) >= newTotal
-                            ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
-                            : (parseFloat(cashReceived) || 0) > 0
-                                ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
-                                : 'bg-gray-100 dark:bg-gray-700 text-gray-400'
-                            }`}>
-                            <span>Change Due</span>
-                            <span>
-                                {(parseFloat(cashReceived) || 0) === 0
-                                    ? '—'
-                                    : (parseFloat(cashReceived) || 0) >= newTotal
-                                        ? formatCurrency((parseFloat(cashReceived) || 0) - newTotal)
-                                        : `Short ${formatCurrency(newTotal - (parseFloat(cashReceived) || 0))}`}
-                            </span>
-                        </div>
-                    </div>
-                </div>
 
             </div>
         </div>

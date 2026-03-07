@@ -31,6 +31,8 @@ export const ProductList = () => {
     const [togglingProductId, setTogglingProductId] = useState<string | number | null>(null);
     const [showInactive, setShowInactive] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
+    const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
+    const [isBulkDeactivating, setIsBulkDeactivating] = useState(false);
 
     const handleExport = async () => {
         if (!token) return;
@@ -67,6 +69,52 @@ export const ProductList = () => {
             addToast('Failed to export products', 'error');
         } finally {
             setIsExporting(false);
+        }
+    };
+
+    const handleBulkDeactivate = async () => {
+        if (selectedProducts.length === 0) return;
+        if (!token) return;
+        const ids = selectedProducts.map(p => p.product_id).filter(Boolean);
+        setIsBulkDeactivating(true);
+        try {
+            const response = await fetch(getApiUrl('/bulk/products/status'), {
+                method: 'PATCH',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids, isActive: false })
+            });
+            if (!response.ok) throw new Error('Failed to update products');
+            const result = await response.json();
+            addToast(`${result.count} products set to inactive`, 'success');
+            setSelectedProducts([]);
+            await loadProducts();
+        } catch (error) {
+            addToast('Failed to deactivate products', 'error');
+        } finally {
+            setIsBulkDeactivating(false);
+        }
+    };
+
+    const handleBulkActivate = async () => {
+        if (selectedProducts.length === 0) return;
+        if (!token) return;
+        const ids = selectedProducts.map(p => p.product_id).filter(Boolean);
+        setIsBulkDeactivating(true);
+        try {
+            const response = await fetch(getApiUrl('/bulk/products/status'), {
+                method: 'PATCH',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids, isActive: true })
+            });
+            if (!response.ok) throw new Error('Failed to update products');
+            const result = await response.json();
+            addToast(`${result.count} products set to active`, 'success');
+            setSelectedProducts([]);
+            await loadProducts();
+        } catch (error) {
+            addToast('Failed to activate products', 'error');
+        } finally {
+            setIsBulkDeactivating(false);
         }
     };
 
@@ -394,6 +442,26 @@ export const ProductList = () => {
                             </label>
                         </div>
                         <div className="flex flex-wrap gap-2">
+                            {selectedProducts.length > 0 && (
+                                <>
+                                    <button
+                                        onClick={handleBulkActivate}
+                                        disabled={isBulkDeactivating}
+                                        className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700 hover:bg-green-100 dark:hover:bg-green-900/40 h-9 px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all shadow-sm disabled:opacity-50 text-sm font-medium"
+                                    >
+                                        <Eye size={16} />
+                                        {isBulkDeactivating ? '...' : `Make Active (${selectedProducts.length})`}
+                                    </button>
+                                    <button
+                                        onClick={handleBulkDeactivate}
+                                        disabled={isBulkDeactivating}
+                                        className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/40 h-9 px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all shadow-sm disabled:opacity-50 text-sm font-medium"
+                                    >
+                                        <EyeOff size={16} />
+                                        {isBulkDeactivating ? 'Updating...' : `Make Inactive (${selectedProducts.length})`}
+                                    </button>
+                                </>
+                            )}
                             <button
                                 onClick={handleExport}
                                 disabled={isExporting}
@@ -426,6 +494,8 @@ export const ProductList = () => {
                         searchable
                         onSearch={setSearchTerm}
                         keyField="product_id"
+                        enableSelection
+                        onSelectionChange={setSelectedProducts}
                         onRowClick={(row) => navigate(`/admin/products/${row.product_id}/history`)}
                         getRowClassName={getRowClassName}
                     />
