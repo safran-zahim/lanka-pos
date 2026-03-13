@@ -27,6 +27,7 @@ interface SaleItem {
 interface SaleResponse {
     id: string;
     customerId?: string | null;
+    parentSaleId?: string | number | null;
     createdAt: string;
     total: number;
     subtotal?: number | null;
@@ -458,19 +459,19 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                                 {sale?.paymentDetails?.cashAmount > 0 && (
                                     <div className="flex items-center gap-1.5 px-2 py-1 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 rounded-md">
                                         <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                                        <span className="text-[10px] font-black text-green-700 dark:text-green-400 uppercase">Cash: {formatCurrency(sale.paymentDetails.cashAmount)}</span>
+                                        <span className="text-[10px] font-black text-green-700 dark:text-green-400 uppercase">Cash: {formatCurrency(sale?.paymentDetails?.cashAmount || 0)}</span>
                                     </div>
                                 )}
                                 {sale?.paymentDetails?.cardAmount > 0 && (
                                     <div className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-md">
                                         <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                                        <span className="text-[10px] font-black text-blue-700 dark:text-blue-400 uppercase">Card: {formatCurrency(sale.paymentDetails.cardAmount)}</span>
+                                        <span className="text-[10px] font-black text-blue-700 dark:text-blue-400 uppercase">Card: {formatCurrency(sale?.paymentDetails?.cardAmount || 0)}</span>
                                     </div>
                                 )}
                                 {sale?.paymentDetails?.creditAmount > 0 && (
                                     <div className="flex items-center gap-1.5 px-2 py-1 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded-md">
                                         <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
-                                        <span className="text-[10px] font-black text-purple-700 dark:text-purple-400 uppercase">Credit: {formatCurrency(sale.paymentDetails.creditAmount)}</span>
+                                        <span className="text-[10px] font-black text-purple-700 dark:text-purple-400 uppercase">Credit: {formatCurrency(sale?.paymentDetails?.creditAmount || 0)}</span>
                                     </div>
                                 )}
                             </div>
