@@ -240,6 +240,7 @@ model Sale {
   createdAt        DateTime   @default(now())
   items            SaleItem[]
   dueAmount        Decimal?   @default(0) // Track outstanding balance for credit sales
+  paymentDetails   Json?
   repayments       CustomerPayment[]
 }
 

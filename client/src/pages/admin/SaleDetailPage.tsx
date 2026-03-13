@@ -319,14 +319,24 @@ export const SaleDetailPage = () => {
                             </div>
                             {transaction.paymentMethod === 'split' && paymentDetails && (
                                 <>
-                                    <div className="flex justify-between text-gray-600 dark:text-gray-400 ml-2 border-l-2 border-gray-100 dark:border-gray-700 pl-2">
-                                        <span>Cash Portion</span>
-                                        <span className="font-medium">{formatCurrency(Number(paymentDetails.cashAmount || 0))}</span>
-                                    </div>
-                                    <div className="flex justify-between text-gray-600 dark:text-gray-400 ml-2 border-l-2 border-gray-100 dark:border-gray-700 pl-2">
-                                        <span>Card Portion</span>
-                                        <span className="font-medium">{formatCurrency(Number(paymentDetails.cardAmount || 0))}</span>
-                                    </div>
+                                    {Number(paymentDetails.cashAmount || 0) > 0 && (
+                                        <div className="flex justify-between text-gray-600 dark:text-gray-400 ml-2 border-l-2 border-gray-100 dark:border-gray-700 pl-2">
+                                            <span>Cash Portion</span>
+                                            <span className="font-medium">{formatCurrency(Number(paymentDetails.cashAmount || 0))}</span>
+                                        </div>
+                                    )}
+                                    {Number(paymentDetails.cardAmount || 0) > 0 && (
+                                        <div className="flex justify-between text-gray-600 dark:text-gray-400 ml-2 border-l-2 border-gray-100 dark:border-gray-700 pl-2">
+                                            <span>Card Portion</span>
+                                            <span className="font-medium">{formatCurrency(Number(paymentDetails.cardAmount || 0))}</span>
+                                        </div>
+                                    )}
+                                    {Number(paymentDetails.creditAmount || 0) > 0 && (
+                                        <div className="flex justify-between text-gray-600 dark:text-gray-400 ml-2 border-l-2 border-gray-100 dark:border-gray-700 pl-2">
+                                            <span>Credit Portion</span>
+                                            <span className="font-medium">{formatCurrency(Number(paymentDetails.creditAmount || 0))}</span>
+                                        </div>
+                                    )}
                                 </>
                             )}
                             {paymentDetails?.cashAmount && !paymentDetails?.cardAmount && (

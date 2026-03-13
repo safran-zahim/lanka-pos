@@ -239,7 +239,10 @@ export const CustomerProfilePage = () => {
                                         <td className="py-2">#{t.id || t.transaction_id}</td>
                                         <td className="py-2 text-xs">{new Date(t.createdAt || t.timestamp).toLocaleString()}</td>
                                         <td className="py-2 capitalize">
-                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${t.paymentMethod === 'credit' ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30' : 'bg-gray-100 dark:bg-gray-700 text-gray-600'}`}>
+                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${t.paymentMethod === 'credit' ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400' :
+                                                    t.paymentMethod === 'split' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
+                                                        'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                                                }`}>
                                                 {t.paymentMethod || 'cash'}
                                             </span>
                                         </td>

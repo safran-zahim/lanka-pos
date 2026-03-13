@@ -68,10 +68,13 @@ export const PurchaseDetailPage = () => {
             const cost = Number(item.costPrice || item.cost_price || 0);
             return sum + qty * cost;
         }, 0);
+        const shipping = Number(purchase?.shipping || 0);
+        const discount = Number(purchase?.discount || 0);
+        const taxAmount = Number(purchase?.taxAmount || purchase?.tax_amount || 0);
         const total = Number(purchase?.totalAmount || purchase?.total_amount || subtotal || 0);
         const paid = Number(purchase?.paidAmount || purchase?.paid_amount || 0);
         const due = Math.max(0, total - paid);
-        return { subtotal, total, paid, due };
+        return { subtotal, shipping, discount, taxAmount, total, paid, due };
     }, [purchase]);
 
     const handlePayment = async () => {
@@ -238,10 +241,40 @@ export const PurchaseDetailPage = () => {
                                     <span className="font-semibold text-gray-600 dark:text-gray-300">{totals.total > 0 ? Math.round((totals.paid / totals.total) * 100) : 0}%</span>
                                 </div>
                                 <div className="w-full h-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                                    <div 
+                                    <div
                                         className={`h-full transition-all ${totals.due <= 0 ? 'bg-green-500' : 'bg-orange-500'}`}
                                         style={{ width: `${totals.total > 0 ? (totals.paid / totals.total) * 100 : 0}%` }}
                                     />
+                                </div>
+                            </div>
+
+                            {/* Cost Breakdown */}
+                            <div className="space-y-2 text-sm">
+                                <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                                    <span>Subtotal</span>
+                                    <span>{formatCurrency(totals.subtotal)}</span>
+                                </div>
+                                {totals.shipping > 0 && (
+                                    <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                                        <span>Shipping</span>
+                                        <span className="text-blue-600 dark:text-blue-400">+{formatCurrency(totals.shipping)}</span>
+                                    </div>
+                                )}
+                                {totals.discount > 0 && (
+                                    <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                                        <span>Discount</span>
+                                        <span className="text-green-600 dark:text-green-400">−{formatCurrency(totals.discount)}</span>
+                                    </div>
+                                )}
+                                {totals.taxAmount > 0 && (
+                                    <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                                        <span>Tax</span>
+                                        <span>+{formatCurrency(totals.taxAmount)}</span>
+                                    </div>
+                                )}
+                                <div className="flex justify-between font-bold text-gray-800 dark:text-white border-t border-gray-200 dark:border-gray-600 pt-2">
+                                    <span>Grand Total</span>
+                                    <span>{formatCurrency(totals.total)}</span>
                                 </div>
                             </div>
 
@@ -341,15 +374,14 @@ export const PurchaseDetailPage = () => {
                                     <button
                                         onClick={handlePayment}
                                         disabled={!paymentAmount || Number(paymentAmount) <= 0 || Number(paymentAmount) > totals.due}
-                                        className={`w-full py-3 rounded-lg font-bold text-white text-lg transition-all ${
-                                            paymentAmount && Number(paymentAmount) > totals.due
+                                        className={`w-full py-3 rounded-lg font-bold text-white text-lg transition-all ${paymentAmount && Number(paymentAmount) > totals.due
                                                 ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'
                                                 : !paymentAmount || Number(paymentAmount) <= 0
                                                     ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'
                                                     : paymentAmount && Number(paymentAmount) === totals.due
                                                         ? 'bg-green-600 hover:bg-green-700 shadow-md shadow-green-600/30'
                                                         : 'bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-600/30'
-                                        }`}
+                                            }`}
                                     >
                                         {paymentAmount && Number(paymentAmount) === totals.due ? '✓ Pay Full Amount' : `Pay ${paymentAmount ? formatCurrency(Number(paymentAmount)) : '0.00'}`}
                                     </button>

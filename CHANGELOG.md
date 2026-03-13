@@ -1,5 +1,30 @@
 # Feature Updates & Bug Fixes Changelog
 
+## [2026-03-07] - Return Module Refinements
+
+## [2026-03-07] - Comprehensive POS UX/UI Enhancements & Return Module Overhaul
+
+### Return Module & Refund Logic
+- **Complete UI Redesign (Single-View UX)**: The `ReturnModal.tsx` has been completely rebuilt. The legacy tabbed interface has been replaced with a fluid, scrollable single-page view. All relevant context—transaction info, structured payment breakdowns, internal notes, and returnable items list—is now immediately visible without clicking between tabs. 
+- **Minimalist Aesthetic Integration**: Applied strict spacing rules, reduced excessive padding, and standardized layout structures to ensure the Return Modal perfectly aligns with the minimalist, modern aesthetic previously established in `UnifiedCheckoutModal` and `SalesHistoryDashboard`.
+- **Backend Note Management**: Implemented a new REST endpoint (`PATCH /sales/:id/note`) and integrated full note-editing capabilities directly into the Return Modal. Staff can now document specific reasons for returns/adjustments on the original sales record seamlessly.
+- **Double Refund Prevention (Critical Fix)**: Implemented robust state-checking to prevent processing refunds on bills that have already been fully returned, or inadvertently attempting to refund a "Return" transaction record. The UI now dynamically disables interactions and explicitly warns the user ("Already Refunded").
+- **Pro-rated Cash Refund Capping (Fiscal Fix)**: Resolved an edge case with split payments (Cash + Credit/Card) where a strict cash refund could incorrectly exceed the initial cash tendered. The system now enforces a hard cap, ensuring cash refunds cannot exceed the original cash portion paid.
+- **Batch ID Nullification Patch**: Corrected a critical payload mapping error (`item.batch_id` vs `item.batchId`) on the frontend that was causing backend 404 validation failures during legitimate refund attempts.
+
+### Core POS & Checkout
+- **Split Payment Receipt Rendering**: Fixed a critical formatting bug where split payments (ex. Cash + Card) were displaying an extraneous "00" string padding block randomly on thermal prints. Added dedicated sub-lines for each payment type to ensure transparent customer accounting.
+- **Credit Balance Integrity**: Ensured that the backend properly registers and deducts `dueAmount` metrics appropriately during both partial and full split-payment refunds.
+- **Unified Checkout Modal Polish**: Addressed corner-case styling issues and ensured dynamic buttons (ex. "Mark as Paid") stretch to full width for better touchscreen targeting.
+
+### Sales History & Interface
+- **Sales History Dashboard Revamp**: Overhauled the Sales History UI, introducing distinct visual badging for transaction types and payment methods. The dashboard now features a cleaner table structure with responsive summary cards.
+- **Print Action Centralization**: Streamlined the layout by moving specific action buttons (like "Print Receipt") directly into modal views rather than cluttering high-level lists.
+
+### Bulk Operations & Admin Tools
+- **Product Bulk Action Refactoring**: Consolidated the generic "Actions" dropdown menu on the Products page into explicit, high-visibility "Bulk Export" and "Bulk Import" primary buttons.
+- **Bulk Import Modal Standardization**: Rebuilt the Import Data modal layout to match the minimalist system aesthetic, significantly reducing padding and visual noise.
+
 ## [2026-02-28] - Security Hardening & Bug Fix Batch
 
 ### Security

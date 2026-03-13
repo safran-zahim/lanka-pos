@@ -23,17 +23,19 @@ export const CustomerList = () => {
         customer: null
     });
 
-    const fetchCustomers = useCallback(async () => {
+    const fetchCustomers = useCallback(async (signal?: AbortSignal) => {
         setLoading(true);
         try {
             const token = sessionStorage.getItem('token') || localStorage.getItem('token');
             const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/customers`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 'Authorization': `Bearer ${token}` },
+                signal
             });
             if (!response.ok) throw new Error('Failed to fetch customers');
             const data = await response.json();
             setCustomers(data);
-        } catch (error) {
+        } catch (error: any) {
+            if (error.name === 'AbortError') return;
             console.error('Error fetching customers:', error);
             addToast('Failed to load customers', 'error');
         } finally {
@@ -42,7 +44,9 @@ export const CustomerList = () => {
     }, [addToast]);
 
     useEffect(() => {
-        fetchCustomers();
+        const controller = new AbortController();
+        fetchCustomers(controller.signal);
+        return () => controller.abort();
     }, [fetchCustomers]);
 
     const handleDelete = async (id: string, e: React.MouseEvent) => {

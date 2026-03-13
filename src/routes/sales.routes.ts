@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { checkout, createHeldSale, deleteHeldSale, getHeldSales, getSale, getSales, refundSale, getDailySummary, getMonthlySummary } from '../controllers/sales.controller';
+import { checkout, createHeldSale, deleteHeldSale, getHeldSales, getSale, getSales, refundSale, getDailySummary, getMonthlySummary, updateSaleNote } from '../controllers/sales.controller';
 import { authenticate, authorize, requireActiveSubscription } from '../middleware/auth.middleware';
 
 const router = Router();
@@ -13,5 +13,6 @@ router.post('/held', authenticate, requireActiveSubscription, authorize(['cashie
 router.delete('/held/:id', authenticate, requireActiveSubscription, authorize(['cashier', 'manager', 'admin']), deleteHeldSale); // Cashier+
 router.get('/:id', authenticate, requireActiveSubscription, getSale); // All (authenticated)
 router.post('/:id/refund', authenticate, requireActiveSubscription, authorize(['manager', 'admin']), refundSale); // Manager+
+router.patch('/:id/note', authenticate, requireActiveSubscription, authorize(['manager', 'admin']), updateSaleNote); // Manager+
 
 export default router;

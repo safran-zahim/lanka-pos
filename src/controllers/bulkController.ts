@@ -4,17 +4,20 @@ import { z } from 'zod';
 import { Decimal } from 'decimal.js';
 
 const productImportSchema = z.object({
-    name: z.string(),
+    name: z.string().min(1, "Name is required"),
     skuCode: z.string().optional().nullable(),
-    category: z.string().optional(), // We might need to map category name to Category ID or create if not exists.
-    price: z.number().optional(), // retail price (stored per purchase batch)
-    stock: z.number().int().optional(),
-    reorderLevel: z.number().int().default(10),
-    costPrice: z.number().optional(), // stored per purchase batch
+    barcode: z.string().optional().nullable(),
+    barcodeType: z.string().optional().nullable(),
+    category_id: z.string().optional().nullable(),
+    sub_category_id: z.string().optional().nullable(),
+    unit_id: z.string().optional().nullable(),
+    brand_id: z.string().optional().nullable(),
+    description: z.string().optional().nullable(),
+    price: z.number().optional().nullable(),
+    costPrice: z.number().optional().nullable(),
+    stock: z.number().optional().nullable(),
+    minStock: z.number().int().optional().nullable().default(10),
 });
-
-// We should check if we need to handle Categories.
-// If category is a string name, we should find or create it.
 
 export const bulkImportProducts = async (req: Request, res: Response) => {
     try {
@@ -35,72 +38,88 @@ export const bulkImportProducts = async (req: Request, res: Response) => {
 
                 try {
                     const data = result.data;
-                    // Handle Category
                     let categoryId = null;
-                    if (data.category) {
+                    let subCategoryId = null;
+                    let brandId = null;
+                    let unitId = null;
+
+                    if (data.category_id && String(data.category_id).trim() !== '') {
+                        const catName = String(data.category_id).trim();
                         const cat = await tx.category.upsert({
-                            where: { name: String(data.category) },
+                            where: { name: catName },
                             update: {},
-                            create: { name: String(data.category) }
+                            create: { name: catName }
                         });
                         categoryId = cat.id;
+
+                        if (data.sub_category_id && String(data.sub_category_id).trim() !== '') {
+                            const subcatName = String(data.sub_category_id).trim();
+
+                            // Check if subcategory exists for this category
+                            let subcat = await tx.subCategory.findFirst({
+                                where: { name: subcatName, categoryId: categoryId }
+                            });
+
+                            if (!subcat) {
+                                subcat = await tx.subCategory.create({
+                                    data: { name: subcatName, categoryId: categoryId }
+                                });
+                            }
+                            subCategoryId = subcat.id;
+                        }
                     }
 
-                    // Check if product with name or SKU exists
-                    // Product model in schema uses UUID 'id'. 'name' is not unique?
-                    // Let's find by name if category matches, or just create.
-                    // If we have a unique SKU field in future, use it.
+                    if (data.brand_id && String(data.brand_id).trim() !== '') {
+                        const brandName = String(data.brand_id).trim();
+                        const brand = await tx.brand.upsert({
+                            where: { name: brandName },
+                            update: {},
+                            create: { name: brandName }
+                        });
+                        brandId = brand.id;
+                    }
 
-                    // Check if product with SKU exists
+                    if (data.unit_id && String(data.unit_id).trim() !== '') {
+                        const unitName = String(data.unit_id).trim();
+                        const unit = await tx.unit.upsert({
+                            where: { name: unitName },
+                            update: {},
+                            create: { name: unitName, shortName: unitName.substring(0, 3).toUpperCase() }
+                        });
+                        unitId = unit.id;
+                    }
+
                     if (data.skuCode) {
                         const existing = await tx.product.findUnique({
                             where: { skuCode: data.skuCode }
                         });
                         if (existing) {
+                            // Instead of failing, we could update, but safety first: skip and report 
                             errors.push(`${data.name} (SKU: ${data.skuCode}): SKU already exists`);
                             continue;
                         }
                     }
 
-                    const created = await tx.product.create({
+                    await tx.product.create({
                         data: {
                             name: data.name,
-                            skuCode: data.skuCode,
-                            reorderLevel: data.reorderLevel,
+                            skuCode: data.skuCode || null,
+                            barcode: data.barcode || null,
+                            barcodeType: data.barcodeType || null,
+                            description: data.description || null,
+                            reorderLevel: data.minStock ?? 10,
+                            price: data.price ? new Decimal(data.price) : null,
                             categoryId: categoryId,
-                            price: data.price ? new Decimal(data.price) : undefined
+                            subCategoryId: subCategoryId,
+                            brandId: brandId,
+                            unitId: unitId,
+                            isActive: true
                         }
                     });
 
-                    if ((data.stock || 0) > 0) {
-                        const costPrice = data.costPrice ?? 0;
-                        const retailPrice = data.price ?? 0;
+                    // Note: Purposefully ignoring data.stock to enforce "Master Data Only" strictness
+                    // No Purchase or Sale records generated here.
 
-                        // Get or create default supplier for bulk imports
-                        const supplier = await tx.supplier.findFirst({
-                            where: { name: 'Bulk Import' }
-                        }) || await tx.supplier.create({
-                            data: { name: 'Bulk Import' }
-                        });
-
-                        await tx.purchase.create({
-                            data: {
-                                supplierId: supplier.id,
-                                totalAmount: new Decimal(costPrice * data.stock!),
-                                paidAmount: new Decimal(costPrice * data.stock!),
-                                status: 'COMPLETED',
-                                date: new Date(),
-                                items: {
-                                    create: [{
-                                        productId: created.id,
-                                        quantity: data.stock!,
-                                        costPrice: new Decimal(costPrice),
-                                        retailPrice: new Decimal(retailPrice)
-                                    }]
-                                }
-                            }
-                        });
-                    }
                     importedCount++;
                 } catch (error: any) {
                     console.error(`Error importing product ${p.name}:`, error);
@@ -117,6 +136,41 @@ export const bulkImportProducts = async (req: Request, res: Response) => {
     } catch (error) {
         console.error('Bulk import error:', error);
         res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+export const bulkExportProducts = async (req: Request, res: Response) => {
+    try {
+        const products = await prisma.product.findMany({
+            where: { isActive: true },
+            include: {
+                categoryRel: true,
+                subCategory: true,
+                brand: true,
+                unit: true
+            },
+            orderBy: { name: 'asc' }
+        });
+
+        // Structure it nicely for CSV
+        const exportData = products.map(p => ({
+            Name: p.name,
+            SKU: p.skuCode || '',
+            Barcode: p.barcode || '',
+            BarcodeType: p.barcodeType || '',
+            Category: p.categoryRel?.name || '',
+            SubCategory: p.subCategory?.name || '',
+            Brand: p.brand?.name || '',
+            Unit: p.unit?.name || '',
+            RetailPrice: p.price ? Number(p.price) : '',
+            AlertQty: Number(p.reorderLevel),
+            Description: p.description || '',
+        }));
+
+        res.json({ data: exportData });
+    } catch (error) {
+        console.error('Bulk export error:', error);
+        res.status(500).json({ error: 'Failed to export products' });
     }
 };
 
@@ -174,5 +228,23 @@ export const bulkImportCustomers = async (req: Request, res: Response) => {
     } catch (error) {
         console.error('Bulk import error:', error);
         res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+export const bulkUpdateProductStatus = async (req: Request, res: Response) => {
+    try {
+        const { ids, isActive } = req.body;
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ error: 'ids must be a non-empty array' });
+        }
+        const numericIds = ids.map(Number).filter(id => !isNaN(id));
+        const result = await prisma.product.updateMany({
+            where: { id: { in: numericIds } },
+            data: { isActive: Boolean(isActive) }
+        });
+        res.json({ message: `Updated ${result.count} products`, count: result.count });
+    } catch (error) {
+        console.error('Bulk status update error:', error);
+        res.status(500).json({ error: 'Failed to update product statuses' });
     }
 };

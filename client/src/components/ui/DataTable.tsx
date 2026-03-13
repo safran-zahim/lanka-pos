@@ -40,7 +40,7 @@ export function DataTable<T>({
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState<{ key: keyof T | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
     const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize] = useState(10);
+    const [pageSize, setPageSize] = useState(10);
     const [selectedIds, setSelectedIds] = useState<Set<any>>(new Set());
 
     // 1. Filter
@@ -66,9 +66,10 @@ export function DataTable<T>({
         });
     }, [filteredData, sortConfig]);
 
-    // 3. Paginate
-    const totalPages = pagination ? Math.ceil(sortedData.length / pageSize) : 1;
-    const paginatedData = pagination ? sortedData.slice((currentPage - 1) * pageSize, currentPage * pageSize) : sortedData;
+    // 3. Paginate — if pageSize is 0, show all
+    const effectivePageSize = pageSize === 0 ? sortedData.length || 1 : pageSize;
+    const totalPages = pagination ? Math.ceil(sortedData.length / effectivePageSize) : 1;
+    const paginatedData = pagination ? sortedData.slice((currentPage - 1) * effectivePageSize, currentPage * effectivePageSize) : sortedData;
 
     // Handlers
     const handleSort = (key: keyof T) => {
@@ -114,7 +115,7 @@ export function DataTable<T>({
     return (
         <div className="w-full bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 font-sans">
             {/* Toolbar */}
-            {(searchable || actions) && (
+            {(searchable || actions || pagination) && (
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row justify-between gap-4 items-center">
                     {searchable && (
                         <div className="relative w-full sm:w-64">
@@ -128,7 +129,23 @@ export function DataTable<T>({
                             />
                         </div>
                     )}
-                    <div className="flex items-center gap-2 ml-auto">
+                    <div className="flex items-center gap-3 ml-auto flex-wrap">
+                        {pagination && (
+                            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                                <span>Show</span>
+                                <select
+                                    value={pageSize}
+                                    onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                                    className="border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    {[10, 50, 100].map(n => (
+                                        <option key={n} value={n}>{n}</option>
+                                    ))}
+                                    <option value={0}>All</option>
+                                </select>
+                                <span className="text-gray-400">/ {sortedData.length}</span>
+                            </div>
+                        )}
                         {actions}
                     </div>
                 </div>
@@ -206,10 +223,10 @@ export function DataTable<T>({
             </div>
 
             {/* Pagination */}
-            {pagination && (
-                <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+            {pagination && pageSize !== 0 && (
+                <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex flex-wrap justify-between items-center gap-3">
                     <span className="text-sm text-gray-500">
-                        Showing {Math.min((currentPage - 1) * pageSize + 1, sortedData.length)} to {Math.min(currentPage * pageSize, sortedData.length)} of {sortedData.length} entries
+                        Showing {Math.min((currentPage - 1) * effectivePageSize + 1, sortedData.length)} to {Math.min(currentPage * effectivePageSize, sortedData.length)} of {sortedData.length}
                     </span>
                     <div className="flex items-center gap-2">
                         <button
