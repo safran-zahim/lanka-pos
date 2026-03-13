@@ -97,7 +97,7 @@ export const SaleDetailPage = () => {
     const discount = Number(transaction.discount || 0);
     const roundOff = Number(transaction.roundOffDiscount || 0);
     const grandTotal = Number(transaction.total || 0);
-    const dueAmount = Number(transaction.dueAmount || 0);
+    const dueAmount = Math.max(0, Number(transaction.dueAmount || 0));
     const pointsEarned = Number(transaction.pointsEarned || 0);
     const pointsRedeemed = Number(transaction.pointsRedeemed || 0);
     const paymentDetails = transaction.paymentDetails as any;
@@ -113,6 +113,12 @@ export const SaleDetailPage = () => {
     const taxPercent = tax > 0 && displaySubtotal - discount > 0
         ? ((tax / (displaySubtotal - discount)) * 100).toFixed(2)
         : '0.00';
+    const cashPortion = Number(paymentDetails?.cashAmount || (transaction.paymentMethod === 'cash' ? grandTotal : 0));
+    const cardPortion = Number(paymentDetails?.cardAmount || (transaction.paymentMethod === 'card' ? grandTotal : 0));
+    const creditPortion = Number(paymentDetails?.creditAmount || (transaction.paymentMethod === 'credit' ? dueAmount || Math.max(0, grandTotal - cashPortion - cardPortion) : 0));
+    const collectedNow = cashPortion + cardPortion;
+    const cashTendered = Number(paymentDetails?.cashAmount || 0);
+    const changeGiven = transaction.paymentMethod !== 'split' && cashTendered > grandTotal ? cashTendered - grandTotal : 0;
 
     return (
         <div className="p-6 max-w-5xl mx-auto space-y-5 text-gray-900 dark:text-white">
@@ -292,6 +298,12 @@ export const SaleDetailPage = () => {
                             <span>{isReturn ? 'REFUND TOTAL' : 'GRAND TOTAL'}</span>
                             <span>{formatCurrency(grandTotal)}</span>
                         </div>
+                        {!isReturn && collectedNow > 0 && (
+                            <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold border-t border-gray-100 dark:border-gray-700 pt-2 mt-1">
+                                <span>Collected Now</span>
+                                <span>{formatCurrency(collectedNow)}</span>
+                            </div>
+                        )}
                         {dueAmount > 0 && (
                             <div className="flex justify-between text-orange-600 dark:text-orange-400 font-bold bg-orange-50 dark:bg-orange-900/10 rounded-lg px-3 py-2 border border-orange-100 dark:border-orange-900/30">
                                 <span>Outstanding Due</span>
@@ -317,48 +329,46 @@ export const SaleDetailPage = () => {
                                 <span className="text-gray-600 dark:text-gray-400">Method</span>
                                 <PaymentBadge method={transaction.paymentMethod || 'cash'} />
                             </div>
-                            {transaction.paymentMethod === 'split' && paymentDetails && (
+                            {(transaction.paymentMethod === 'split' || transaction.paymentMethod === 'credit') && (cashPortion > 0 || cardPortion > 0 || creditPortion > 0) && (
                                 <>
-                                    {Number(paymentDetails.cashAmount || 0) > 0 && (
+                                    {cashPortion > 0 && (
                                         <div className="flex justify-between text-gray-600 dark:text-gray-400 ml-2 border-l-2 border-gray-100 dark:border-gray-700 pl-2">
                                             <span>Cash Portion</span>
-                                            <span className="font-medium">{formatCurrency(Number(paymentDetails.cashAmount || 0))}</span>
+                                            <span className="font-medium">{formatCurrency(cashPortion)}</span>
                                         </div>
                                     )}
-                                    {Number(paymentDetails.cardAmount || 0) > 0 && (
+                                    {cardPortion > 0 && (
                                         <div className="flex justify-between text-gray-600 dark:text-gray-400 ml-2 border-l-2 border-gray-100 dark:border-gray-700 pl-2">
                                             <span>Card Portion</span>
-                                            <span className="font-medium">{formatCurrency(Number(paymentDetails.cardAmount || 0))}</span>
+                                            <span className="font-medium">{formatCurrency(cardPortion)}</span>
                                         </div>
                                     )}
-                                    {Number(paymentDetails.creditAmount || 0) > 0 && (
+                                    {creditPortion > 0 && (
                                         <div className="flex justify-between text-gray-600 dark:text-gray-400 ml-2 border-l-2 border-gray-100 dark:border-gray-700 pl-2">
                                             <span>Credit Portion</span>
-                                            <span className="font-medium">{formatCurrency(Number(paymentDetails.creditAmount || 0))}</span>
+                                            <span className="font-medium">{formatCurrency(creditPortion)}</span>
                                         </div>
                                     )}
                                 </>
                             )}
-                            {paymentDetails?.cashAmount && !paymentDetails?.cardAmount && (
+                            {cashTendered > 0 && transaction.paymentMethod !== 'split' && (
                                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
                                     <span>Cash Tendered</span>
-                                    <span className="font-medium">{formatCurrency(Number(paymentDetails.cashAmount))}</span>
+                                    <span className="font-medium">{formatCurrency(cashTendered)}</span>
                                 </div>
                             )}
-                            {paymentDetails?.cashAmount &&
-                                Number(paymentDetails.cashAmount) > grandTotal &&
-                                transaction.paymentMethod !== 'split' && (
+                            {changeGiven > 0 && (
                                     <div className="flex justify-between font-semibold text-emerald-600 dark:text-emerald-400">
                                         <span>Change Given</span>
-                                        <span>{formatCurrency(Number(paymentDetails.cashAmount) - grandTotal)}</span>
+                                        <span>{formatCurrency(changeGiven)}</span>
                                     </div>
                                 )}
-                            {transaction.paymentMethod === 'credit' && (
+                            {creditPortion > 0 && (
                                 <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 text-sm">
                                     <p className="font-bold text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400 mb-1">On Account (Credit)</p>
                                     <div className="flex justify-between font-semibold">
                                         <span>Charged to Account</span>
-                                        <span className="text-orange-600 dark:text-orange-400">{formatCurrency(grandTotal)}</span>
+                                        <span className="text-orange-600 dark:text-orange-400">{formatCurrency(creditPortion)}</span>
                                     </div>
                                     {dueAmount > 0 && (
                                         <div className="flex justify-between text-sm mt-1 text-red-500">

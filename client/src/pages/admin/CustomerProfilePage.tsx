@@ -108,6 +108,8 @@ export const CustomerProfilePage = () => {
         return map;
     }, [transactions]);
 
+    const outstandingDue = Number(customer?.stats?.outstandingDue ?? customer?.totalDue ?? 0);
+
     if (!customer) {
         return (
             <div className="p-6">
@@ -174,13 +176,13 @@ export const CustomerProfilePage = () => {
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
                     <div className="text-xs text-gray-400 uppercase tracking-wider">Credit Balance</div>
-                    <div className={`mt-2 text-2xl font-bold flex items-center gap-2 ${Number(customer.totalDue || 0) > 0 ? 'text-red-500' : 'text-green-500'}`}>
-                        <Wallet size={20} /> {formatCurrency(Number(customer.totalDue || 0))}
+                    <div className={`mt-2 text-2xl font-bold flex items-center gap-2 ${outstandingDue > 0 ? 'text-red-500' : 'text-green-500'}`}>
+                        <Wallet size={20} /> {formatCurrency(outstandingDue)}
                     </div>
-                    {Number(customer.totalDue || 0) > 0 && (
+                    {outstandingDue > 0 && (
                         <button
                             onClick={() => {
-                                setPaymentAmount(String(customer.totalDue));
+                                setPaymentAmount(String(outstandingDue));
                                 setPaymentNote('General debt repayment');
                                 setPaymentSaleId(null);
                                 setIsPaymentModalOpen(true);
@@ -248,15 +250,15 @@ export const CustomerProfilePage = () => {
                                         </td>
                                         <td className="py-2 text-right font-medium">{transactionItemsMap.get(String(t.id || t.transaction_id))?.count || 0}</td>
                                         <td className="py-2 text-right font-medium">{formatCurrency(Number(t.total || t.total_amount || 0))}</td>
-                                        <td className={`py-2 text-right font-bold ${Number(t.dueAmount || 0) > 0 ? 'text-red-500' : 'text-emerald-500'}`}>
-                                            {formatCurrency(Number(t.dueAmount || 0))}
+                                        <td className={`py-2 text-right font-bold ${Math.max(0, Number(t.dueAmount || 0)) > 0 ? 'text-red-500' : 'text-emerald-500'}`}>
+                                            {formatCurrency(Math.max(0, Number(t.dueAmount || 0)))}
                                         </td>
                                         <td className="py-2 text-right pl-4">
-                                            {Number(t.dueAmount || 0) > 0 && (
+                                            {Math.max(0, Number(t.dueAmount || 0)) > 0 && (
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        setPaymentAmount(String(t.dueAmount));
+                                                        setPaymentAmount(String(Math.max(0, Number(t.dueAmount || 0))));
                                                         setPaymentNote(`Payment for Bill #${t.id || t.transaction_id}`);
                                                         setPaymentSaleId(t.id || t.transaction_id);
                                                         setIsPaymentModalOpen(true);
@@ -356,7 +358,7 @@ export const CustomerProfilePage = () => {
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Amount</label>
                                 <div className="text-lg font-bold text-red-600 dark:text-red-400">
-                                    {formatCurrency(Number(customer.totalDue || 0))}
+                                    {formatCurrency(Math.max(0, outstandingDue))}
                                 </div>
                             </div>
 

@@ -119,6 +119,7 @@ export const SalesHistoryDashboard = () => {
             tax_amount: Number(sale.tax || 0),
             round_off_discount: Number(sale.roundOffDiscount || 0),
             payment_method: sale.paymentMethod || 'cash',
+            payment_details: sale.paymentDetails || undefined,
             status: 'completed',
             type: sale.parentSaleId ? 'return' : 'sale',
             parent_sale_id: sale.parentSaleId || undefined

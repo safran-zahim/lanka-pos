@@ -3,6 +3,31 @@ import prisma from '../utils/prisma';
 import { z } from 'zod';
 import { Decimal } from 'decimal.js';
 
+const getSaleBreakdown = (sale: any) => {
+    const total = Math.abs(Number(sale.total || 0));
+    const cashAmount = Number(sale.paymentDetails?.cashAmount || 0);
+    const cardAmount = Number(sale.paymentDetails?.cardAmount || 0);
+    const explicitCreditAmount = Number(sale.paymentDetails?.creditAmount || 0);
+
+    if (sale.paymentMethod === 'split') {
+        return { cashAmount, cardAmount, creditAmount: explicitCreditAmount };
+    }
+
+    if (sale.paymentMethod === 'credit') {
+        return {
+            cashAmount,
+            cardAmount,
+            creditAmount: explicitCreditAmount || Math.max(0, Number(sale.dueAmount || 0) || (total - cashAmount - cardAmount))
+        };
+    }
+
+    if (sale.paymentMethod === 'card') {
+        return { cashAmount: 0, cardAmount: total, creditAmount: 0 };
+    }
+
+    return { cashAmount: total, cardAmount: 0, creditAmount: 0 };
+};
+
 const openShiftSchema = z.object({
     startingCash: z.number().nonnegative("Starting cash must be 0 or greater"),
     note: z.string().optional()
@@ -83,18 +108,18 @@ export const getActiveShift = async (req: Request, res: Response) => {
 
         const expectedCash = starting.plus(sales).plus(debtPaid).plus(totalCashIn).minus(refunds).minus(supplierPaid).minus(expenses).minus(totalCashOut);
 
-        // Compute non-cash sales
-        const salesData = await prisma.sale.groupBy({
-            by: ['paymentMethod'],
-            where: { shiftId: shift.id },
-            _sum: { total: true }
+        const shiftSales = await prisma.sale.findMany({
+            where: { shiftId: shift.id, status: { in: ['COMPLETED', 'RETURNED'] } },
+            select: { total: true, status: true, paymentMethod: true, paymentDetails: true, dueAmount: true }
         });
 
         let totalCardSales = new Decimal(0);
         let totalCreditSales = new Decimal(0);
-        salesData.forEach(item => {
-            if (item.paymentMethod === 'card') totalCardSales = totalCardSales.plus(item._sum.total || 0);
-            if (item.paymentMethod === 'credit') totalCreditSales = totalCreditSales.plus(item._sum.total || 0);
+        shiftSales.forEach((sale) => {
+            const multiplier = sale.status === 'RETURNED' || new Decimal(sale.total).lt(0) ? -1 : 1;
+            const breakdown = getSaleBreakdown(sale);
+            if (breakdown.cardAmount > 0) totalCardSales = totalCardSales.plus(new Decimal(breakdown.cardAmount).times(multiplier));
+            if (breakdown.creditAmount > 0) totalCreditSales = totalCreditSales.plus(new Decimal(breakdown.creditAmount).times(multiplier));
         });
 
         res.json({
@@ -167,18 +192,18 @@ export const closeShift = async (req: Request, res: Response) => {
             }
         });
 
-        // Compute non-cash sales
-        const salesData = await prisma.sale.groupBy({
-            by: ['paymentMethod'],
-            where: { shiftId: shift.id },
-            _sum: { total: true }
+        const shiftSales = await prisma.sale.findMany({
+            where: { shiftId: shift.id, status: { in: ['COMPLETED', 'RETURNED'] } },
+            select: { total: true, status: true, paymentMethod: true, paymentDetails: true, dueAmount: true }
         });
 
         let totalCardSales = new Decimal(0);
         let totalCreditSales = new Decimal(0);
-        salesData.forEach(item => {
-            if (item.paymentMethod === 'card') totalCardSales = totalCardSales.plus(item._sum.total || 0);
-            if (item.paymentMethod === 'credit') totalCreditSales = totalCreditSales.plus(item._sum.total || 0);
+        shiftSales.forEach((sale) => {
+            const multiplier = sale.status === 'RETURNED' || new Decimal(sale.total).lt(0) ? -1 : 1;
+            const breakdown = getSaleBreakdown(sale);
+            if (breakdown.cardAmount > 0) totalCardSales = totalCardSales.plus(new Decimal(breakdown.cardAmount).times(multiplier));
+            if (breakdown.creditAmount > 0) totalCreditSales = totalCreditSales.plus(new Decimal(breakdown.creditAmount).times(multiplier));
         });
 
         res.json({

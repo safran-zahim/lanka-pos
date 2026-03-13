@@ -95,8 +95,16 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
         const roundOff = transaction.round_off_discount || 0;
         const total = transaction.total_amount;
         const taxPercent = taxEnabled && taxAmount > 0 ? ((taxAmount / itemsTotal) * 100).toFixed(2).replace(/\.00$/, '') : '0';
+        const cashPortion = Number(transaction.payment_details?.cashAmount || (transaction.payment_method === 'cash' ? total : 0));
+        const cardPortion = Number(transaction.payment_details?.cardAmount || (transaction.payment_method === 'card' ? total : 0));
+        const creditPortion = Number(transaction.payment_details?.creditAmount || (transaction.payment_method === 'credit' ? Math.max(0, total - cashPortion - cardPortion) : 0));
+        const paymentBreakdown = [
+            cashPortion > 0 ? `Cash: ${formatCurrency(cashPortion)}` : '',
+            cardPortion > 0 ? `Card: ${formatCurrency(cardPortion)}` : '',
+            creditPortion > 0 ? `Credit: ${formatCurrency(creditPortion)}` : ''
+        ].filter(Boolean).join('\n');
 
-        const receiptText = `🧾 *${header}*\n${address}\n${phone ? `Tel: ${phone}` : ''}\n${email ? `Email: ${email}` : ''}\n\n*Invoice:* #${transaction.transaction_id}\n*Date:* ${formatDateTime(new Date(transaction.timestamp))}\n${customer?.name ? `*Customer:* ${customer.name}\n` : ''}\n*Items:*\n${items.map(item => `• ${item.quantity} × ${item.name} (${formatCurrency(item.price_at_sale * item.quantity)})`).join('\n')}\n\n*Summary:*\nSubtotal: ${formatCurrency(subtotal)}\n${discountAmount > 0 ? `Discount: -${formatCurrency(discountAmount)}\n` : ''}${taxEnabled && taxAmount > 0 ? `Tax (${taxPercent}%): ${formatCurrency(taxAmount)}\n` : ''}${roundOffEnabled && roundOff > 0 ? `Round Off: -${formatCurrency(roundOff)}\n` : ''}*Total: ${formatCurrency(total)}*\n\nPayment Method: ${transaction.payment_method.toUpperCase()}\n\n${footer || 'Thank you for your business!'}`;
+        const receiptText = `🧾 *${header}*\n${address}\n${phone ? `Tel: ${phone}` : ''}\n${email ? `Email: ${email}` : ''}\n\n*Invoice:* #${transaction.transaction_id}\n*Date:* ${formatDateTime(new Date(transaction.timestamp))}\n${customer?.name ? `*Customer:* ${customer.name}\n` : ''}\n*Items:*\n${items.map(item => `• ${item.quantity} × ${item.name} (${formatCurrency(item.price_at_sale * item.quantity)})`).join('\n')}\n\n*Summary:*\nSubtotal: ${formatCurrency(subtotal)}\n${discountAmount > 0 ? `Discount: -${formatCurrency(discountAmount)}\n` : ''}${taxEnabled && taxAmount > 0 ? `Tax (${taxPercent}%): ${formatCurrency(taxAmount)}\n` : ''}${roundOffEnabled && roundOff > 0 ? `Round Off: -${formatCurrency(roundOff)}\n` : ''}*Total: ${formatCurrency(total)}*\n\nPayment Method: ${transaction.payment_method.toUpperCase()}${paymentBreakdown ? `\n${paymentBreakdown}` : ''}${creditPortion > 0 ? `\nDue: ${formatCurrency(creditPortion)}` : ''}\n\n${footer || 'Thank you for your business!'}`;
 
         // Clean phone number
         const phoneNumber = customer?.phone?.replace(/[^0-9]/g, '') || '';

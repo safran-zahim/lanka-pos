@@ -2,6 +2,31 @@ import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import { Decimal } from 'decimal.js';
 
+const getSalePaymentBreakdown = (sale: any) => {
+    const total = Math.abs(Number(sale.total || 0));
+    const cashAmount = Number(sale.paymentDetails?.cashAmount || 0);
+    const cardAmount = Number(sale.paymentDetails?.cardAmount || 0);
+    const explicitCreditAmount = Number(sale.paymentDetails?.creditAmount || 0);
+
+    if (sale.paymentMethod === 'split') {
+        return { cashAmount, cardAmount, creditAmount: explicitCreditAmount };
+    }
+
+    if (sale.paymentMethod === 'credit') {
+        return {
+            cashAmount,
+            cardAmount,
+            creditAmount: explicitCreditAmount || Math.max(0, Number(sale.dueAmount || 0) || (total - cashAmount - cardAmount))
+        };
+    }
+
+    if (sale.paymentMethod === 'card') {
+        return { cashAmount: 0, cardAmount: total, creditAmount: 0 };
+    }
+
+    return { cashAmount: total, cardAmount: 0, creditAmount: 0 };
+};
+
 export const getTransactions = async (req: Request, res: Response) => {
     try {
         // Fetch data simultaneously
@@ -32,27 +57,42 @@ export const getTransactions = async (req: Request, res: Response) => {
 
         // 1. Map Sales (Completed = IN, Returned = OUT)
         sales.forEach(s => {
-            if (s.status === 'COMPLETED' && new Decimal(s.total).greaterThan(0)) {
-                transactions.push({
-                    id: `SALE-${s.id}`,
-                    date: s.createdAt,
-                    type: 'IN',
-                    category: 'Sale',
-                    amount: s.total,
-                    method: s.paymentMethod || 'mixed',
-                    description: s.customer ? `Sale to ${s.customer.name}` : 'Walk-in Sale'
+            const saleTotal = new Decimal(s.total || 0);
+            const isRefund = s.status === 'RETURNED' || saleTotal.lessThan(0);
+            const flowType = isRefund ? 'OUT' : 'IN';
+            const categoryPrefix = isRefund ? 'Refund' : 'Sale';
+            const descriptionBase = `Invoice #${s.id}${s.customer ? ` - ${s.customer.name}` : ' - Walk-in'}`;
+            const breakdown = getSalePaymentBreakdown(s);
+            const entries = [
+                { key: 'cash', label: 'Cash', amount: breakdown.cashAmount },
+                { key: 'card', label: 'Card', amount: breakdown.cardAmount },
+                { key: 'credit', label: 'Credit', amount: breakdown.creditAmount }
+            ].filter(entry => entry.amount > 0);
+
+            if (entries.length > 0) {
+                entries.forEach(entry => {
+                    transactions.push({
+                        id: `${isRefund ? 'REFUND' : 'SALE'}-${s.id}-${entry.key.toUpperCase()}`,
+                        date: s.createdAt,
+                        type: flowType,
+                        category: `${categoryPrefix} ${entry.label}`,
+                        amount: entry.amount,
+                        method: entry.key,
+                        description: descriptionBase
+                    });
                 });
-            } else if (s.status === 'RETURNED' && new Decimal(s.total).greaterThan(0)) {
-                transactions.push({
-                    id: `REFUND-${s.id}`,
-                    date: s.createdAt,
-                    type: 'OUT',
-                    category: 'Refund',
-                    amount: s.total,
-                    method: s.paymentMethod || 'mixed',
-                    description: s.customer ? `Refund to ${s.customer.name}` : 'Walk-in Refund'
-                });
+                return;
             }
+
+            transactions.push({
+                id: `${isRefund ? 'REFUND' : 'SALE'}-${s.id}`,
+                date: s.createdAt,
+                type: flowType,
+                category: categoryPrefix,
+                amount: saleTotal.abs().toNumber(),
+                method: s.paymentMethod || 'mixed',
+                description: descriptionBase
+            });
         });
 
         // 2. Map Customer Payments (Debt Repayment = IN)

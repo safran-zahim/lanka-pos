@@ -123,14 +123,25 @@ export const getCustomerDetails = async (req: Request, res: Response) => {
             _max: { createdAt: true }
         });
 
+        const outstandingDueAggregate = await prisma.sale.aggregate({
+            where: {
+                customerId: id,
+                dueAmount: { gt: 0 }
+            },
+            _sum: { dueAmount: true }
+        });
+
         const totalSpent = totalSpentAggregate._sum.total || new Decimal(0);
         const lastVisit = totalSpentAggregate._max.createdAt || customer.createdAt; // Fallback to creation date
+        const outstandingDue = outstandingDueAggregate._sum.dueAmount || new Decimal(0);
 
         res.json({
             ...customer,
+            totalDue: outstandingDue,
             stats: {
                 totalSpent,
                 lastVisit,
+                outstandingDue,
                 pointsBalance: customer.pointsBalance || 0,
                 visitCount: customer._count.sales
             }
@@ -216,14 +227,6 @@ export const processPayment = async (req: Request, res: Response) => {
         if (!customer) return res.status(404).json({ error: 'Customer not found' });
 
         const result = await prisma.$transaction(async (tx) => {
-            // Update customer debt
-            const updatedCustomer = await tx.customer.update({
-                where: { id },
-                data: {
-                    totalDue: { decrement: new Decimal(data.amount) }
-                }
-            });
-
             // Get active shift for staff
             const staffId = (req as any).user?.id;
             let currentShiftId: number | undefined;
@@ -317,6 +320,21 @@ export const processPayment = async (req: Request, res: Response) => {
                     data: { totalCustomerPayments: { increment: new Decimal(data.amount) } }
                 });
             }
+
+            const outstandingDueAggregate = await tx.sale.aggregate({
+                where: {
+                    customerId: id,
+                    dueAmount: { gt: 0 }
+                },
+                _sum: { dueAmount: true }
+            });
+
+            const updatedCustomer = await tx.customer.update({
+                where: { id },
+                data: {
+                    totalDue: outstandingDueAggregate._sum.dueAmount || new Decimal(0)
+                }
+            });
 
             return { updatedCustomer, payments: createdPayments };
         });

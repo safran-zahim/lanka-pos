@@ -42,6 +42,43 @@ const checkoutSchema = z.object({
     }).optional()
 });
 
+const getPaymentBreakdown = (paymentMethod: string, paymentDetails: { cashAmount?: number; cardAmount?: number; creditAmount?: number } | undefined, grandTotal: number) => {
+    const cashAmount = Number(paymentDetails?.cashAmount || 0);
+    const cardAmount = Number(paymentDetails?.cardAmount || 0);
+    const explicitCreditAmount = Number(paymentDetails?.creditAmount || 0);
+
+    if (paymentMethod === 'split') {
+        return {
+            cashAmount,
+            cardAmount,
+            creditAmount: explicitCreditAmount
+        };
+    }
+
+    if (paymentMethod === 'credit') {
+        const creditAmount = Math.max(0, explicitCreditAmount || (grandTotal - cashAmount - cardAmount));
+        return {
+            cashAmount,
+            cardAmount,
+            creditAmount
+        };
+    }
+
+    if (paymentMethod === 'card') {
+        return {
+            cashAmount,
+            cardAmount: cardAmount || grandTotal,
+            creditAmount: 0
+        };
+    }
+
+    return {
+        cashAmount: cashAmount || grandTotal,
+        cardAmount,
+        creditAmount: 0
+    };
+};
+
 export const checkout = async (req: Request, res: Response) => {
     try {
         const data = checkoutSchema.parse(req.body);
@@ -408,14 +445,9 @@ export const checkout = async (req: Request, res: Response) => {
 
 
             const refundTotal = returnSubtotal.plus(refundTax).minus(refundDiscount).minus(refundRoundOff);
-
-            // Extract credit amount specifically for dueAmount logic
-            let creditAmount = 0;
-            if (data.payment_method === 'credit') {
-                creditAmount = isReturn ? refundTotal.neg().toNumber() : data.totals.grand_total;
-            } else if (data.payment_method === 'split' && data.payment_details?.creditAmount) {
-                creditAmount = isReturn ? refundTotal.neg().toNumber() : data.payment_details.creditAmount;
-            }
+            const saleGrandTotal = isReturn ? refundTotal.toNumber() : data.totals.grand_total;
+            const paymentBreakdown = getPaymentBreakdown(data.payment_method, data.payment_details, saleGrandTotal);
+            const creditAmount = paymentBreakdown.creditAmount;
 
             // 2. Create Sale Record
             const sale = await tx.sale.create({
@@ -431,7 +463,7 @@ export const checkout = async (req: Request, res: Response) => {
                     discount: new Decimal(isReturn ? refundDiscount.neg() : data.totals.discount),
                     roundOffDiscount: new Decimal(isReturn ? refundRoundOff.neg() : (data.totals.round_off_discount || 0)),
                     note: isReturn ? (data.note || `Refund for Bill #${data.parent_sale_id}`) : data.note,
-                    dueAmount: new Decimal(creditAmount), // This handles 'credit' and 'split' with credit portion
+                    dueAmount: new Decimal(creditAmount),
                     status: isReturn ? 'RETURNED' : 'COMPLETED',
                     paymentDetails: data.payment_details || undefined,
                     items: {
@@ -481,12 +513,21 @@ export const checkout = async (req: Request, res: Response) => {
                         });
                     }
                 } else if (parentSale) {
-                    // Update original sale dueAmount if it was a credit sale
-                    if (parentSale.paymentMethod === 'credit') {
+                    const parentDue = new Decimal(parentSale.dueAmount?.toString() || '0');
+                    const dueReduction = Decimal.min(parentDue, refundTotal);
+
+                    if (dueReduction.gt(0)) {
                         await tx.sale.update({
                             where: { id: parentSale.id },
                             data: {
-                                dueAmount: { decrement: refundTotal }
+                                dueAmount: { decrement: dueReduction }
+                            }
+                        });
+
+                        await tx.customer.update({
+                            where: { id: saleCustomerId },
+                            data: {
+                                totalDue: { decrement: dueReduction }
                             }
                         });
                     }
@@ -530,19 +571,15 @@ export const checkout = async (req: Request, res: Response) => {
                 }
             }
 
-            // Update customer debt if payment method is "credit"
-            if (data.payment_method === 'credit' && saleCustomerId) {
+            // Update customer debt for any sale with a credit portion.
+            if (!isReturn && creditAmount > 0 && saleCustomerId) {
                 const customer = await tx.customer.findUnique({ where: { id: saleCustomerId } });
                 if (!customer) throw new Error("Customer not found for credit sale");
 
                 const currentDue = new Decimal(customer.totalDue.toString());
                 const creditLimit = new Decimal(customer.creditLimit.toString());
-                // Use calculated refundTotal for returns to ensure trust, otherwise use grand_total
-                const upfrontCash = data.payment_details?.cashAmount || 0;
-                const creditAmountForSale = Math.max(0, data.totals.grand_total - upfrontCash);
-                const newGrandTotal = isReturn ? refundTotal.neg() : new Decimal(creditAmountForSale);
+                const newGrandTotal = new Decimal(creditAmount);
 
-                // For sales (positive), check limit. For returns (negative), skip check.
                 if (newGrandTotal.gt(0) && currentDue.plus(newGrandTotal).gt(creditLimit)) {
                     throw new Error(`Credit limit exceeded. Limit: ${creditLimit}, Current Due: ${currentDue}`);
                 }
@@ -555,25 +592,19 @@ export const checkout = async (req: Request, res: Response) => {
                 });
             }
 
-            // Update Shift Totals if payment method is cash or if there is upfront cash for credit
+            // Update shift cash totals for any sale that contributes cash to the drawer.
             if (shiftId) {
-                if (data.payment_method === 'cash') {
-                    if (isReturn) {
+                if (isReturn) {
+                    if (paymentBreakdown.cashAmount > 0) {
                         await tx.shift.update({
                             where: { id: shiftId },
-                            data: { totalCashRefunds: { increment: refundTotal } }
-                        });
-                    } else {
-                        await tx.shift.update({
-                            where: { id: shiftId },
-                            data: { totalCashSales: { increment: new Decimal(data.totals.grand_total) } }
+                            data: { totalCashRefunds: { increment: new Decimal(paymentBreakdown.cashAmount) } }
                         });
                     }
-                } else if (data.payment_method === 'credit' && !isReturn && data.payment_details?.cashAmount) {
-                    // Record partial upfront cash for a credit sale
+                } else if (paymentBreakdown.cashAmount > 0) {
                     await tx.shift.update({
                         where: { id: shiftId },
-                        data: { totalCashSales: { increment: new Decimal(data.payment_details.cashAmount) } }
+                        data: { totalCashSales: { increment: new Decimal(paymentBreakdown.cashAmount) } }
                     });
                 }
             }
@@ -851,15 +882,24 @@ export const getDailySummary = async (req: Request, res: Response) => {
             const saleTotal = new Decimal(sale.total.toString());
             totalSales = totalSales.plus(saleTotal);
 
-            if (sale.paymentMethod === 'cash') {
-                cashTotal = cashTotal.plus(saleTotal);
-            } else if (sale.paymentMethod === 'card') {
-                cardTotal = cardTotal.plus(saleTotal);
+            const multiplier = sale.status === 'RETURNED' || saleTotal.lt(0) ? -1 : 1;
+            const breakdown = getPaymentBreakdown(
+                sale.paymentMethod || 'cash',
+                sale.paymentDetails as { cashAmount?: number; cardAmount?: number; creditAmount?: number } | undefined,
+                Math.abs(saleTotal.toNumber())
+            );
+
+            if (breakdown.cashAmount > 0) {
+                cashTotal = cashTotal.plus(new Decimal(breakdown.cashAmount).times(multiplier));
+            }
+            if (breakdown.cardAmount > 0) {
+                cardTotal = cardTotal.plus(new Decimal(breakdown.cardAmount).times(multiplier));
+            }
+            if (breakdown.creditAmount > 0) {
+                creditTotal = creditTotal.plus(new Decimal(breakdown.creditAmount).times(multiplier));
             } else if (sale.paymentMethod === 'bank') {
                 bankTotal = bankTotal.plus(saleTotal);
-            } else if (sale.paymentMethod === 'credit') {
-                creditTotal = creditTotal.plus(saleTotal);
-            } else {
+            } else if (sale.paymentMethod !== 'cash' && sale.paymentMethod !== 'card' && sale.paymentMethod !== 'credit' && sale.paymentMethod !== 'split') {
                 otherTotal = otherTotal.plus(saleTotal);
             }
         });
