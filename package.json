@@ -15,7 +15,8 @@
     "seed": "ts-node prisma/seed_super_admin.ts",
     "check-data": "ts-node prisma/check_data.ts",
     "reset-db": "ts-node prisma/reset_database.ts",
-    "cleanup-dummy": "ts-node prisma/cleanup_dummy_data.ts"
+    "cleanup-dummy": "ts-node prisma/cleanup_dummy_data.ts",
+    "backup": "ts-node scripts/backup_db.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.3.1",
