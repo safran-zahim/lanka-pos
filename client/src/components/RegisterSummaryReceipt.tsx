@@ -15,7 +15,7 @@ interface RegisterSummaryReceiptProps {
 
 export const RegisterSummaryReceipt = ({ shiftData, countedCash, variance, closeNote, onClose }: RegisterSummaryReceiptProps) => {
     const { formatCurrency } = useCurrency();
-    const { formatDateTime } = useLocale();
+    const { formatDate, formatTime } = useLocale();
     const token = useAuthStore((state) => state.token);
     const [settings, setSettings] = useState<Record<string, any>>({});
     const [loadingSettings, setLoadingSettings] = useState(true);
@@ -86,9 +86,21 @@ export const RegisterSummaryReceipt = ({ shiftData, countedCash, variance, close
         else printContainerWidth = 'w-[297mm]';
     }
 
+    const receiptTemplate = settings['receiptTemplate'] || (receiptType === 'a4' ? 'a4-classic' : 'thermal-classic');
+    const isModern = receiptTemplate === 'a4-modern';
+    const isCreative = receiptTemplate === 'a4-creative';
+    const isElegant = receiptTemplate === 'a4-elegant';
+    const isBold = receiptTemplate === 'a4-bold';
+    const isThermalCompact = receiptTemplate === 'thermal-compact';
+
+    // Content settings
+    const logoUrl = settings['companyLogo'] || settings['receiptLogo'] || '';
+    const showLogo = Boolean(logoUrl) || settings['showLogo'] || false;
+
+
     return (
         <div id="receipt-modal" className="fixed inset-0 bg-black/80 z-[200] flex justify-center items-center text-black overflow-y-auto print:bg-white print:static print:h-auto print:flex print:items-start print:justify-center">
-            <div className={`${printContainerWidth} max-h-[90vh] bg-white text-black p-4 text-[12px] font-mono leading-tight shadow-none border-none mx-auto relative overflow-y-auto print:w-full print:shadow-none print:p-0 print:pt-0 print:pb-12 print:max-h-none print:overflow-visible print:mx-auto`}>
+            <div className={`${printContainerWidth} max-h-[90vh] bg-white text-black p-5 ${isModern || isElegant || isBold ? 'font-sans' : 'font-mono'} ${isThermalCompact ? 'text-[10px]' : 'text-[12px]'} leading-tight shadow-none border-none mx-auto relative overflow-y-auto print:w-full print:shadow-none print:p-0 print:pt-0 print:pb-12 print:max-h-none print:overflow-visible print:mx-auto ${isCreative ? 'border-2 border-black print:border-black rounded-lg p-5' : ''} ${isElegant ? 'border border-gray-200 print:border-gray-300 rounded-2xl p-5' : ''} ${isBold ? 'border-2 border-black print:border-black rounded-xl p-5' : ''}`}>
                 {/* Print action buttons visible only on screen, hidden via @media print in index.css */}
                 <div className="absolute top-2 right-2 flex gap-2 print:hidden z-10">
                     <button onClick={() => window.print()} className="bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-300">
@@ -99,41 +111,84 @@ export const RegisterSummaryReceipt = ({ shiftData, countedCash, variance, close
                     </button>
                 </div>
 
-                <div className="text-center mb-4">
-                    <h1 className="text-xl font-bold mb-1">{header}</h1>
-                    <div className="text-[10px] text-gray-600 whitespace-pre-wrap">{address}</div>
-                    {phone && <div className="text-[10px] text-gray-600">Tel: {phone}</div>}
-                </div>
+                {isModern || isBold ? (
+                    <div className="bg-blue-600 text-white rounded-xl p-4 mb-4 flex items-center justify-between">
+                        <div>
+                            <h1 className="text-xl font-bold mb-0.5">{header}</h1>
+                            <div className="text-[10px] opacity-90 whitespace-pre-wrap">{address}</div>
+                            {phone && <div className="text-[10px] opacity-90">Tel: {phone}</div>}
+                        </div>
+                        {showLogo && (
+                            logoUrl ? (
+                                <img src={logoUrl} alt="Logo" className="h-12 w-12 object-contain bg-white rounded" />
+                            ) : (
+                                <div className="h-12 w-12 bg-white/20 rounded flex items-center justify-center text-[9px]">LOGO</div>
+                            )
+                        )}
+                    </div>
+                ) : isElegant ? (
+                    <div className="bg-gradient-to-r from-gray-900 to-gray-700 text-white rounded-2xl p-5 mb-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h1 className="text-xl font-bold tracking-wide mb-0.5">{header}</h1>
+                                <div className="text-[10px] opacity-80 whitespace-pre-wrap">{address}</div>
+                                {phone && <div className="text-[10px] opacity-80">Tel: {phone}</div>}
+                            </div>
+                            {showLogo && (
+                                logoUrl ? (
+                                    <img src={logoUrl} alt="Logo" className="h-12 w-12 object-contain bg-white rounded" />
+                                ) : (
+                                    <div className="h-12 w-12 bg-white/20 rounded flex items-center justify-center text-[9px]">LOGO</div>
+                                )
+                            )}
+                        </div>
+                    </div>
+                ) : (
+                    <div className="text-center mb-4">
+                        {showLogo && (
+                            <div className="flex justify-center mb-2">
+                                {logoUrl ? (
+                                    <img src={logoUrl} alt="Logo" className="h-16 w-16 object-contain" />
+                                ) : (
+                                    <div className="w-16 h-16 bg-gray-200 flex items-center justify-center rounded-full text-[10px] text-gray-500 font-bold uppercase">Logo</div>
+                                )}
+                            </div>
+                        )}
+                        <h1 className="text-xl font-bold mb-1">{header}</h1>
+                        <div className="text-[10px] text-gray-600 whitespace-pre-wrap">{address}</div>
+                        {phone && <div className="text-[10px] text-gray-600">Tel: {phone}</div>}
+                    </div>
+                )}
 
-                <div className="text-center font-bold text-sm border-y border-dashed border-gray-400 py-2 mb-4 uppercase">
+                <div className={`text-center font-bold text-sm border-y py-2 mb-4 uppercase ${isCreative || isBold ? 'border-black print:border-black' : 'border-dashed border-gray-400 print:border-gray-500'}`}>
                     Register Closure Shift Summary
                 </div>
 
                 <div className="mb-4 space-y-1 text-xs">
                     <div className="flex justify-between">
                         <span className="text-gray-600">Opened:</span>
-                        <span>{formatDateTime(new Date(shiftData.startTime))}</span>
+                        <span>{formatDate(new Date(shiftData.startTime))} {formatTime(new Date(shiftData.startTime))}</span>
                     </div>
                     {shiftData.endTime && (
                         <div className="flex justify-between">
                             <span className="text-gray-600">Closed:</span>
-                            <span>{formatDateTime(new Date(shiftData.endTime))}</span>
+                            <span>{formatDate(new Date(shiftData.endTime))} {formatTime(new Date(shiftData.endTime))}</span>
                         </div>
                     )}
                     <div className="flex justify-between">
                         <span className="text-gray-600">Printed:</span>
-                        <span>{formatDateTime(new Date())}</span>
+                        <span>{formatDate(new Date())} {formatTime(new Date())}</span>
                     </div>
                 </div>
 
-                <div className="border-b border-dashed border-gray-400 pb-2 mb-2 space-y-1">
+                <div className={`border-b pb-2 mb-2 space-y-1 ${isCreative || isBold ? 'border-black print:border-black' : 'border-dashed border-gray-400 print:border-gray-500'}`}>
                     <div className="flex justify-between font-bold">
                         <span>Starting Float:</span>
                         <span>{formatCurrency(shiftData.startingCash)}</span>
                     </div>
                 </div>
 
-                <div className="border-b border-dashed border-gray-400 pb-2 mb-2 space-y-1">
+                <div className={`border-b pb-2 mb-2 space-y-1 ${isCreative || isBold ? 'border-black print:border-black' : 'border-dashed border-gray-400 print:border-gray-500'}`}>
                     <div className="text-[10px] font-bold text-gray-500 uppercase mb-1">Sales & Cash In (+)</div>
                     <div className="flex justify-between pl-2">
                         <span>Cash Sales:</span>
@@ -145,7 +200,7 @@ export const RegisterSummaryReceipt = ({ shiftData, countedCash, variance, close
                     </div>
                 </div>
 
-                <div className="border-b border-dashed border-gray-400 pb-2 mb-2 space-y-1">
+                <div className={`border-b pb-2 mb-2 space-y-1 ${isCreative || isBold ? 'border-black print:border-black' : 'border-dashed border-gray-400 print:border-gray-500'}`}>
                     <div className="text-[10px] font-bold text-gray-500 uppercase mb-1">Non-Cash Sales (Info)</div>
                     <div className="flex justify-between pl-2 text-gray-600">
                         <span>Card Sales:</span>
@@ -157,7 +212,7 @@ export const RegisterSummaryReceipt = ({ shiftData, countedCash, variance, close
                     </div>
                 </div>
 
-                <div className="border-b border-dashed border-gray-400 pb-2 mb-2 space-y-1">
+                <div className={`border-b pb-2 mb-2 space-y-1 ${isCreative || isBold ? 'border-black print:border-black' : 'border-dashed border-gray-400 print:border-gray-500'}`}>
                     <div className="text-[10px] font-bold text-gray-500 uppercase mb-1">Cash Out (-)</div>
                     <div className="flex justify-between pl-2">
                         <span>Cash Refunds:</span>
@@ -173,7 +228,7 @@ export const RegisterSummaryReceipt = ({ shiftData, countedCash, variance, close
                     </div>
                 </div>
 
-                <div className="border-b border-dashed border-gray-800 pb-2 mb-2 space-y-2 mt-4">
+                <div className={`border-b-2 pb-2 mb-2 space-y-2 mt-4 ${isCreative || isBold ? 'border-black print:border-black' : 'border-gray-800 print:border-gray-800'}`}>
                     <div className="flex justify-between font-bold text-sm">
                         <span>Expected Drawer:</span>
                         <span>{formatCurrency(shiftData.liveExpectedCash)}</span>

@@ -56,10 +56,16 @@
       "dist/**/*",
       "client/dist/**/*",
       "prisma/**/*",
-      "dev.db",
       ".env",
       "electron-main.js",
       "node_modules/**/*"
+    ],
+    "asarUnpack": [
+      "node_modules/@prisma/client",
+      "node_modules/.prisma/client"
+    ],
+    "extraResources": [
+      "dev.db"
     ],
     "win": {
       "target": "nsis"

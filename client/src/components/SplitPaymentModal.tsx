@@ -13,21 +13,33 @@ export const SplitPaymentModal = ({ total, onConfirm, onClose }: SplitPaymentMod
     const { formatCurrency } = useCurrency();
     const [cashAmount, setCashAmount] = useState<string>('');
     const [cardAmount, setCardAmount] = useState<string>('');
+    const [receivedCash, setReceivedCash] = useState<string>('');
     const [remaining, setRemaining] = useState(total);
 
     useEffect(() => {
         const cash = parseFloat(cashAmount) || 0;
         const card = parseFloat(cardAmount) || 0;
         setRemaining(total - (cash + card));
-    }, [cashAmount, cardAmount, total]);
+        // Auto-fill received cash if cash amount changes and no received cash entered yet,
+        // or if received cash is somehow less than cash amount
+        if (cash > 0 && (!receivedCash || (parseFloat(receivedCash) || 0) < cash)) {
+            setReceivedCash(cashAmount);
+        }
+    }, [cashAmount, cardAmount, total, receivedCash]);
 
     const handleConfirm = (e: FormEvent) => {
         e.preventDefault();
         const cash = parseFloat(cashAmount) || 0;
         const card = parseFloat(cardAmount) || 0;
+        const received = parseFloat(receivedCash) || 0;
 
         if (Math.abs(remaining) > 0.01) {
             alert('Total payment must match the bill amount.');
+            return;
+        }
+
+        if (cash > 0 && received < cash) {
+            alert('Received cash cannot be less than the cash allocated to the bill.');
             return;
         }
 
@@ -70,16 +82,16 @@ export const SplitPaymentModal = ({ total, onConfirm, onClose }: SplitPaymentMod
 
                 <form onSubmit={handleConfirm} className="space-y-4">
                     <div>
-                        <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1 flex justify-between">
-                            <span>Cash Amount</span>
-                            <button type="button" onClick={() => handleAutoFill('cash')} className="text-blue-500 hover:text-blue-600 text-xs">Max</button>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex justify-between">
+                            <span>Cash Allocated to Bill</span>
+                            <button type="button" onClick={() => handleAutoFill('cash')} className="text-blue-500 hover:text-blue-600 text-xs font-bold bg-blue-50 dark:bg-blue-900/40 px-2 py-0.5 rounded">Auto Fill Max</button>
                         </label>
                         <div className="relative">
-                            <Banknote className="absolute left-3 top-2.5 text-gray-400" size={18} />
+                            <Banknote className="absolute left-3 top-3 text-gray-400" size={18} />
                             <input
                                 type="number"
                                 step="0.01"
-                                className="w-full pl-10 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none border border-gray-300 dark:border-gray-600"
+                                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500 outline-none border border-gray-300 dark:border-gray-600 font-semibold"
                                 value={cashAmount}
                                 onChange={(e) => {
                                     const val = e.target.value;
@@ -95,19 +107,44 @@ export const SplitPaymentModal = ({ total, onConfirm, onClose }: SplitPaymentMod
                                 placeholder="0.00"
                             />
                         </div>
+
+                        {/* Actually Received Cash */}
+                        {(parseFloat(cashAmount) || 0) > 0 && (
+                            <div className="mt-3 pl-4 border-l-2 border-blue-500">
+                                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Actual Cash Received from Customer
+                                </label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-2.5 text-gray-400 font-bold">$</span>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        className="w-full pl-8 pr-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none border border-gray-300 dark:border-gray-600 font-bold text-blue-600 dark:text-blue-400"
+                                        value={receivedCash}
+                                        onChange={(e) => setReceivedCash(e.target.value)}
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                                {((parseFloat(receivedCash) || 0) - (parseFloat(cashAmount) || 0)) > 0 && (
+                                    <div className="mt-1.5 text-sm font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-lg inline-block">
+                                        Change to give: {formatCurrency((parseFloat(receivedCash) || 0) - (parseFloat(cashAmount) || 0))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     <div>
-                        <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1 flex justify-between">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex justify-between">
                             <span>Card Amount</span>
-                            <button type="button" onClick={() => handleAutoFill('card')} className="text-blue-500 hover:text-blue-600 text-xs">Max</button>
+                            <button type="button" onClick={() => handleAutoFill('card')} className="text-blue-500 hover:text-blue-600 text-xs font-bold bg-blue-50 dark:bg-blue-900/40 px-2 py-0.5 rounded">Auto Fill Max</button>
                         </label>
                         <div className="relative">
-                            <CreditCard className="absolute left-3 top-2.5 text-gray-400" size={18} />
+                            <CreditCard className="absolute left-3 top-3 text-gray-400" size={18} />
                             <input
                                 type="number"
                                 step="0.01"
-                                className="w-full pl-10 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none border border-gray-300 dark:border-gray-600"
+                                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500 outline-none border border-gray-300 dark:border-gray-600 font-semibold"
                                 value={cardAmount}
                                 onChange={(e) => {
                                     const val = e.target.value;
@@ -118,6 +155,7 @@ export const SplitPaymentModal = ({ total, onConfirm, onClose }: SplitPaymentMod
                                         const cardVal = parseFloat(val) || 0;
                                         const remaining = Math.max(0, total - cardVal);
                                         setCashAmount(remaining > 0 ? remaining.toFixed(2) : '0.00');
+                                        setReceivedCash(remaining > 0 ? remaining.toFixed(2) : '0.00'); // Auto update received cash when auto-filling cash
                                     }
                                 }}
                                 placeholder="0.00"

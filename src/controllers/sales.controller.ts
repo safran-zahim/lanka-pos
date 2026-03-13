@@ -321,7 +321,7 @@ export const checkout = async (req: Request, res: Response) => {
                         if (batchAvailable > 0) {
                             saleItemsData.push({
                                 productId: item.product_id,
-                                quantity: batchAvailable,
+                                quantity: isReturn ? -batchAvailable : batchAvailable,
                                 price: new Decimal(item.unit_price),
                                 batchId: item.batch_id,
                                 isOverSale: false,
@@ -330,7 +330,7 @@ export const checkout = async (req: Request, res: Response) => {
                         }
                         saleItemsData.push({
                             productId: item.product_id,
-                            quantity: item.quantity - batchAvailable,
+                            quantity: isReturn ? -(item.quantity - batchAvailable) : (item.quantity - batchAvailable),
                             price: fallbackPrice,
                             batchId: null,
                             isOverSale: true,
@@ -339,7 +339,7 @@ export const checkout = async (req: Request, res: Response) => {
                     } else {
                         saleItemsData.push({
                             productId: item.product_id,
-                            quantity: item.quantity,
+                            quantity: isReturn ? -item.quantity : item.quantity,
                             price: isReturn ? (returnUnitPrices.get(key) || new Decimal(item.unit_price)) : new Decimal(item.unit_price),
                             batchId: item.batch_id,
                             isOverSale: false,
@@ -367,7 +367,7 @@ export const checkout = async (req: Request, res: Response) => {
                             const assignQty = Math.min(remainingToAssign, batchAvailable);
                             saleItemsData.push({
                                 productId: item.product_id,
-                                quantity: assignQty,
+                                quantity: isReturn ? -assignQty : assignQty,
                                 price: new Decimal(item.unit_price),
                                 batchId: batch.id,
                                 isOverSale: false,
@@ -394,7 +394,7 @@ export const checkout = async (req: Request, res: Response) => {
 
                         saleItemsData.push({
                             productId: item.product_id,
-                            quantity: remainingToAssign,
+                            quantity: isReturn ? -remainingToAssign : remainingToAssign,
                             price: fallbackPrice,
                             batchId: null,
                             isOverSale: true,

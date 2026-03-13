@@ -25,6 +25,11 @@ export const updateSetting = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Setting key is required' });
         }
 
+        // Restrict developer settings to super admin
+        if ((key === 'developerFooter' || key === 'developerFooterEnabled') && (req as any).user?.role !== 'super_admin') {
+            return res.status(403).json({ error: 'Only super admin can modify developer settings' });
+        }
+
         const data = settingSchema.parse(req.body);
 
         const setting = await prisma.setting.upsert({

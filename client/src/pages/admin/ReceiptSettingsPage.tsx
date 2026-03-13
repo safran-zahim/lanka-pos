@@ -13,6 +13,7 @@ export const ReceiptSettingsPage = () => {
     const { addToast } = useToast();
     const { currencySymbol } = useCurrency();
     const token = useAuthStore((state) => state.token);
+    const user = useAuthStore((state) => state.user);
     const [isSaving, setIsSaving] = useState(false);
 
     // Receipt Type & Size Settings
@@ -133,7 +134,7 @@ export const ReceiptSettingsPage = () => {
         { id: 'business', label: 'Business Info', icon: <Printer size={18} /> },
         { id: 'appearance', label: 'Receipt Options', icon: <FileText size={18} /> },
         { id: 'digital', label: 'Digital & WhatsApp', icon: <MessageSquare size={18} /> },
-        ...(useAuthStore.getState().user?.role === 'admin' ? [{ id: 'developer', label: 'Super Admin', icon: <Maximize2 size={18} /> }] : [])
+        ...(useAuthStore.getState().user?.role === 'super_admin' ? [{ id: 'developer', label: 'Super Admin', icon: <Maximize2 size={18} /> }] : [])
     ] as const;
 
     if (loading) {
@@ -631,20 +632,21 @@ export const ReceiptSettingsPage = () => {
 
                                         <div className={`border-b ${isCreative || isBold ? 'border-black' : 'border-black'} mb-4`}></div>
 
-                                        <div className={`space-y-3 mb-6 ${isThermalCompact ? 'text-[10px]' : ''}`}>
-                                            <div className="flex justify-between">
-                                                <div className="flex-1">
+                                        <div className={`space-y-4 mb-6 ${isThermalCompact ? 'text-[10px]' : ''}`}>
+                                            <div className="flex gap-2">
+                                                <div className="flex-1 pr-2">
                                                     <div className="font-bold">Organic Coffee Beans - 500g</div>
+                                                    <div className="text-[10px] opacity-70 mb-0.5 line-clamp-2">Premium dark roast, ethically sourced Arabica beans with hints of chocolate.</div>
                                                     <div className="opacity-70">2 x {currencySymbol}15.50</div>
                                                 </div>
-                                                <div className="font-bold">{currencySymbol}31.00</div>
+                                                <div className="font-bold flex-shrink-0">{currencySymbol}31.00</div>
                                             </div>
-                                            <div className="flex justify-between">
-                                                <div className="flex-1">
+                                            <div className="flex gap-2">
+                                                <div className="flex-1 pr-2">
                                                     <div className="font-bold">Fresh Milk - 1L</div>
                                                     <div className="opacity-70">1 x {currencySymbol}4.25</div>
                                                 </div>
-                                                <div className="font-bold">{currencySymbol}4.25</div>
+                                                <div className="font-bold flex-shrink-0">{currencySymbol}4.25</div>
                                             </div>
                                         </div>
 

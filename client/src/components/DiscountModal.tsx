@@ -12,6 +12,9 @@ interface DiscountModalProps {
 
 const QUICK_PRESETS = [5, 10, 15, 20, 25];
 
+/**
+ * Modal to apply a discount to the entire bill before payment
+ */
 export const DiscountModal = ({
     subtotal,
     total,
@@ -68,7 +71,7 @@ export const DiscountModal = ({
                 <div className="flex justify-between items-center mb-5">
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                         <Tag className="text-blue-500" />
-                        Apply Discount
+                        Apply Bill Discount
                     </h2>
                     <button
                         onClick={onClose}
@@ -90,8 +93,8 @@ export const DiscountModal = ({
                                 type="button"
                                 onClick={() => handlePreset(preset)}
                                 className={`py-2 rounded-lg text-sm font-bold border-2 transition-all ${mode === 'percent' && numValue === preset
-                                        ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200 dark:shadow-blue-900/30'
-                                        : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-600 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                                    ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200 dark:shadow-blue-900/30'
+                                    : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-600 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
                                     }`}
                             >
                                 {preset}%
@@ -106,8 +109,8 @@ export const DiscountModal = ({
                         type="button"
                         onClick={() => setMode('percent')}
                         className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-1 ${mode === 'percent'
-                                ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-white shadow'
-                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                            ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-white shadow'
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                             }`}
                     >
                         <Percent size={14} />
@@ -117,8 +120,8 @@ export const DiscountModal = ({
                         type="button"
                         onClick={() => setMode('amount')}
                         className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-1 ${mode === 'amount'
-                                ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-white shadow'
-                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                            ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-white shadow'
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                             }`}
                     >
                         <DollarSign size={14} />
@@ -192,8 +195,8 @@ export const DiscountModal = ({
 
                     <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 space-y-3 border border-gray-200 dark:border-gray-600">
                         <div className="flex justify-between text-sm">
-                            <span className="text-gray-500 dark:text-gray-400">Bill Total</span>
-                            <span className="font-bold text-gray-900 dark:text-white">{formatCurrency(total)}</span>
+                            <span className="text-gray-500 dark:text-gray-400">Bill Total (After Discount)</span>
+                            <span className="font-bold text-gray-900 dark:text-white">{formatCurrency(newTotal)}</span>
                         </div>
 
                         <div>
@@ -211,19 +214,19 @@ export const DiscountModal = ({
                             />
                         </div>
 
-                        <div className={`flex justify-between text-sm font-bold rounded-lg p-2 ${cashNum >= total
-                                ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
-                                : cashNum > 0
-                                    ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
-                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-400'
+                        <div className={`flex justify-between text-sm font-bold rounded-lg p-2 ${(parseFloat(cashReceived) || 0) >= newTotal
+                            ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                            : (parseFloat(cashReceived) || 0) > 0
+                                ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-400'
                             }`}>
                             <span>Change Due</span>
                             <span>
-                                {cashNum === 0
+                                {(parseFloat(cashReceived) || 0) === 0
                                     ? '—'
-                                    : cashNum >= total
-                                        ? formatCurrency(changeDue)
-                                        : `Short ${formatCurrency(total - cashNum)}`}
+                                    : (parseFloat(cashReceived) || 0) >= newTotal
+                                        ? formatCurrency((parseFloat(cashReceived) || 0) - newTotal)
+                                        : `Short ${formatCurrency(newTotal - (parseFloat(cashReceived) || 0))}`}
                             </span>
                         </div>
                     </div>

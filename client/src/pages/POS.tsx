@@ -24,6 +24,7 @@ import { SelectBatchModal } from '../components/SelectBatchModal';
 import { RegisterManager } from '../components/RegisterManager';
 import { ActiveRegisterModal } from '../components/ActiveRegisterModal';
 import { POSCashModal } from '../components/POSCashModal';
+import { PaymentModal } from '../components/PaymentModal';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useCurrency } from '../hooks/useCurrency';
 import { getApiUrl } from '../config/api';
@@ -56,6 +57,7 @@ export const POS = () => {
     const [showHoldModal, setShowHoldModal] = useState(false);
     const [showHeldSalesList, setShowHeldSalesList] = useState(false);
     const [showSplitPaymentModal, setShowSplitPaymentModal] = useState(false);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [showDiscountModal, setShowDiscountModal] = useState(false);
     const [checkoutNote, setCheckoutNote] = useState('');
     const [showCheckoutNote, setShowCheckoutNote] = useState(false);
@@ -460,7 +462,7 @@ export const POS = () => {
         }
     }, [showReturnLookup]);
 
-    const handlePayment = async (paymentDetails?: { cash: number, card: number }, method: string = 'cash', customDiscount: number = 0) => {
+    const handlePayment = async (paymentDetails?: { cash: number, card: number }, method: string = 'cash', customDiscount: number = 0, receivedAmountFromModal?: number) => {
         if (items.length === 0) return;
         if (!user) {
             addToast("No user logged in!", 'error');
@@ -521,7 +523,7 @@ export const POS = () => {
                     payment_details: paymentDetails ? {
                         cashAmount: paymentDetails.cash,
                         cardAmount: paymentDetails.card
-                    } : undefined,
+                    } : (method === 'cash' && receivedAmountFromModal !== undefined ? { cashAmount: receivedAmountFromModal } : undefined),
                     items: items.map(item => ({
                         product_id: item.product_id,
                         quantity: item.quantity,
@@ -566,7 +568,7 @@ export const POS = () => {
                 payment_details: paymentDetails ? {
                     cashAmount: paymentDetails.cash,
                     cardAmount: paymentDetails.card
-                } : undefined,
+                } : (method === 'cash' && receivedAmountFromModal !== undefined ? { cashAmount: receivedAmountFromModal } : undefined),
                 note: sale.note || checkoutNote
             });
 
@@ -992,11 +994,23 @@ export const POS = () => {
                                     </div>
                                 </div>
 
-                                {item.note && (
-                                    <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                                        <StickyNote size={12} />
-                                        <span className="line-clamp-1">{item.note}</span>
-                                    </div>
+                                {item.note ? (
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setEditingItem(item); }}
+                                        className="text-[10px] text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1 bg-gray-50 dark:bg-gray-700/50 p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors w-full text-left line-clamp-1 group"
+                                    >
+                                        <StickyNote size={10} className="text-blue-500 flex-shrink-0" />
+                                        <span className="flex-1 truncate">Note: {item.note}</span>
+                                        <Edit2 size={10} className="text-gray-400 group-hover:text-blue-500 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setEditingItem(item); }}
+                                        className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1 hover:text-blue-500 transition-colors"
+                                    >
+                                        <StickyNote size={10} />
+                                        <span>Add Item Note</span>
+                                    </button>
                                 )}
 
                                 <div className="flex justify-between items-center">
@@ -1141,7 +1155,7 @@ export const POS = () => {
                                     <StickyNote size={18} />
                                 </div>
                                 <div className="text-left">
-                                    <p className="text-sm font-bold text-gray-900 dark:text-white">Add Checkout Note</p>
+                                    <p className="text-sm font-bold text-gray-900 dark:text-white">Add Bill Note</p>
                                     <p className="text-xs text-gray-500 dark:text-gray-400">
                                         {checkoutNote ? `Note: ${checkoutNote.slice(0, 30)}${checkoutNote.length > 30 ? '...' : ''}` : 'Special instructions for this bill'}
                                     </p>
@@ -1202,17 +1216,7 @@ export const POS = () => {
                             <span className="text-[10px] uppercase font-bold mt-1">{pointsRedeemed > 0 ? 'Remove' : 'Points'}</span>
                         </button>
 
-                        {enableCustomerCredit && (
-                            <button
-                                onClick={() => handlePayment(undefined, 'credit')}
-                                disabled={isProcessing || items.length === 0 || !customer}
-                                className="flex flex-col items-center justify-center py-2 bg-amber-600 dark:bg-amber-700 text-white rounded-lg hover:bg-amber-700 dark:hover:bg-amber-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95"
-                                title={!customer ? "Register customer for credit sales" : "Payment on credit"}
-                            >
-                                <Users size={20} />
-                                <span className="text-[10px] uppercase font-bold mt-1">Credit</span>
-                            </button>
-                        )}
+
 
                         <button
                             onClick={() => setShowSplitPaymentModal(true)}
@@ -1224,7 +1228,7 @@ export const POS = () => {
                         </button>
 
                         <button
-                            onClick={() => handlePayment()}
+                            onClick={() => setShowPaymentModal(true)}
                             disabled={isProcessing || items.length === 0}
                             className="col-span-2 flex flex-col items-center justify-center py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-green-600/30 transition-all active:scale-95"
                         >
@@ -1297,6 +1301,20 @@ export const POS = () => {
                         handlePayment(details);
                     }}
                     onClose={() => setShowSplitPaymentModal(false)}
+                />
+            )}
+
+            {/* Standard Payment Modal */}
+            {showPaymentModal && (
+                <PaymentModal
+                    total={total + tax - roundOffDiscount}
+                    enableCustomerCredit={enableCustomerCredit}
+                    hasCustomer={!!customer}
+                    onConfirm={(method, receivedAmount) => {
+                        setShowPaymentModal(false);
+                        handlePayment(undefined, method, 0, receivedAmount);
+                    }}
+                    onClose={() => setShowPaymentModal(false)}
                 />
             )}
 
