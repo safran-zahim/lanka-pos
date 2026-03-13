@@ -266,11 +266,15 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                     <div className={`border-b-2 ${isCreative || isBold ? 'border-black print:border-black' : 'border-dashed border-gray-400 print:border-gray-500'} my-4`}></div>
 
                     {/* Meta Information (Date, Time, Receipt #) */}
-                    <div className="grid grid-cols-2 gap-2 mb-4 opacity-80 text-xs">
-                        <div>Date: {formatDate(new Date(transaction.timestamp))}</div>
-                        <div className="text-right">Time: {formatTime(new Date(transaction.timestamp))}</div>
-                        <div>{transaction.type === 'return' ? 'Refund #: ' : 'Receipt: #'}R-{transaction.transaction_id}</div>
-                        <div className="text-right font-bold">Cashier: {user?.username || 'Admin'}</div>
+                    <div className="mb-4 text-xs font-bold w-full">
+                        <div className="flex justify-between w-full">
+                            <span>{formatDate(new Date(transaction.timestamp))} {formatTime(new Date(transaction.timestamp))}</span>
+                            <span className="uppercase">{user?.username || 'Admin'}</span>
+                        </div>
+                        <div className="flex justify-between w-full mt-1">
+                            <span>{transaction.type === 'return' ? 'R-' : ''}#{transaction.transaction_id}</span>
+                            <span></span>
+                        </div>
                     </div>
                     {customer && (() => {
                         const hasCredit = transaction.payment_method === 'credit' || (transaction.payment_method === 'split' && transaction.payment_details && Number(transaction.payment_details.creditAmount || 0) > 0);
@@ -281,7 +285,7 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                         );
                     })()}
                     {transaction.note && (
-                        <div className="mb-4 text-xs p-1 rounded border border-gray-200 dark:border-gray-700 font-bold italic">
+                        <div className={`mb-4 text-xs py-2 font-bold italic border-t ${isCreative || isBold ? 'border-black print:border-black' : 'border-dashed border-gray-400 print:border-gray-500'}`}>
                             {transaction.note}
                         </div>
                     )}
@@ -314,21 +318,21 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                     <div className={`border-b-2 ${isCreative ? 'border-black print:border-black' : 'border-black border-dashed print:border-black print:border-dashed'} my-4`}></div>
 
                     {/* Totals Section */}
-                    <div className={`space-y-1.5 text-right mb-6 text-xs ${(isModern || isElegant || isBold) ? 'bg-gray-50 rounded-xl p-4 border border-gray-200 print:border-gray-300' : ''}`}>
+                    <div className={`space-y-1.5 text-right mb-6 text-xs font-bold ${(isModern || isElegant || isBold) ? 'bg-gray-50 rounded-xl p-4 border border-gray-200 print:border-gray-300' : ''}`}>
                         {/* Only show "Items Total" if there is a discount line under it to show the math clearly. Otherwise just show Subtotal. */}
                         {(transaction.discount ?? 0) > 0 ? (
                             <>
-                                <div className="flex justify-between opacity-80">
+                                <div className="flex justify-between">
                                     <span>Items Total</span>
                                     <span>{formatCurrency(items.reduce((sum, item) => sum + (item.price_at_sale * item.quantity), 0))}</span>
                                 </div>
-                                <div className="flex justify-between text-green-700 font-medium">
+                                <div className="flex justify-between text-black">
                                     <span>Discount</span>
                                     <span>-{formatCurrency(transaction.discount!)}</span>
                                 </div>
                             </>
                         ) : null}
-                        <div className="flex justify-between opacity-80 font-semibold">
+                        <div className="flex justify-between font-black">
                             <span>Subtotal</span>
                             <span>{formatCurrency(items.reduce((sum, item) => sum + (Number(item.price_at_sale) * Number(item.quantity)), 0) - (Number(transaction.discount || 0)))}</span>
                         </div>
@@ -351,9 +355,9 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                     </div>
 
                     {/* Payment Info Box */}
-                    <div className={`p-3 text-left rounded-lg border ${isBold ? 'border-black bg-white print:border-black' : 'border-black/5 bg-gray-50 print:border-gray-200 print:bg-gray-50'} opacity-80 mb-6 text-[10px]`}>
+                    <div className={`py-2 text-left border-y ${isCreative || isBold ? 'border-black print:border-black' : 'border-dashed border-gray-400 print:border-gray-500'} mb-6 text-[10px]`}>
                         <div className="flex justify-between mb-1">
-                            <span className="font-bold">{transaction.type === 'return' ? 'Refund Method:' : 'Payment Method:'}</span>
+                            <span className="font-bold">{transaction.type === 'return' ? 'Refund Method' : 'Payment Method'}</span>
                             <span className="capitalize font-bold">{transaction.payment_method}</span>
                         </div>
 

@@ -27,7 +27,10 @@ interface SaleItem {
 interface SaleResponse {
     id: string;
     customerId?: string | null;
+<<<<<<< HEAD
     parentSaleId?: string | null;
+=======
+    parentSaleId?: string | number | null;
     createdAt: string;
     total: number;
     subtotal?: number | null;
