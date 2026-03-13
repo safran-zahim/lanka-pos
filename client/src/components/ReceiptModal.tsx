@@ -168,8 +168,8 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
     const printReceiptWidth = receiptType === 'thermal' ? `print:w-[${thermalWidth}]` : 'print:w-full';
 
     return (
-        <div id="receipt-modal" className="fixed inset-0 bg-black/80 flex flex-col items-center pt-10 pb-10 overflow-y-auto print:overflow-visible z-[200] print:bg-white print:static print:h-auto print:w-full print:flex print:items-start print:justify-center">
-            <div className={`bg-white text-black p-8 rounded-lg ${receiptWidth} ${receiptHeight} relative ${printReceiptWidth} print:shadow-none print:p-0 print:pt-0 print:pb-0 print:m-0`}>
+        <div id="receipt-modal" className="fixed inset-0 bg-black/80 flex items-center justify-center z-[200] print:bg-white print:static print:h-auto print:w-full print:flex print:items-start print:justify-center">
+            <div className={`bg-white text-black p-8 rounded-lg ${receiptWidth} ${receiptHeight} max-h-[90vh] overflow-y-auto ${printReceiptWidth} print:shadow-none print:p-0 print:pt-0 print:pb-12 print:max-h-none print:mx-auto print:mt-0`}>
 
                 {/* Actions (Hidden on Print) */}
                 <div className="flex justify-between items-center mb-6 print:hidden">
@@ -258,38 +258,47 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                     <div className={`border-b-2 ${isCreative || isBold ? 'border-black print:border-black' : 'border-dashed border-gray-400 print:border-gray-500'} my-4`}></div>
 
                     {/* Meta Information (Date, Time, Receipt #) */}
-                    <div className="mb-1 text-[10px] font-bold">
-                        <div>{formatDate(new Date(transaction.timestamp))} {formatTime(new Date(transaction.timestamp))}</div>
-                        <div>#{transaction.transaction_id} | {user?.username || 'Admin'}</div>
+                    <div className="mb-4 text-xs font-bold w-full">
+                        <div className="flex justify-between w-full">
+                            <span>{formatDate(new Date(transaction.timestamp))} {formatTime(new Date(transaction.timestamp))}</span>
+                            <span className="uppercase">{user?.username || 'Admin'}</span>
+                        </div>
+                        <div className="flex justify-between w-full mt-1">
+                            <span>{transaction.type === 'return' ? 'R-' : ''}#{transaction.transaction_id}</span>
+                            <span></span>
+                        </div>
                     </div>
                     {customer && (() => {
                         const hasCredit = transaction.payment_method === 'credit' || (transaction.payment_method === 'split' && transaction.payment_details && Number(transaction.payment_details.creditAmount || 0) > 0);
                         return (
-                            <div className={`text-[10px] mb-1 font-bold ${hasCredit ? 'border border-black p-0.5 print:border-black print:p-0.5 text-[12px] uppercase' : ''}`}>
-                                {customer.name}
+                            <div className={`text-xs opacity-80 mb-2 font-bold ${hasCredit ? 'border border-black p-1 print:border-black print:p-1 text-[14px] uppercase' : ''}`}>
+                                Customer: {customer.name}
                             </div>
                         );
                     })()}
-                    <div className={`border-b ${isCreative || isBold ? 'border-black print:border-black' : 'border-black print:border-black'} my-1`}></div>
-
                     {transaction.note && (
-                        <>
-                            <div className="mb-1 mt-1 text-[10px] font-bold italic py-0.5 text-center">
-                                Note: {transaction.note}
-                            </div>
-                            <div className={`border-b ${isCreative || isBold ? 'border-black print:border-black' : 'border-black print:border-black'} mb-1`}></div>
-                        </>
+                        <div className={`mb-4 text-xs py-2 font-bold italic border-t ${isCreative || isBold ? 'border-black print:border-black' : 'border-dashed border-gray-400 print:border-gray-500'}`}>
+                            {transaction.note}
+                        </div>
                     )}
 
-                    {/* Items List - Condensed */}
-                    <div className={`space-y-1 mb-2 ${isThermalCompact ? 'text-[9px]' : 'text-[10px]'}`}>
+                    <div className={`border-b ${isCreative || isBold ? 'border-black print:border-black' : 'border-black print:border-black'} my-4`}></div>
+
+                    {/* Items List - Flex Layout Matching Live Preview */}
+                    <div className={`space-y-4 mb-6 ${isThermalCompact ? 'text-[10px]' : 'text-xs'}`}>
                         {items.map((item, idx) => (
-                            <div key={idx} className="flex gap-2 leading-tight">
-                                <div className="flex-1 pr-1">
+                            <div key={idx} className="flex gap-2">
+                                <div className="flex-1 pr-2">
                                     <div className="font-bold">{item.name}</div>
-                                    <div className="text-[9px] font-bold">
+                                    {item.description && (
+                                        <div className="text-[10px] opacity-70 mb-0.5 line-clamp-2">{item.description}</div>
+                                    )}
+                                    <div className="opacity-70">
                                         {item.quantity} x {formatCurrency(item.price_at_sale)}
                                     </div>
+                                    {item.note && (
+                                        <div className="text-[10px] opacity-60 mt-0.5 italic">{item.note}</div>
+                                    )}
                                 </div>
                                 <div className="font-bold flex-shrink-0">
                                     {formatCurrency(item.price_at_sale * item.quantity)}
@@ -298,83 +307,139 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                         ))}
                     </div>
 
-                    <div className={`border-b ${isCreative ? 'border-black print:border-black' : 'border-black border-dashed print:border-black print:border-dashed'} my-1`}></div>
+                    <div className={`border-b-2 ${isCreative ? 'border-black print:border-black' : 'border-black border-dashed print:border-black print:border-dashed'} my-4`}></div>
 
-                    {/* Totals Section - Condensed No Labels */}
-                    <div className={`space-y-0.5 text-right mb-2 text-[10px] font-bold ${(isModern || isElegant || isBold) ? 'bg-gray-50 rounded-xl p-2 border border-gray-200 print:border-gray-300' : ''}`}>
+                    {/* Totals Section */}
+                    <div className={`space-y-1.5 text-right mb-6 text-xs font-bold ${(isModern || isElegant || isBold) ? 'bg-gray-50 rounded-xl p-4 border border-gray-200 print:border-gray-300' : ''}`}>
+                        {/* Only show "Items Total" if there is a discount line under it to show the math clearly. Otherwise just show Subtotal. */}
                         {(transaction.discount ?? 0) > 0 ? (
                             <>
-                                <div className="flex justify-end italic text-[9px]">
+                                <div className="flex justify-between">
+                                    <span>Items Total</span>
                                     <span>{formatCurrency(items.reduce((sum, item) => sum + (item.price_at_sale * item.quantity), 0))}</span>
                                 </div>
-                                <div className="flex justify-end text-[9px]">
+                                <div className="flex justify-between text-black">
+                                    <span>Discount</span>
                                     <span>-{formatCurrency(transaction.discount!)}</span>
                                 </div>
                             </>
                         ) : null}
-                        <div className="flex justify-end font-black border-t border-black/10 pt-0.5">
-                            <span>{formatCurrency(transaction.total_amount)}</span>
+                        <div className="flex justify-between font-black">
+                            <span>Subtotal</span>
+                            <span>{formatCurrency(items.reduce((sum, item) => sum + (Number(item.price_at_sale) * Number(item.quantity)), 0) - (Number(transaction.discount || 0)))}</span>
+                        </div>
+                        {taxEnabled && transaction.tax_amount > 0 && (
+                            <div className="flex justify-between opacity-80">
+                                <span>Tax ({((transaction.tax_amount / items.reduce((sum, item) => sum + (item.price_at_sale * item.quantity), 0)) * 100).toFixed(2).replace(/\.00$/, '')}%)</span>
+                                <span>{formatCurrency(transaction.tax_amount)}</span>
+                            </div>
+                        )}
+                        {roundOffEnabled && (transaction.round_off_discount ?? 0) > 0 && (
+                            <div className="flex justify-between text-green-700 font-medium">
+                                <span>Round Off</span>
+                                <span>-{formatCurrency(transaction.round_off_discount!)}</span>
+                            </div>
+                        )}
+                        <div className={`flex justify-between items-center ${transaction.type === 'return' ? 'text-sm font-bold pt-1.5 mt-1 border-t border-black/10 text-red-600' : 'text-base font-black pt-1.5 mt-1 border-t border-black/10'}`}>
+                            <span className="whitespace-nowrap uppercase">{transaction.type === 'return' ? 'Refund Total' : 'Total'}</span>
+                            <span className="whitespace-nowrap font-bold">{formatCurrency(transaction.type === 'return' ? Math.abs(Number(transaction.total_amount || 0)) : Number(transaction.total_amount || 0))}</span>
                         </div>
                     </div>
 
-                    {/* Payment Info Box - Borderless Condensed */}
-                    <div className="text-left mb-2 text-[9px] font-bold leading-tight">
-                        <div className="flex justify-between">
-                            <span className="capitalize">{transaction.payment_method}</span>
-                            <span>{formatCurrency(Number(transaction.total_amount))}</span>
+                    {/* Payment Info Box */}
+                    <div className={`py-2 text-left border-y ${isCreative || isBold ? 'border-black print:border-black' : 'border-dashed border-gray-400 print:border-gray-500'} mb-6 text-[10px]`}>
+                        <div className="flex justify-between mb-1">
+                            <span className="font-bold">{transaction.type === 'return' ? 'Refund Method' : 'Payment Method'}</span>
+                            <span className="capitalize font-bold">{transaction.payment_method}</span>
                         </div>
 
                         {transaction.payment_method === 'split' && transaction.payment_details && (
-                            <div className="space-y-0.5 ml-1 border-l border-black/20 pl-1 my-0.5">
+                            <div className="space-y-1 ml-2 border-l-2 border-gray-200 pl-2 my-1">
                                 {Number(transaction.payment_details.cashAmount || 0) > 0 && (
                                     <div className="flex justify-between">
-                                        <span>Cash:</span>
+                                        <span>Cash Portion:</span>
                                         <span>{formatCurrency(Number(transaction.payment_details.cashAmount || 0))}</span>
                                     </div>
                                 )}
                                 {Number(transaction.payment_details.cardAmount || 0) > 0 && (
                                     <div className="flex justify-between">
-                                        <span>Card:</span>
+                                        <span>Card Portion:</span>
                                         <span>{formatCurrency(Number(transaction.payment_details.cardAmount || 0))}</span>
                                     </div>
                                 )}
                                 {Number(transaction.payment_details.creditAmount || 0) > 0 && (
                                     <div className="flex justify-between">
-                                        <span>Credit:</span>
+                                        <span>Credit Portion:</span>
                                         <span>{formatCurrency(Number(transaction.payment_details.creditAmount || 0))}</span>
                                     </div>
                                 )}
                             </div>
                         )}
 
-                        {transaction.type !== 'return' && transaction.payment_details?.cashAmount && transaction.payment_method !== 'credit' && (() => {
-                            const totalTendered = (Number(transaction.payment_details.cashAmount || 0) + Number(transaction.payment_details.cardAmount || 0) + Number(transaction.payment_details.creditAmount || 0));
-                            const changeDue = totalTendered - Number(transaction.total_amount);
-                            if (changeDue > 0) {
-                                return (
-                                    <div className="flex justify-between mt-0.5 pt-0.5 border-t border-black/10 font-black">
-                                        <span>Change:</span>
-                                        <span>{formatCurrency(changeDue)}</span>
+                        {transaction.payment_method === 'credit' && (
+                            <div className="mt-2 space-y-1 border-t border-gray-200 pt-2">
+                                <div className="flex justify-between font-bold text-[9px] uppercase tracking-wider">
+                                    <span>{transaction.type === 'return' ? 'Debt Reduction' : 'On Account (Credit)'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span>{transaction.type === 'return' ? 'Amount Reduced:' : 'Current Charge:'}</span>
+                                    <span className="font-bold">{formatCurrency(Math.abs(Number(transaction.total_amount || 0)))}</span>
+                                </div>
+                                {customer && (
+                                    <div className="flex justify-between border-t border-gray-200 pt-1 mt-1 font-bold">
+                                        <span>Outstanding Balance:</span>
+                                        <span>{formatCurrency(Number(customer.total_due || 0))}</span>
                                     </div>
-                                );
+                                )}
+                            </div>
+                        )}
+
+                        {(() => {
+                            // Calculate total tendered dynamically based on payment details
+                            let totalTendered = 0;
+                            if (transaction.payment_details) {
+                                totalTendered =
+                                    Number(transaction.payment_details.cashAmount || 0) +
+                                    Number(transaction.payment_details.cardAmount || 0) +
+                                    Number(transaction.payment_details.creditAmount || 0);
                             }
-                            return null;
+
+                            const changeDue = totalTendered - Number(transaction.total_amount);
+
+                            return (
+                                <>
+                                    {transaction.payment_method !== 'split' && transaction.payment_details?.cashAmount && !transaction.payment_details.cardAmount && (
+                                        <div className="flex justify-between mt-1 pt-1 border-t border-gray-200">
+                                            <span>{transaction.type === 'return' ? 'Cash Refunded:' : 'Paid:'}</span>
+                                            <span>{formatCurrency(Number(transaction.payment_details.cashAmount || 0))}</span>
+                                        </div>
+                                    )}
+                                    {transaction.type !== 'return' && totalTendered > Number(transaction.total_amount) && (
+                                        <div className="flex justify-between mt-1 pt-1 border-t border-gray-200 font-bold">
+                                            <span>Change:</span>
+                                            <span>{formatCurrency(changeDue)}</span>
+                                        </div>
+                                    )}
+                                </>
+                            );
                         })()}
                     </div>
 
                     {showBarcode && (
-                        <div className="flex flex-col items-center gap-1 mb-2">
+                        <div className="flex flex-col items-center gap-1 mb-6">
                             <div className="w-full h-8 bg-black print:bg-black" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}></div>
-                            <div className="text-[9px] tracking-[0.2em] font-bold">#{transaction.transaction_id}</div>
+                            <div className="text-[9px] tracking-[0.2em]">#{String(transaction.transaction_id).padStart(8, '0')}</div>
                         </div>
                     )}
 
-                    <div className="text-center font-bold">
-                        <div className="text-[9px] mb-0.5">{footer || 'Thank you!'}</div>
+                    <div className="text-center mt-auto">
+                        <div className="text-[9px] opacity-80 mb-2 whitespace-pre-wrap">{footer || 'Thank you for your business!'}</div>
                         {devFooterEnabled && (
-                            <div className="text-[7px] opacity-60 uppercase tracking-tighter">{devFooter}</div>
+                            <div className="text-[7px] opacity-40 uppercase tracking-tighter">{devFooter || 'Developed by Tap Lanka POS 0705083388'}</div>
                         )}
                     </div>
+
+                    <div className="h-4 print:block hidden"></div> {/* Extra space for thermal printers */}
 
                     {/* Refund Notice Banner */}
                     {transaction.type === 'return' && (
@@ -392,7 +457,7 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                 </div>
 
                 {/* Print & Digital Actions */}
-                <div className="mt-4 flex flex-col gap-2 print:hidden pb-10">
+                <div className="mt-6 flex flex-col gap-2 print:hidden">
                     <button
                         onClick={handlePrint}
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded flex items-center justify-center space-x-2"
