@@ -149,7 +149,10 @@ export const Login = () => {
 
                     <div className="mt-8 pt-8 border-t border-gray-100 dark:border-gray-800">
                         <p className="text-xs text-center text-gray-500 dark:text-gray-400 mb-4">Demo Credentials</p>
-                        <div className="flex justify-center gap-4 text-xs font-mono">
+                        <div className="flex flex-wrap justify-center gap-4 text-xs font-mono">
+                            <div className="bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded text-gray-600 dark:text-gray-300">
+                                <span className="text-purple-600 font-bold">superadmin</span> / admin123
+                            </div>
                             <div className="bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded text-gray-600 dark:text-gray-300">
                                 <span className="text-blue-600 font-bold">admin</span> / admin123
                             </div>
