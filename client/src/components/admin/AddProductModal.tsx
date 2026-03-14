@@ -79,15 +79,24 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
 
                     // Auto-generate SKU for new products if not editing
                     if (!isEdit && !product) {
-                        const numericSKUs = (loadedProducts || [])
-                            .map((p: any) => parseInt(p.skuCode || p.sku_code))
-                            .filter((n: number) => !isNaN(n));
+                        if (!loadedProducts || loadedProducts.length === 0) {
+                            setFormData(prev => ({ ...prev, sku_code: '10001' }));
+                        } else {
+                            const latestProduct = [...loadedProducts].sort((a, b) => (b.id || b.product_id) - (a.id || a.product_id))[0];
+                            const latestSKU = latestProduct?.skuCode || latestProduct?.sku_code;
 
-                        const nextSKU = numericSKUs.length > 0
-                            ? Math.max(...numericSKUs) + 1
-                            : 10001;
-
-                        setFormData(prev => ({ ...prev, sku_code: nextSKU.toString() }));
+                            let nextSKU = '10001';
+                            if (latestSKU) {
+                                const numericPart = latestSKU.match(/\d+/);
+                                if (numericPart) {
+                                    const number = parseInt(numericPart[0]);
+                                    nextSKU = latestSKU.replace(numericPart[0], (number + 1).toString());
+                                } else {
+                                    nextSKU = latestSKU + '1';
+                                }
+                            }
+                            setFormData(prev => ({ ...prev, sku_code: nextSKU }));
+                        }
                     }
                 }
             } catch (error) {
@@ -127,16 +136,30 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
     }, [categories, formData.category_id]);
 
     const handleGenerateSKU = () => {
-        // Find highest numeric SKU
-        const numericSKUs = (products || [])
-            .map(p => parseInt(p.skuCode || p.sku_code))
-            .filter(n => !isNaN(n));
+        if (!products || products.length === 0) {
+            setFormData({ ...formData, sku_code: '10001' });
+            addToast(`Generated SKU: 10001`, 'info');
+            return;
+        }
 
-        const nextSKU = numericSKUs.length > 0
-            ? Math.max(...numericSKUs) + 1
-            : 10001; // Starting number if none exist
+        // Find the most recently added product (highest ID)
+        // Products are returned sorted by name 'asc' from getProducts, 
+        // but we have the full list so we can find the max ID
+        const latestProduct = [...products].sort((a, b) => (b.id || b.product_id) - (a.id || a.product_id))[0];
+        const latestSKU = latestProduct?.skuCode || latestProduct?.sku_code;
 
-        setFormData({ ...formData, sku_code: nextSKU.toString() });
+        let nextSKU = '10001';
+        if (latestSKU) {
+            const numericPart = latestSKU.match(/\d+/);
+            if (numericPart) {
+                const number = parseInt(numericPart[0]);
+                nextSKU = latestSKU.replace(numericPart[0], (number + 1).toString());
+            } else {
+                nextSKU = latestSKU + '1';
+            }
+        }
+
+        setFormData({ ...formData, sku_code: nextSKU });
         addToast(`Generated SKU: ${nextSKU}`, 'info');
     };
 
