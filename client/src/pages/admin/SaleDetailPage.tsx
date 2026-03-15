@@ -9,6 +9,7 @@ import { ReceiptModal } from '../../components/ReceiptModal';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useCurrency } from '../../hooks/useCurrency';
 import { getApiUrl } from '../../config/api';
+import { useToast } from '../../store/useToast';
 
 const StatusBadge = ({ status }: { status: string }) => {
     const map: Record<string, { icon: any; label: string; cls: string }> = {
@@ -47,10 +48,17 @@ export const SaleDetailPage = () => {
     const token = useAuthStore((s) => s.token);
     const { user } = useAuthStore();
     const { formatCurrency } = useCurrency();
+    const { addToast } = useToast();
 
     const [transaction, setTransaction] = useState<any | null>(null);
     const [isPrinting, setIsPrinting] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [paymentAmount, setPaymentAmount] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'bank'>('cash');
+    const [paymentNote, setPaymentNote] = useState('');
+    const [isPaying, setIsPaying] = useState(false);
+    const [invoicePayments, setInvoicePayments] = useState<any[]>([]);
+    const [loadingInvoicePayments, setLoadingInvoicePayments] = useState(false);
 
     useEffect(() => {
         if (!id || !token) return;
@@ -71,6 +79,45 @@ export const SaleDetailPage = () => {
         };
         load();
     }, [id, token]);
+
+    const loadTransaction = async () => {
+        if (!id || !token) return;
+        const res = await fetch(getApiUrl(`/sales/${id}?includeItems=true`), {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Failed to reload sale');
+        setTransaction(await res.json());
+    };
+
+    const loadInvoicePayments = async (customerId?: number | string, saleId?: number | string) => {
+        if (!token || !customerId || !saleId) {
+            setInvoicePayments([]);
+            return;
+        }
+        setLoadingInvoicePayments(true);
+        try {
+            const response = await fetch(getApiUrl(`/customers/${customerId}/payments`), {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Failed to load invoice payments');
+            const allPayments = await response.json();
+            const filtered = (allPayments || []).filter((payment: any) => Number(payment.saleId) === Number(saleId));
+            setInvoicePayments(filtered);
+        } catch (error) {
+            console.error(error);
+            setInvoicePayments([]);
+        } finally {
+            setLoadingInvoicePayments(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!transaction?.id || !transaction?.customer?.id) {
+            setInvoicePayments([]);
+            return;
+        }
+        loadInvoicePayments(transaction.customer.id, transaction.id);
+    }, [transaction?.id, transaction?.customer?.id, token]);
 
     if (loading) {
         return (
@@ -119,6 +166,62 @@ export const SaleDetailPage = () => {
     const collectedNow = cashPortion + cardPortion;
     const cashTendered = Number(paymentDetails?.cashAmount || 0);
     const changeGiven = transaction.paymentMethod !== 'split' && cashTendered > grandTotal ? cashTendered - grandTotal : 0;
+    const parsedPaymentAmount = Number(paymentAmount || 0);
+    const paidAgainstInvoice = invoicePayments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
+    const remainingAfterInput = Math.max(0, dueAmount - (Number.isFinite(parsedPaymentAmount) ? parsedPaymentAmount : 0));
+
+    const handlePayDue = async () => {
+        if (!token) return;
+        if (!customer?.id) {
+            addToast('This sale has no customer linked', 'error');
+            return;
+        }
+        if (dueAmount <= 0) {
+            addToast('No due amount remaining', 'error');
+            return;
+        }
+        if (!paymentAmount || Number.isNaN(parsedPaymentAmount) || parsedPaymentAmount <= 0) {
+            addToast('Enter a valid payment amount', 'error');
+            return;
+        }
+        if (parsedPaymentAmount > dueAmount) {
+            addToast('Payment exceeds due amount', 'error');
+            return;
+        }
+
+        setIsPaying(true);
+        try {
+            const response = await fetch(getApiUrl(`/customers/${customer.id}/payments`), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    amount: parsedPaymentAmount,
+                    paymentMethod,
+                    note: paymentNote || `Payment for Bill #${transaction.id}`,
+                    saleId: Number(transaction.id)
+                })
+            });
+
+            if (!response.ok) {
+                const payload = await response.json().catch(() => ({}));
+                throw new Error(payload.error || 'Failed to record payment');
+            }
+
+            addToast('Payment recorded successfully', 'success');
+            setPaymentAmount('');
+            setPaymentNote('');
+            await loadTransaction();
+            await loadInvoicePayments(customer.id, transaction.id);
+        } catch (error: any) {
+            console.error(error);
+            addToast(error?.message || 'Failed to record payment', 'error');
+        } finally {
+            setIsPaying(false);
+        }
+    };
 
     return (
         <div className="p-6 max-w-5xl mx-auto space-y-5 text-gray-900 dark:text-white">
@@ -207,6 +310,23 @@ export const SaleDetailPage = () => {
                 </div>
             </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Invoice Total</div>
+                    <div className="mt-1 text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(grandTotal)}</div>
+                </div>
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Paid (This Invoice)</div>
+                    <div className="mt-1 text-xl font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(paidAgainstInvoice)}</div>
+                </div>
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Open Due</div>
+                    <div className={`mt-1 text-xl font-bold ${dueAmount > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                        {formatCurrency(dueAmount)}
+                    </div>
+                </div>
+            </div>
+
             {/* Items Table */}
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm overflow-hidden">
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
@@ -230,6 +350,8 @@ export const SaleDetailPage = () => {
                             {items.map((item: any) => {
                                 const qty = Number(item.quantity || 0);
                                 const price = Number(item.price || 0);
+                                const batchId = item.batchId ?? item.batch_id ?? item.batch?.id ?? null;
+                                const batchDateRaw = item.batch?.purchase?.date || item.batch?.createdAt || item.batch?.created_at;
                                 return (
                                     <tr key={item.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors ${qty < 0 ? 'bg-red-50/40 dark:bg-red-900/10' : ''}`}>
                                         <td className="px-4 py-3 font-medium">
@@ -240,7 +362,14 @@ export const SaleDetailPage = () => {
                                             {item.product?.skuCode || '-'}
                                         </td>
                                         <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">
-                                            {item.batch?.batchNumber || 'N/A'}
+                                            {batchId ? (
+                                                <div className="flex flex-col">
+                                                    <span className="font-semibold text-gray-700 dark:text-gray-300">B#{batchId}</span>
+                                                    {batchDateRaw && (
+                                                        <span className="text-[10px] text-gray-400">{new Date(batchDateRaw).toLocaleDateString()}</span>
+                                                    )}
+                                                </div>
+                                            ) : 'N/A'}
                                         </td>
                                         <td className={`px-4 py-3 text-right font-medium ${qty < 0 ? 'text-red-600 dark:text-red-400' : ''}`}>
                                             {qty}
@@ -400,6 +529,107 @@ export const SaleDetailPage = () => {
                                         <span>− {pointsRedeemed} pts</span>
                                     </div>
                                 )}
+                            </div>
+                        </div>
+                    )}
+
+                    {dueAmount > 0 && customer?.id && !isReturn && (
+                        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-5">
+                            <h2 className="font-bold text-base mb-3 flex items-center gap-2">
+                                <Wallet size={16} className="text-orange-500" /> Due Payment
+                            </h2>
+                            <div className="space-y-3 text-sm">
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600 dark:text-gray-400">Invoice Due</span>
+                                    <span className="font-bold text-orange-600 dark:text-orange-400">{formatCurrency(dueAmount)}</span>
+                                </div>
+                                <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                                    <span>Already Paid (This Bill)</span>
+                                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">{formatCurrency(paidAgainstInvoice)}</span>
+                                </div>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <button
+                                        onClick={() => setPaymentAmount(String(dueAmount))}
+                                        className="px-3 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg text-xs font-bold hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
+                                    >
+                                        Pay All
+                                    </button>
+                                    <button
+                                        onClick={() => setPaymentAmount((dueAmount / 2).toFixed(2))}
+                                        className="px-3 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-bold hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                                    >
+                                        Pay Half
+                                    </button>
+                                    <button
+                                        onClick={() => setPaymentAmount('')}
+                                        className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-bold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                    >
+                                        Clear
+                                    </button>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase mb-1">Amount</label>
+                                    <input
+                                        type="number"
+                                        value={paymentAmount}
+                                        onChange={(event) => setPaymentAmount(event.target.value)}
+                                        className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+                                        min="0"
+                                        step="0.01"
+                                        max={dueAmount}
+                                        placeholder="0.00"
+                                    />
+                                    {paymentAmount && parsedPaymentAmount > 0 && (
+                                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Remaining after this payment: {formatCurrency(remainingAfterInput)}</p>
+                                    )}
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase mb-1">Method</label>
+                                    <select
+                                        value={paymentMethod}
+                                        onChange={(event) => setPaymentMethod(event.target.value as 'cash' | 'card' | 'bank')}
+                                        className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+                                    >
+                                        <option value="cash">Cash</option>
+                                        <option value="card">Card</option>
+                                        <option value="bank">Bank</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase mb-1">Note</label>
+                                    <input
+                                        type="text"
+                                        value={paymentNote}
+                                        onChange={(event) => setPaymentNote(event.target.value)}
+                                        className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+                                        placeholder={`Payment for Bill #${transaction.id}`}
+                                    />
+                                </div>
+                                <button
+                                    onClick={handlePayDue}
+                                    disabled={isPaying || !paymentAmount || parsedPaymentAmount <= 0 || parsedPaymentAmount > dueAmount}
+                                    className="w-full py-2.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white font-bold disabled:opacity-50"
+                                >
+                                    {isPaying ? 'Processing...' : `Record Payment ${paymentAmount ? `(${formatCurrency(parsedPaymentAmount)})` : ''}`}
+                                </button>
+
+                                <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                                    <h3 className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase mb-2">Invoice Payment History</h3>
+                                    {loadingInvoicePayments ? (
+                                        <div className="text-xs text-gray-500 dark:text-gray-400">Loading payment history...</div>
+                                    ) : invoicePayments.length === 0 ? (
+                                        <div className="text-xs text-gray-500 dark:text-gray-400">No payments recorded for this invoice yet.</div>
+                                    ) : (
+                                        <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                                            {invoicePayments.map((payment) => (
+                                                <div key={payment.id} className="flex items-center justify-between text-xs bg-gray-50 dark:bg-gray-700/40 rounded px-2 py-1.5">
+                                                    <span className="text-gray-600 dark:text-gray-300">{new Date(payment.createdAt).toLocaleString()} · {String(payment.paymentMethod || '').toUpperCase()}</span>
+                                                    <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(Number(payment.amount || 0))}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}

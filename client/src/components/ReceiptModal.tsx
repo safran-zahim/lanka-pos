@@ -30,6 +30,34 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
     const [settingsError, setSettingsError] = useState<string | null>(null);
     const [autoPrinted, setAutoPrinted] = useState(false);
 
+    const normalizeWhatsAppPhone = (rawPhone?: string | null): string | null => {
+        if (!rawPhone) return null;
+
+        const defaultCountryCode = String(settings['whatsappDefaultCountryCode'] || '94').replace(/\D/g, '') || '94';
+        let phoneValue = rawPhone.trim();
+
+        if (phoneValue.startsWith('00')) {
+            phoneValue = phoneValue.slice(2);
+        }
+
+        phoneValue = phoneValue.replace(/[^\d+]/g, '');
+        let digits = phoneValue.startsWith('+') ? phoneValue.slice(1) : phoneValue;
+
+        if (!digits) return null;
+
+        // Handle Sri Lanka/local style numbers: 077xxxxxxx -> 9477xxxxxxx
+        if (digits.startsWith('0') && digits.length === 10) {
+            digits = `${defaultCountryCode}${digits.slice(1)}`;
+        } else if (!digits.startsWith(defaultCountryCode) && digits.length === 9) {
+            // Handle numbers entered without leading 0 (e.g., 77xxxxxxx)
+            digits = `${defaultCountryCode}${digits}`;
+        }
+
+        if (digits.length < 10) return null;
+
+        return digits;
+    };
+
     useEffect(() => {
         const fetchSettings = async () => {
             try {
@@ -106,14 +134,22 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
 
         const receiptText = `🧾 *${header}*\n${address}\n${phone ? `Tel: ${phone}` : ''}\n${email ? `Email: ${email}` : ''}\n\n*Invoice:* #${transaction.transaction_id}\n*Date:* ${formatDateTime(new Date(transaction.timestamp))}\n${customer?.name ? `*Customer:* ${customer.name}\n` : ''}\n*Items:*\n${items.map(item => `• ${item.quantity} × ${item.name} (${formatCurrency(item.price_at_sale * item.quantity)})`).join('\n')}\n\n*Summary:*\nSubtotal: ${formatCurrency(subtotal)}\n${discountAmount > 0 ? `Discount: -${formatCurrency(discountAmount)}\n` : ''}${taxEnabled && taxAmount > 0 ? `Tax (${taxPercent}%): ${formatCurrency(taxAmount)}\n` : ''}${roundOffEnabled && roundOff > 0 ? `Round Off: -${formatCurrency(roundOff)}\n` : ''}*Total: ${formatCurrency(total)}*\n\nPayment Method: ${transaction.payment_method.toUpperCase()}${paymentBreakdown ? `\n${paymentBreakdown}` : ''}${creditPortion > 0 ? `\nDue: ${formatCurrency(creditPortion)}` : ''}\n\n${footer || 'Thank you for your business!'}`;
 
-        // Clean phone number
-        const phoneNumber = customer?.phone?.replace(/[^0-9]/g, '') || '';
+        const normalizedPhone = normalizeWhatsAppPhone(customer?.phone);
+        const encodedMessage = encodeURIComponent(receiptText);
+        const whatsappUrl = normalizedPhone
+            ? `https://wa.me/${normalizedPhone}?text=${encodedMessage}`
+            : `https://wa.me/?text=${encodedMessage}`;
 
-        // Use WhatsApp API format
-        const whatsappUrl = `https://api.whatsapp.com/send/?phone=${phoneNumber}&text=${encodeURIComponent(receiptText)}&type=phone_number&app_absent=0`;
+        const popup = window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
 
-        // Open WhatsApp
-        window.open(whatsappUrl, '_blank');
+        // Fallback for popup blockers and some in-app browsers.
+        if (!popup) {
+            window.location.href = whatsappUrl;
+        }
+
+        if (!normalizedPhone && customer?.phone) {
+            alert('Could not normalize customer phone for WhatsApp. Opened share without preselected contact.');
+        }
     };
 
     if (loadingSettings) {

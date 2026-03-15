@@ -262,6 +262,27 @@ export const SalesHistoryDashboard = () => {
         setCurrentPage(1);
     };
 
+    const getBatchSummaryForTxn = (txnId: number | string) => {
+        const items = saleItemsBySaleId.get(String(txnId)) || [];
+        const qtyByBatch = new Map<string, number>();
+
+        items.forEach((item: any) => {
+            const batchId = item.batchId ?? item.batch_id;
+            if (batchId === null || batchId === undefined) {
+                return;
+            }
+
+            const key = String(batchId);
+            const nextQty = (qtyByBatch.get(key) || 0) + Math.abs(Number(item.quantity || 0));
+            qtyByBatch.set(key, nextQty);
+        });
+
+        return Array.from(qtyByBatch.entries()).map(([batchId, qty]) => ({
+            batchId,
+            qty
+        }));
+    };
+
     const handleExport = () => {
         if (!filteredTransactions.length) {
             return;
@@ -555,13 +576,14 @@ export const SalesHistoryDashboard = () => {
                             </div>
                         </div>
                         <div className="overflow-x-auto overflow-y-auto w-full">
-                            <table className="w-full text-left border-collapse min-w-[800px]">
+                            <table className="w-full text-left border-collapse min-w-[980px]">
                                 <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
                                     <tr>
                                         <th className="p-4 font-medium text-gray-500 dark:text-gray-400">ID</th>
                                         <th className="p-4 font-medium text-gray-500 dark:text-gray-400">Date</th>
                                         <th className="p-4 font-medium text-gray-500 dark:text-gray-400">Type</th>
                                         <th className="p-4 font-medium text-gray-500 dark:text-gray-400">Payment</th>
+                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400">Batches</th>
                                         <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-right">Amount</th>
                                         <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-center">Actions</th>
                                     </tr>
@@ -570,6 +592,7 @@ export const SalesHistoryDashboard = () => {
                                     {transactionsToDisplay.map((txn) => {
                                         const signedAmount = getSignedAmount(txn);
                                         const isReturn = txn.type === 'return';
+                                        const batchSummary = getBatchSummaryForTxn(txn.transaction_id || '');
                                         return (
                                             <tr
                                                 key={txn.transaction_id}
@@ -614,6 +637,26 @@ export const SalesHistoryDashboard = () => {
                                                 <td className="p-4 text-gray-500 dark:text-gray-400">
                                                     {txn.payment_method}
                                                 </td>
+                                                <td className="p-4">
+                                                    {batchSummary.length > 0 ? (
+                                                        <div className="flex flex-wrap gap-1.5 max-w-[260px]">
+                                                            {batchSummary.slice(0, 4).map((entry) => (
+                                                                <span
+                                                                    key={entry.batchId}
+                                                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300"
+                                                                >
+                                                                    B#{entry.batchId}
+                                                                    <span className="opacity-80">x{entry.qty % 1 === 0 ? entry.qty : entry.qty.toFixed(2)}</span>
+                                                                </span>
+                                                            ))}
+                                                            {batchSummary.length > 4 && (
+                                                                <span className="text-[11px] text-gray-500 dark:text-gray-400">+{batchSummary.length - 4} more</span>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-400">No batch</span>
+                                                    )}
+                                                </td>
                                                 <td
                                                     className={`p-4 text-right font-medium ${isReturn
                                                         ? 'text-red-600 dark:text-red-400 font-bold'
@@ -652,7 +695,7 @@ export const SalesHistoryDashboard = () => {
                                     {!filteredTransactions.length && (
                                         <tr>
                                             <td
-                                                colSpan={6}
+                                                colSpan={7}
                                                 className="p-6 text-center text-sm text-gray-500 dark:text-gray-400"
                                             >
                                                 {(!paginatedTransactions && transactions) ? (

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { Plus, Package, Tag, Scale, FolderTree, History, Edit, Eye, EyeOff } from 'lucide-react';
@@ -33,6 +33,7 @@ export const ProductList = () => {
     const [isExporting, setIsExporting] = useState(false);
     const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
     const [isBulkDeactivating, setIsBulkDeactivating] = useState(false);
+    const [batchStockByProduct, setBatchStockByProduct] = useState<Record<string, { totalBatches: number; activeBatches: number; badges: Array<{ batchId: string; qty: number }> }>>({});
 
     const handleExport = async () => {
         if (!token) return;
@@ -237,16 +238,72 @@ export const ProductList = () => {
     };
 
     // Use filtering on fetched products
-    const filteredProducts = products.filter(product => {
-        const search = searchTerm.toLowerCase();
-        const name = (product?.name || '').toLowerCase();
-        const sku_code = (product?.sku_code || '').toLowerCase();
+    const filteredProducts = useMemo(() => {
+        return products.filter(product => {
+            const search = searchTerm.toLowerCase();
+            const name = (product?.name || '').toLowerCase();
+            const sku_code = (product?.sku_code || '').toLowerCase();
 
-        const matchesSearch = name.includes(search) || sku_code.includes(search);
-        const matchesStatus = showInactive || product.isActive !== false;
+            const matchesSearch = name.includes(search) || sku_code.includes(search);
+            const matchesStatus = showInactive || product.isActive !== false;
 
-        return matchesSearch && matchesStatus;
-    });
+            return matchesSearch && matchesStatus;
+        });
+    }, [products, searchTerm, showInactive]);
+
+    useEffect(() => {
+        if (!token || activeTab !== 'products') return;
+
+        const loadBatchSummaries = async () => {
+            // Guard against too many parallel requests by limiting to top visible records.
+            const targets = filteredProducts
+                .filter((p) => p.product_id)
+                .slice(0, 60);
+
+            if (targets.length === 0) {
+                setBatchStockByProduct({});
+                return;
+            }
+
+            try {
+                const summaries = await Promise.all(
+                    targets.map(async (p) => {
+                        const productId = String(p.product_id);
+                        const response = await fetch(getApiUrl(`/products/${productId}/batches`), {
+                            headers: { Authorization: `Bearer ${token}` }
+                        });
+
+                        if (!response.ok) {
+                            return [productId, { totalBatches: 0, activeBatches: 0, badges: [] }] as const;
+                        }
+
+                        const batches = await response.json();
+                        const allBatches = Array.isArray(batches) ? batches : [];
+                        const activeBatches = allBatches.filter((b: any) => Number(b.quantity ?? b.remaining_in_stock ?? b.remaining_stock ?? 0) > 0);
+                        const topBadges = activeBatches
+                            .sort((a: any, b: any) => Number(b.quantity ?? 0) - Number(a.quantity ?? 0))
+                            .slice(0, 3)
+                            .map((b: any) => ({
+                                batchId: String(b.batch_id),
+                                qty: Number(b.quantity ?? b.remaining_in_stock ?? b.remaining_stock ?? 0)
+                            }));
+
+                        return [productId, {
+                            totalBatches: allBatches.length,
+                            activeBatches: activeBatches.length,
+                            badges: topBadges
+                        }] as const;
+                    })
+                );
+
+                setBatchStockByProduct(Object.fromEntries(summaries));
+            } catch (error) {
+                console.error('Failed to load product batch summaries', error);
+            }
+        };
+
+        loadBatchSummaries();
+    }, [token, activeTab, filteredProducts]);
 
     const tabs = [
         { id: 'products', label: 'Products', icon: <Package size={18} /> },
@@ -334,6 +391,7 @@ export const ProductList = () => {
                 const stock = row.stock_quantity || 0;
                 const reorder = row.alert_quantity || row.reorder_level || 0;
                 const unitShortName = row.unit?.shortName || row.unit?.short_name || '';
+                const batchSummary = batchStockByProduct[String(row.product_id)];
 
                 return (
                     <div className="flex flex-col gap-1">
@@ -343,6 +401,29 @@ export const ProductList = () => {
                             }`}>
                             {stock} {unitShortName}
                         </span>
+                            {batchSummary && (
+                                <div className="flex flex-wrap gap-1 mt-0.5">
+                                    {batchSummary.badges.length > 0 ? (
+                                        <>
+                                            {batchSummary.badges.map((badge) => (
+                                                <span
+                                                    key={badge.batchId}
+                                                    className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300"
+                                                >
+                                                    B#{badge.batchId}: {badge.qty % 1 === 0 ? badge.qty : badge.qty.toFixed(2)}
+                                                </span>
+                                            ))}
+                                            {batchSummary.activeBatches > batchSummary.badges.length && (
+                                                <span className="text-[10px] text-gray-500 dark:text-gray-400">
+                                                    +{batchSummary.activeBatches - batchSummary.badges.length} more
+                                                </span>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <span className="text-[10px] text-gray-400">No active batches</span>
+                                    )}
+                                </div>
+                            )}
                     </div>
                 );
             },
@@ -409,19 +490,19 @@ export const ProductList = () => {
                 </div>
             </div>
 
-            <div className="flex flex-wrap lg:flex-nowrap justify-between items-end gap-3 mb-6">
-                <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 mb-6">
+                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                     {tabs.map(tab => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${activeTab === tab.id
+                            className={`flex flex-1 sm:flex-none items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold uppercase tracking-wide transition-colors ${activeTab === tab.id
                                 ? 'bg-blue-600 text-white'
                                 : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                                 }`}
                         >
-                            {tab.icon}
-                            {tab.label}
+                            <span className="shrink-0">{tab.icon}</span>
+                            <span>{tab.label}</span>
                         </button>
                     ))}
                 </div>
@@ -441,48 +522,48 @@ export const ProductList = () => {
                                 Show inactive products
                             </label>
                         </div>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-2 w-full lg:w-auto">
                             {selectedProducts.length > 0 && (
-                                <>
+                                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                                     <button
                                         onClick={handleBulkActivate}
                                         disabled={isBulkDeactivating}
-                                        className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700 hover:bg-green-100 dark:hover:bg-green-900/40 h-9 px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all shadow-sm disabled:opacity-50 text-sm font-medium"
+                                        className="flex-1 sm:flex-none bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700 hover:bg-green-100 dark:hover:bg-green-900/40 h-9 px-3 py-1.5 rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-50 text-[10px] font-bold uppercase"
                                     >
                                         <Eye size={16} />
-                                        {isBulkDeactivating ? '...' : `Make Active (${selectedProducts.length})`}
+                                        <span>{isBulkDeactivating ? '...' : `Activate (${selectedProducts.length})`}</span>
                                     </button>
                                     <button
                                         onClick={handleBulkDeactivate}
                                         disabled={isBulkDeactivating}
-                                        className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/40 h-9 px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all shadow-sm disabled:opacity-50 text-sm font-medium"
+                                        className="flex-1 sm:flex-none bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/40 h-9 px-3 py-1.5 rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-50 text-[10px] font-bold uppercase"
                                     >
                                         <EyeOff size={16} />
-                                        {isBulkDeactivating ? 'Updating...' : `Make Inactive (${selectedProducts.length})`}
+                                        <span>{isBulkDeactivating ? '...' : `Deactivate (${selectedProducts.length})`}</span>
                                     </button>
-                                </>
+                                </div>
                             )}
                             <button
                                 onClick={handleExport}
                                 disabled={isExporting}
-                                className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 h-9 px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all shadow-sm disabled:opacity-50 text-sm"
+                                className="flex-1 sm:flex-none bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 h-9 px-3 py-1.5 rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-50 text-[10px] font-bold uppercase"
                             >
                                 <Download size={16} />
-                                {isExporting ? 'Exporting...' : 'Bulk Export'}
+                                <span>Export</span>
                             </button>
                             <button
                                 onClick={() => setIsBulkModalOpen(true)}
-                                className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 h-9 px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all shadow-sm text-sm"
+                                className="flex-1 sm:flex-none bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 h-9 px-3 py-1.5 rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm text-[10px] font-bold uppercase"
                             >
                                 <Upload size={16} />
-                                Bulk Import
+                                <span>Import</span>
                             </button>
                             <button
                                 onClick={() => setIsAddModalOpen(true)}
-                                className="bg-blue-600 hover:bg-blue-700 text-white h-9 px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-md hover:shadow-lg transition-all text-sm"
+                                className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white h-9 px-3 py-1.5 rounded-lg flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all text-[10px] font-bold uppercase"
                             >
                                 <Plus size={16} />
-                                Add Product
+                                <span>Add</span>
                             </button>
                         </div>
                     </div>

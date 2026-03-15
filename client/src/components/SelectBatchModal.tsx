@@ -99,8 +99,13 @@ export const SelectBatchModal = ({ product, batches, onSelect, onClose }: Select
                                 }`}
                             >
                                 <div className="flex-1">
-                                    <div className="font-bold text-base text-gray-900 dark:text-white">
-                                        {formatCurrency(batch.retail_price)}
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="font-bold text-base text-gray-900 dark:text-white">
+                                            {formatCurrency(batch.retail_price)}
+                                        </span>
+                                        <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold">
+                                            Batch #{batch.batch_id}
+                                        </span>
                                     </div>
                                     <div className="flex items-center gap-3 mt-1.5">
                                         <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
@@ -121,11 +126,14 @@ export const SelectBatchModal = ({ product, batches, onSelect, onClose }: Select
                                     </div>
                                 </div>
                                 <div className="text-xs text-gray-500 dark:text-gray-400 ml-4 text-right">
-                                    {new Date(batch.created_at).toLocaleDateString('en-US', { 
-                                        month: 'short', 
-                                        day: 'numeric',
-                                        year: 'numeric'
-                                    })}
+                                    <div className="font-medium">Purchase Date</div>
+                                    <div>
+                                        {new Date(batch.created_at).toLocaleDateString('en-US', {
+                                            month: 'short',
+                                            day: 'numeric',
+                                            year: 'numeric'
+                                        })}
+                                    </div>
                                 </div>
                             </button>
                         );
