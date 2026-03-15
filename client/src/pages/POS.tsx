@@ -72,9 +72,10 @@ export const POS = () => {
     const [selectedReturnTransaction, setSelectedReturnTransaction] = useState<Transaction | null>(null);
     const [selectedReturnSaleId, setSelectedReturnSaleId] = useState<string | null>(null);
 
-    // Batch Selection State
     const [batchProduct, setBatchProduct] = useState<null | { productId: number | string; product: Product }>(null);
     const [batchOptions, setBatchOptions] = useState<any[]>([]);
+
+    const [activeMobileTab, setActiveMobileTab] = useState<'products' | 'cart'>('products');
 
     const [products, setProducts] = useState<Product[]>([]);
     const [customers, setCustomers] = useState<Customer[]>([]);
@@ -434,9 +435,12 @@ export const POS = () => {
             return;
         }
 
-        // If all available batches have the same price, auto-select the oldest one
-        const uniquePrices = new Set(availableBatches.map((b: any) => b.retail_price));
-        if (uniquePrices.size === 1) {
+        // Auto-select only when pricing structure is identical across batches.
+        // If either cost or selling price differs, force explicit batch selection.
+        const uniqueBatchPricing = new Set(
+            availableBatches.map((b: any) => `${Number(b.retail_price || 0).toFixed(4)}|${Number(b.cost_price || 0).toFixed(4)}`)
+        );
+        if (uniqueBatchPricing.size === 1) {
             const batch = availableBatches[0];
             addItem({ ...product, retail_price: batch.retail_price, batch_id: batch.batch_id });
             return;
@@ -759,7 +763,7 @@ export const POS = () => {
 
 
     return (
-        <div className="flex w-full h-full relative flex-row bg-gray-100 dark:bg-gray-900 overflow-hidden">
+        <div className="flex w-full h-full relative flex-col lg:flex-row bg-gray-100 dark:bg-gray-900 overflow-hidden">
             {enableDailyRegister && !isRegisterOpen && (
                 <div className="absolute inset-0 bg-white/60 dark:bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
                     <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl flex flex-col items-center max-w-md text-center border border-gray-200 dark:border-gray-700 animate-in fade-in zoom-in duration-300">
@@ -780,7 +784,7 @@ export const POS = () => {
                 </div>
             )}
             {/* LEFT PANEL: PRODUCTS (60%) */}
-            <div className="w-[60%] flex flex-col h-full border-r border-gray-200 dark:border-gray-700 order-1">
+            <div className={`w-full lg:w-[60%] flex flex-col h-full border-r border-gray-200 dark:border-gray-700 order-1 ${activeMobileTab === 'products' ? 'flex' : 'hidden lg:flex'}`}>
                 {/* Search & Categories - Fixed Height Header */}
                 <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                     {/* Search Bar - Fixed Height */}
@@ -878,7 +882,7 @@ export const POS = () => {
             </div>
 
             {/* RIGHT PANEL: CART (40%) */}
-            <div className="w-[40%] flex flex-col h-full bg-white dark:bg-gray-800 order-2 shadow-xl z-10 border-l border-gray-200 dark:border-gray-700">
+            <div className={`w-full lg:w-[40%] flex flex-col h-full bg-white dark:bg-gray-800 order-2 shadow-xl z-10 border-l border-gray-200 dark:border-gray-700 ${activeMobileTab === 'cart' ? 'flex' : 'hidden lg:flex'}`}>
                 {/* Customer Header - Fixed Height */}
                 <div className="h-16 px-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white">Current Sale</h2>
@@ -1108,7 +1112,7 @@ export const POS = () => {
                 </div>
 
                 {/* Cart Footer / Totals */}
-                <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+                <div className="pb-24 lg:pb-0 p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
                     <div className="space-y-2 mb-4">
                         <div className="flex justify-between text-gray-600 dark:text-gray-400 text-sm">
                             <span>Subtotal</span>
@@ -1245,6 +1249,45 @@ export const POS = () => {
                             <span className="text-xs uppercase font-extrabold">{isProcessing ? 'Processing...' : 'Checkout'}</span>
                         </button>
                     </div>
+                </div>
+            </div>
+
+            {/* Mobile Bottom Navigation */}
+            <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 h-20 px-6 flex items-center justify-around z-[100] shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+                <button
+                    onClick={() => setActiveMobileTab('products')}
+                    className={`flex flex-col items-center gap-1 transition-colors ${activeMobileTab === 'products' ? 'text-blue-600' : 'text-gray-400'}`}
+                >
+                    <div className={`p-2 rounded-xl ${activeMobileTab === 'products' ? 'bg-blue-50 dark:bg-blue-900/30' : ''}`}>
+                        <LayoutDashboard size={24} />
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider">Browse</span>
+                </button>
+
+                <div className="relative">
+                    <button
+                        onClick={() => setActiveMobileTab('cart')}
+                        className={`flex flex-col items-center gap-1 transition-colors ${activeMobileTab === 'cart' ? 'text-blue-600' : 'text-gray-400'}`}
+                    >
+                        <div className={`p-2 rounded-xl ${activeMobileTab === 'cart' ? 'bg-blue-50 dark:bg-blue-900/30' : ''}`}>
+                            <ShoppingCart size={24} />
+                            {items.length > 0 && (
+                                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-gray-800">
+                                    {items.reduce((acc, i) => acc + i.quantity, 0)}
+                                </span>
+                            )}
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider">Cart</span>
+                    </button>
+                </div>
+
+                <div className="h-10 w-px bg-gray-100 dark:bg-gray-700" />
+
+                <div className="flex flex-col items-end">
+                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Total</span>
+                    <span className="text-xl font-black text-blue-600 dark:text-blue-400">
+                        {formatCurrency(total + tax - roundOffDiscount)}
+                    </span>
                 </div>
             </div>
 

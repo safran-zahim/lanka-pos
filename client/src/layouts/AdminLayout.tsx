@@ -85,28 +85,25 @@ export const AdminLayout = () => {
         <div className="flex h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans transition-colors duration-200 overflow-hidden">
             {/* Mobile Header */}
             <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-4 z-40">
-                <div className="flex items-center gap-3">
-                    <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 -ml-2 text-gray-600 dark:text-gray-300">
+                <div className="flex items-center gap-2 overflow-hidden">
+                    <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 -ml-2 text-gray-600 dark:text-gray-300 flex-shrink-0">
                         <Menu size={24} />
                     </button>
-                    {brandLogo && <img src={brandLogo} alt="Logo" className="h-6 w-6 object-contain" />}
-                    <span className="font-bold text-lg text-blue-600 dark:text-blue-500">{brandName}</span>
+                    {brandLogo && <img src={brandLogo} alt="Logo" className="h-6 w-6 object-contain flex-shrink-0" />}
+                    <span className="font-bold text-base text-blue-600 dark:text-blue-500 truncate">{brandName}</span>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                     <button
                         onClick={() => navigate('/pos')}
-                        className="hidden sm:flex items-center gap-1 bg-blue-600 text-white px-2 py-1 rounded text-xs"
+                        className="flex items-center gap-1 bg-blue-600 text-white px-2 py-1.5 rounded text-[10px] font-bold uppercase transition-transform active:scale-95"
                     >
                         <ShoppingCart size={14} />
-                        POS
+                        <span className="hidden xs:inline">POS</span>
                     </button>
-                    <div className="text-xs text-gray-600 dark:text-gray-300 truncate max-w-[120px]">
-                        {user?.username}
-                    </div>
                     <ThemeToggle />
                     <button
                         onClick={handleLogout}
-                        className="p-2 text-red-500 hover:text-red-600"
+                        className="p-2 text-red-500 hover:text-red-600 active:scale-90 transition-transform"
                         title="Logout"
                     >
                         <LogOut size={18} />

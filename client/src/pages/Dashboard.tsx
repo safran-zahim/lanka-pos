@@ -128,32 +128,32 @@ export const Dashboard = () => {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-6 transition-colors">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-                <div className="flex items-center space-x-4">
-                    <button onClick={() => navigate('/pos')} className="p-2 bg-white dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
-                        <ArrowLeft size={24} className="text-gray-600 dark:text-white" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+                <div className="flex items-center space-x-3 overflow-hidden">
+                    <button onClick={() => navigate('/pos')} className="p-2 bg-white dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors flex-shrink-0">
+                        <ArrowLeft size={20} className="text-gray-600 dark:text-white" />
                     </button>
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Manager Dashboard</h1>
-                        <p className="text-gray-500 dark:text-gray-400 text-sm">Overview of your business performance</p>
+                    <div className="truncate">
+                        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white truncate">Dashboard</h1>
+                        <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm truncate">Business performance overview</p>
                     </div>
                 </div>
 
                 {/* Quick Actions */}
-                <div className="flex gap-3">
+                <div className="flex gap-2 sm:gap-3">
                     <button
                         onClick={() => navigate('/admin/purchases/new')}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg shadow-blue-600/20 active:scale-95 transition-all text-sm font-medium"
+                        className="flex-1 sm:flex-none justify-center bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg shadow-blue-600/20 active:scale-95 transition-all text-xs sm:text-sm font-bold uppercase tracking-wide"
                     >
-                        <Package size={18} />
-                        New Purchase
+                        <Package size={16} />
+                        <span>Purchase</span>
                     </button>
                     <button
                         onClick={() => navigate('/pos')}
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg shadow-green-600/20 active:scale-95 transition-all text-sm font-medium"
+                        className="flex-1 sm:flex-none justify-center bg-green-600 hover:bg-green-700 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg shadow-green-600/20 active:scale-95 transition-all text-xs sm:text-sm font-bold uppercase tracking-wide"
                     >
-                        <DollarSign size={18} />
-                        Open POS
+                        <DollarSign size={16} />
+                        <span>POS</span>
                     </button>
                 </div>
             </div>
