@@ -1,0 +1,49 @@
+# Markdown Registry
+
+This registry tracks all repository Markdown files in one place.
+
+Last updated: 2026-03-25
+
+## Root
+
+- CHANGELOG.md
+- README.md
+
+## Docs
+
+- docs/api_documentation.md
+- docs/analysis/FEATURES.md
+- docs/analysis/ISSUES.md
+- docs/analysis/SYSTEM_INTEGRATION_ANALYSIS.md
+- docs/batch/BATCH_FIXES_SUMMARY.md
+- docs/batch/BATCH_SYSTEM.md
+- docs/batch/BATCH_SYSTEM_QUICK_REFERENCE.md
+- docs/batch/RETURNS_AND_HELD_SALES.md
+- docs/guides/BUILD.md
+- docs/guides/DESKTOP_APP_GUIDE.md
+- docs/guides/LOCAL_SETUP.md
+- docs/operations/CREDENTIALS.md
+- docs/specs/srs.md
+
+## Client
+
+- client/README.md
+
+## Tools
+
+- tools/README.md
+- tools/test-queries/README.md
+
+## System Tracker
+
+- system-tracker/CENTRAL_UPDATE_PROMPT.md
+- system-tracker/README.md
+- system-tracker/MARKDOWN_REGISTRY.md
+- system-tracker/daily/2026-03-25.md
+- system-tracker/docs-updates/README.md
+- system-tracker/docs-updates/daily-doc-updates.md
+- system-tracker/templates/daily-template.md
+
+## Maintenance Rule
+
+Whenever a Markdown file is added, removed, or moved, update this registry in the same change set.

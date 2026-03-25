@@ -5,10 +5,10 @@ import { getSubscriptionStatus, updateSubscriptionStatus, createPlan, getPlans, 
 const router = Router();
 
 router.get('/status', authenticate, requireActiveSubscription, getSubscriptionStatus);
-router.patch('/status', authenticate, authorize(['admin', 'super_admin']), updateSubscriptionStatus);
+router.patch('/status', authenticate, authorize(['super_admin']), updateSubscriptionStatus);
 
 router.post('/plans', authenticate, authorize(['super_admin']), createPlan);
-router.get('/plans', authenticate, authorize(['admin', 'super_admin']), getPlans);
+router.get('/plans', authenticate, authorize(['super_admin']), getPlans);
 router.patch('/plans/:id', authenticate, authorize(['super_admin']), updatePlan);
 router.put('/plans/:id', authenticate, authorize(['super_admin']), updatePlan);
 

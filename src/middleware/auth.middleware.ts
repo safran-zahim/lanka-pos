@@ -33,12 +33,14 @@ export const authorize = (roles: string[]) => {
 
 export const requireActiveSubscription = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-        if (req.user?.role === 'admin' || req.user?.role === 'super_admin') {
+        if (req.user?.role === 'super_admin') {
             return next();
         }
         const config = await getAppConfig();
         if (config.subscriptionStatus !== 'active') {
-            return res.status(402).json({ error: 'Subscription inactive' });
+            return res.status(402).json({
+                error: 'Subscription inactive. Please contact developer to activate the system.'
+            });
         }
         next();
     } catch (error) {

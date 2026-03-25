@@ -33,7 +33,8 @@ export const Login = () => {
             const apiUser: any = {
                 user_id: data.staff.id,
                 username: data.staff.name,
-                role: data.staff.role
+                role: data.staff.role,
+                subscription_status: data.subscriptionStatus || 'active'
             };
             login(apiUser, data.token);
             if (data.staff.role === 'admin' || data.staff.role === 'manager' || data.staff.role === 'super_admin') {

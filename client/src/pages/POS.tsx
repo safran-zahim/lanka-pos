@@ -90,6 +90,9 @@ export const POS = () => {
 
     const [productBatches, setProductBatches] = useState<Record<string, any[]>>({});
 
+    const subscriptionStatus = String(user?.subscription_status || 'active').toLowerCase();
+    const isSubscriptionInactive = user?.role !== 'super_admin' && subscriptionStatus !== 'active';
+
     useEffect(() => {
         const loadReferenceData = async () => {
             if (!token) return;
@@ -760,6 +763,31 @@ export const POS = () => {
     };
 
 
+
+    if (isSubscriptionInactive) {
+        return (
+            <div className="flex w-full h-full items-center justify-center bg-gray-100 dark:bg-gray-900 p-6">
+                <div className="max-w-xl w-full bg-white dark:bg-gray-800 border-2 border-red-200 dark:border-red-800 rounded-2xl shadow-lg p-8 text-center">
+                    <div className="mx-auto w-14 h-14 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center mb-4">
+                        <AlertCircle size={30} className="text-red-600 dark:text-red-400" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Subscription Expired</h2>
+                    <p className="text-red-600 dark:text-red-300 font-semibold mb-2">
+                        POS is locked because the subscription is not active.
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-300 mb-6">
+                        Contact developer and activate the system to continue using POS.
+                    </p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl transition-colors"
+                    >
+                        Retry After Activation
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex w-full h-full relative flex-row bg-gray-100 dark:bg-gray-900 overflow-hidden">

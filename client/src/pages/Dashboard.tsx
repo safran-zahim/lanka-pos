@@ -27,6 +27,9 @@ export const Dashboard = () => {
     const [products, setProducts] = useState<any[]>([]);
     const [lowStockItems, setLowStockItems] = useState<any[]>([]);
     const [shiftData, setShiftData] = useState<any>(null);
+    const user = useAuthStore((state) => state.user);
+    const subscriptionStatus = String(user?.subscription_status || 'active').toLowerCase();
+    const isSubscriptionInactive = user?.role !== 'super_admin' && subscriptionStatus !== 'active';
 
     useEffect(() => {
         if (!token) return;
@@ -149,14 +152,30 @@ export const Dashboard = () => {
                         <span>Purchase</span>
                     </button>
                     <button
-                        onClick={() => navigate('/pos')}
-                        className="flex-1 sm:flex-none justify-center bg-green-600 hover:bg-green-700 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg shadow-green-600/20 active:scale-95 transition-all text-xs sm:text-sm font-bold uppercase tracking-wide"
+                        onClick={() => {
+                            if (!isSubscriptionInactive) {
+                                navigate('/pos');
+                            }
+                        }}
+                        className={`flex-1 sm:flex-none justify-center text-white px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg active:scale-95 transition-all text-xs sm:text-sm font-bold uppercase tracking-wide ${isSubscriptionInactive
+                            ? 'bg-gray-400 cursor-not-allowed shadow-gray-400/20'
+                            : 'bg-green-600 hover:bg-green-700 shadow-green-600/20'
+                            }`}
                     >
                         <DollarSign size={16} />
-                        <span>POS</span>
+                        <span>{isSubscriptionInactive ? 'POS Locked' : 'POS'}</span>
                     </button>
                 </div>
             </div>
+
+            {isSubscriptionInactive && (
+                <div className="mb-6 rounded-xl border-2 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-4">
+                    <h2 className="text-lg font-bold text-red-700 dark:text-red-300">Subscription Expired</h2>
+                    <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                        System is currently inactive. Contact developer and activate the system to continue POS operations.
+                    </p>
+                </div>
+            )}
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -180,8 +199,15 @@ export const Dashboard = () => {
                 </div>
 
                 <div
-                    onClick={() => navigate('/pos')}
-                    className="bg-gradient-to-br from-green-50 to-white dark:from-green-900/20 dark:to-gray-800 p-6 rounded-xl border border-green-100 dark:border-green-900/30 shadow-sm transition-colors relative overflow-hidden group cursor-pointer hover:shadow-md"
+                    onClick={() => {
+                        if (!isSubscriptionInactive) {
+                            navigate('/pos');
+                        }
+                    }}
+                    className={`bg-gradient-to-br from-green-50 to-white dark:from-green-900/20 dark:to-gray-800 p-6 rounded-xl border border-green-100 dark:border-green-900/30 shadow-sm transition-colors relative overflow-hidden group ${isSubscriptionInactive
+                        ? 'cursor-not-allowed opacity-70'
+                        : 'cursor-pointer hover:shadow-md'
+                        }`}
                 >
                     <div className="absolute right-0 top-0 w-24 h-24 bg-green-100 dark:bg-green-800/20 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
                     <div className="relative z-10">
