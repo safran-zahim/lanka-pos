@@ -12,19 +12,19 @@ const clockInSchema = z.object({
 
 const staffCreateSchema = z.object({
     name: z.string().min(1),
-    role: z.enum(['admin', 'manager', 'cashier']),
-    password: z.string().min(4),
+    role: z.enum(['admin', 'manager', 'cashier', 'super_admin']),
+    password: z.string().min(8, "Password must be at least 8 characters long"),
     hourly_rate: z.number().optional()
 });
 
 const staffUpdateSchema = z.object({
     name: z.string().min(1).optional(),
-    role: z.enum(['admin', 'manager', 'cashier']).optional(),
+    role: z.enum(['admin', 'manager', 'cashier', 'super_admin']).optional(),
     hourly_rate: z.number().optional()
 });
 
 const staffPasswordSchema = z.object({
-    password: z.string().min(4)
+    password: z.string().min(8, "Password must be at least 8 characters long")
 });
 
 export const getStaffList = async (req: Request, res: Response) => {
@@ -191,6 +191,13 @@ export const getPerformance = async (req: Request, res: Response) => {
 export const clockIn = async (req: Request, res: Response) => {
     try {
         const { staff_id, cash_drawer_balance } = clockInSchema.parse(req.body);
+
+        // IDOR Fix: Ensure staff_id matches authenticated user
+        const authenticatedUser = (req as any).user;
+        if (authenticatedUser.id !== staff_id && authenticatedUser.role !== 'admin' && authenticatedUser.role !== 'super_admin') {
+            console.warn(`[Security] IDOR attempt by user ${authenticatedUser.id} trying to clock-in for staff_id ${staff_id}`);
+            return res.status(403).json({ error: 'Unauthorized staff ID' });
+        }
 
         const shift = await prisma.shift.create({
             data: {

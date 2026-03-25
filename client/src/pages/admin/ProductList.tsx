@@ -490,19 +490,19 @@ export const ProductList = () => {
                 </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 mb-6">
-                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+            <div className="flex flex-wrap lg:flex-nowrap justify-between items-end gap-3 mb-6">
+                <div className="flex flex-wrap gap-2">
                     {tabs.map(tab => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`flex flex-1 sm:flex-none items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold uppercase tracking-wide transition-colors ${activeTab === tab.id
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${activeTab === tab.id
                                 ? 'bg-blue-600 text-white'
                                 : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                                 }`}
                         >
-                            <span className="shrink-0">{tab.icon}</span>
-                            <span>{tab.label}</span>
+                            {tab.icon}
+                            {tab.label}
                         </button>
                     ))}
                 </div>
@@ -522,48 +522,48 @@ export const ProductList = () => {
                                 Show inactive products
                             </label>
                         </div>
-                        <div className="flex flex-wrap gap-2 w-full lg:w-auto">
+                        <div className="flex flex-wrap gap-2">
                             {selectedProducts.length > 0 && (
-                                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                                <>
                                     <button
                                         onClick={handleBulkActivate}
                                         disabled={isBulkDeactivating}
-                                        className="flex-1 sm:flex-none bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700 hover:bg-green-100 dark:hover:bg-green-900/40 h-9 px-3 py-1.5 rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-50 text-[10px] font-bold uppercase"
+                                        className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700 hover:bg-green-100 dark:hover:bg-green-900/40 h-9 px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all shadow-sm disabled:opacity-50 text-sm font-medium"
                                     >
                                         <Eye size={16} />
-                                        <span>{isBulkDeactivating ? '...' : `Activate (${selectedProducts.length})`}</span>
+                                        {isBulkDeactivating ? '...' : `Make Active (${selectedProducts.length})`}
                                     </button>
                                     <button
                                         onClick={handleBulkDeactivate}
                                         disabled={isBulkDeactivating}
-                                        className="flex-1 sm:flex-none bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/40 h-9 px-3 py-1.5 rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-50 text-[10px] font-bold uppercase"
+                                        className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/40 h-9 px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all shadow-sm disabled:opacity-50 text-sm font-medium"
                                     >
                                         <EyeOff size={16} />
-                                        <span>{isBulkDeactivating ? '...' : `Deactivate (${selectedProducts.length})`}</span>
+                                        {isBulkDeactivating ? 'Updating...' : `Make Inactive (${selectedProducts.length})`}
                                     </button>
-                                </div>
+                                </>
                             )}
                             <button
                                 onClick={handleExport}
                                 disabled={isExporting}
-                                className="flex-1 sm:flex-none bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 h-9 px-3 py-1.5 rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-50 text-[10px] font-bold uppercase"
+                                className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 h-9 px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all shadow-sm disabled:opacity-50 text-sm"
                             >
                                 <Download size={16} />
-                                <span>Export</span>
+                                {isExporting ? 'Exporting...' : 'Bulk Export'}
                             </button>
                             <button
                                 onClick={() => setIsBulkModalOpen(true)}
-                                className="flex-1 sm:flex-none bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 h-9 px-3 py-1.5 rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm text-[10px] font-bold uppercase"
+                                className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 h-9 px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all shadow-sm text-sm"
                             >
                                 <Upload size={16} />
-                                <span>Import</span>
+                                Bulk Import
                             </button>
                             <button
                                 onClick={() => setIsAddModalOpen(true)}
-                                className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white h-9 px-3 py-1.5 rounded-lg flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all text-[10px] font-bold uppercase"
+                                className="bg-blue-600 hover:bg-blue-700 text-white h-9 px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-md hover:shadow-lg transition-all text-sm"
                             >
                                 <Plus size={16} />
-                                <span>Add</span>
+                                Add Product
                             </button>
                         </div>
                     </div>

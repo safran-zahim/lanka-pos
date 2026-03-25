@@ -137,7 +137,18 @@ export const getProducts = async (req: Request, res: Response) => {
             };
         });
 
-        res.json(enriched);
+        const authenticatedUser = (req as any).user;
+        const isManagement = authenticatedUser?.role === 'admin' || authenticatedUser?.role === 'super_admin' || authenticatedUser?.role === 'manager';
+
+        const filteredEnriched = enriched.map(p => {
+            if (!isManagement) {
+                const { costPrice, ...rest } = p;
+                return rest;
+            }
+            return p;
+        });
+
+        res.json(filteredEnriched);
     } catch (error) {
         console.error("Error fetching products:", error);
         res.status(500).json({ error: 'Internal server error' });
@@ -368,7 +379,10 @@ export const getProductDetails = async (req: Request, res: Response) => {
             include: { sale: { select: { createdAt: true } } }
         });
 
-        res.json({
+        const authenticatedUser = (req as any).user;
+        const isManagement = authenticatedUser?.role === 'admin' || authenticatedUser?.role === 'super_admin' || authenticatedUser?.role === 'manager';
+
+        const responseData = {
             id: product.id,
             name: product.name,
             skuCode: product.skuCode,
@@ -392,18 +406,23 @@ export const getProductDetails = async (req: Request, res: Response) => {
             _count: product._count,
             stats: {
                 currentStock: stock,
-                currentCost: Number(currentCost),
                 currentRetail: Number(currentPrice),
                 totalSold,
-                totalRevenue,
-                currentMargin: Number(margin),
                 recentSales: recentSales.map(s => ({
                     date: s.sale.createdAt,
                     quantity: Number(s.quantity),
                     price: Number(s.price)
                 }))
             }
-        });
+        };
+
+        if (isManagement) {
+            (responseData.stats as any).currentCost = Number(currentCost);
+            (responseData.stats as any).totalRevenue = totalRevenue;
+            (responseData.stats as any).currentMargin = Number(margin);
+        }
+
+        res.json(responseData);
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });

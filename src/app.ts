@@ -1,8 +1,12 @@
 import express from 'express';
+import helmet from 'helmet';
+import cors from 'cors';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Security hardening
+app.use(helmet());
 app.use(express.json());
 
 // Request logging middleware
@@ -12,19 +16,17 @@ app.use((req, res, next) => {
 });
 
 const allowedOrigins = ['http://localhost:4173', 'http://localhost:5173', 'http://localhost:5174'];
-app.use((req, res, next) => {
-    const origin = req.headers.origin as string | undefined;
-    if (origin && allowedOrigins.includes(origin)) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-        res.setHeader('Vary', 'Origin');
-    }
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    if (req.method === 'OPTIONS') {
-        return res.sendStatus(204);
-    }
-    next();
-});
+app.use(cors({
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 app.get('/', (req, res) => {
     res.send('POS Backend is running');
