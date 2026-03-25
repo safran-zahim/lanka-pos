@@ -9,7 +9,7 @@
     "build": "npm install --include=dev && tsc || true && npx prisma generate",
     "build:all": "npm run build && npm --prefix client run build",
     "render-build": "npm install --include=dev && npm run build && npx prisma generate",
-    "render-start": "npx prisma migrate deploy && node dist/src/app.js",
+    "render-start": "node dist/src/app.js",
     "electron": "electron .",
     "pack": "npm run build:all && electron-builder --dir",
     "dist": "npm run build:all && electron-builder",
