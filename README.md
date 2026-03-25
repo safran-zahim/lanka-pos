@@ -244,7 +244,9 @@ The full API reference is in [`docs/api_documentation.md`](./docs/api_documentat
 
 ## 📦 Building the Desktop Application
 
-For detailed instructions on building the Electron desktop application (Windows .exe), please refer to [BUILD.md](./BUILD.md).
+For detailed instructions on building the Electron desktop application (Windows .exe), please refer to [docs/guides/BUILD.md](./docs/guides/BUILD.md).
+
+For the full centralized documentation layout, see [docs/README.md](./docs/README.md).
 
 ---
 
@@ -324,7 +326,7 @@ You can host this entire system for **$0/month** using the following services:
 ---
 
 ## 🔐 Default Credentials
-See [CREDENTIALS.md](./CREDENTIALS.md) for a list of default logins and important secrets.
+See [docs/operations/CREDENTIALS.md](./docs/operations/CREDENTIALS.md) for a list of default logins and important secrets.
 
 ## 📖 API Documentation & Project Structure
 (See original README for API details)

@@ -17,7 +17,7 @@ Lanka POS is a point-of-sale system that includes a web client and a backend API
 
 ### 1.4 References
 - architecture_overview.md
-- CREDENTIALS.md
+- ../operations/CREDENTIALS.md
 
 ### 1.5 Overview
 This SRS presents the system overview, requirements, and constraints for Lanka POS.
@@ -59,8 +59,8 @@ Lanka POS is a client-server application:
 - Frontend uses IndexedDB for local demo data
 
 ### 2.6 User Documentation
-- LOCAL_SETUP.md
-- DESKTOP_APP_GUIDE.md
+- ../guides/LOCAL_SETUP.md
+- ../guides/DESKTOP_APP_GUIDE.md
 - architecture_overview.md
 
 ### 2.7 Assumptions and Dependencies

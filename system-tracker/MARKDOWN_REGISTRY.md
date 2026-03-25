@@ -11,6 +11,7 @@ Last updated: 2026-03-25
 
 ## Docs
 
+- docs/README.md
 - docs/api_documentation.md
 - docs/analysis/FEATURES.md
 - docs/analysis/ISSUES.md
@@ -37,6 +38,8 @@ Last updated: 2026-03-25
 ## System Tracker
 
 - system-tracker/CENTRAL_UPDATE_PROMPT.md
+- system-tracker/knowledge-base/LANKA_POS_WORKSPACE_ARCHITECTURE_ANALYSIS.md
+- system-tracker/knowledge-base/README.md
 - system-tracker/README.md
 - system-tracker/MARKDOWN_REGISTRY.md
 - system-tracker/daily/2026-03-25.md
@@ -47,3 +50,4 @@ Last updated: 2026-03-25
 ## Maintenance Rule
 
 Whenever a Markdown file is added, removed, or moved, update this registry in the same change set.
+Keep project documentation centralized under `docs/` and tracking workflow docs under `system-tracker/`.

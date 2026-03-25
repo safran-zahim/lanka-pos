@@ -197,4 +197,4 @@ Create a folder with:
 
 ---
 
-**Need help?** Check the main `README.md` or `CREDENTIALS.md` for more details.
+**Need help?** Check the main `README.md` or `../operations/CREDENTIALS.md` for more details.

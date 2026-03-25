@@ -255,7 +255,7 @@ This is a **purchase order list**, not a batch detail view. Showing:
 - Batch remaining stock shown in checkout list
 - Pre-check batch stock validation before payment
 
-**✅ Fully functional - See BATCH_SYSTEM.md**
+**✅ Fully functional - See ../batch/BATCH_SYSTEM.md**
 
 ---
 
@@ -269,7 +269,7 @@ This is a **purchase order list**, not a batch detail view. Showing:
 - Stock restoration to correct batch
 - FIFO validation in checkout
 
-**✅ Fully functional - See BATCH_SYSTEM.md**
+**✅ Fully functional - See ../batch/BATCH_SYSTEM.md**
 
 ---
 
@@ -453,9 +453,9 @@ PurchaseItem (1) ──── (N) SaleItem [batch reference]
 ## 📝 Documentation Status
 
 ### Available Docs
-1. ✅ BATCH_SYSTEM.md - Comprehensive technical guide
-2. ✅ BATCH_SYSTEM_QUICK_REFERENCE.md - Quick reference
-3. ✅ SYSTEM_INTEGRATION_ANALYSIS.md (this file)
+1. ✅ ../batch/BATCH_SYSTEM.md - Comprehensive technical guide
+2. ✅ ../batch/BATCH_SYSTEM_QUICK_REFERENCE.md - Quick reference
+3. ✅ ./SYSTEM_INTEGRATION_ANALYSIS.md (this file)
 
 ### Doc Coverage
 - ✅ System architecture
@@ -513,14 +513,14 @@ All modules correctly:
 ## 📞 Support
 
 ### If Issues Arise
-1. Check BATCH_SYSTEM.md for troubleshooting
+1. Check ../batch/BATCH_SYSTEM.md for troubleshooting
 2. Verify database migration applied
 3. Check API responses in Network tab
 4. Review error logs in console
 
 ### Related Files
-- `/BATCH_SYSTEM.md` - Full documentation
-- `/BATCH_SYSTEM_QUICK_REFERENCE.md` - Quick guide
+- `../batch/BATCH_SYSTEM.md` - Full documentation
+- `../batch/BATCH_SYSTEM_QUICK_REFERENCE.md` - Quick guide
 - `prisma/schema.prisma` - Database schema
 - `src/controllers/sales.controller.ts` - Sale logic
 - `src/controllers/product.controller.ts` - Product logic

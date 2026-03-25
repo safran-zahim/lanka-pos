@@ -345,10 +345,10 @@ npx prisma migrate status
 ---
 
 ## Related Documentation
-- **Full Documentation:** `/BATCH_SYSTEM.md`
-- **Returns Guide:** `/RETURNS_AND_HELD_SALES.md`
-- **Build Guide:** `/BUILD.md`
-- **Setup Guide:** `/LOCAL_SETUP.md`
+- **Full Documentation:** `./BATCH_SYSTEM.md`
+- **Returns Guide:** `./RETURNS_AND_HELD_SALES.md`
+- **Build Guide:** `../guides/BUILD.md`
+- **Setup Guide:** `../guides/LOCAL_SETUP.md`
 
 ---
 

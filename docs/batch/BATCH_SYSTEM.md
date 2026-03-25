@@ -1140,11 +1140,11 @@ Actual: ✅ Decimal.js handles precise calculations
 
 ### Contact
 - **Developer:** System Administrator
-- **Documentation:** `/BATCH_SYSTEM.md`
+- **Documentation:** `./BATCH_SYSTEM.md`
 - **Related Docs:** 
-  - `/RETURNS_AND_HELD_SALES.md`
-  - `/BUILD.md`
-  - `/LOCAL_SETUP.md`
+  - `./RETURNS_AND_HELD_SALES.md`
+  - `../guides/BUILD.md`
+  - `../guides/LOCAL_SETUP.md`
 
 ### Resources
 - Database Schema: `prisma/schema.prisma`
