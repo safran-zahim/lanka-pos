@@ -14,3 +14,9 @@
 - Enhanced central prompt to explicitly require CHANGELOG maintenance and markdown registry date refresh.
 - Added centralized architecture knowledge base at `system-tracker/knowledge-base/LANKA_POS_WORKSPACE_ARCHITECTURE_ANALYSIS.md`.
 - Updated central prompt to require architecture and request-flow updates in knowledge base after structural changes.
+
+## 2026-03-26
+
+- Updated `system-tracker/knowledge-base/LANKA_POS_WORKSPACE_ARCHITECTURE_ANALYSIS.md` with deep structural documentation logic detailing every file's limits, data sources, and database attribute purposes as requested.
+- Updated `CHANGELOG.md` with React state and toast duplication fixes.
+- Tracked new updates in `system-tracker/MARKDOWN_REGISTRY.md`.

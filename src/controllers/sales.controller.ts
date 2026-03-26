@@ -240,10 +240,7 @@ export const checkout = async (req: Request, res: Response) => {
                         _sum: { quantity: true }
                     }),
                     tx.saleItem.aggregate({
-                        where: { 
-                            productId: item.product_id,
-                            sale: { status: { not: 'VOIDED' } }
-                        },
+                        where: { productId: item.product_id },
                         _sum: { quantity: true }
                     })
                 ]);
@@ -275,8 +272,7 @@ export const checkout = async (req: Request, res: Response) => {
                     const batchSales = await tx.saleItem.aggregate({
                         where: {
                             productId: item.product_id,
-                            batchId: item.batch_id,
-                            sale: { status: { not: 'VOIDED' } }
+                            batchId: item.batch_id
                         },
                         _sum: { quantity: true }
                     });
@@ -299,11 +295,7 @@ export const checkout = async (req: Request, res: Response) => {
                     let remainingToAssign = item.quantity;
                     for (const batch of batches) {
                         const batchSales = await tx.saleItem.aggregate({
-                            where: { 
-                                productId: item.product_id, 
-                                batchId: batch.id,
-                                sale: { status: { not: 'VOIDED' } }
-                            },
+                            where: { productId: item.product_id, batchId: batch.id },
                             _sum: { quantity: true }
                         });
                         const batchPurchased = Number(batch.quantity || 0);
@@ -337,11 +329,7 @@ export const checkout = async (req: Request, res: Response) => {
 
                     if (item.quantity > 0 && !isReturn && item.batch_id) {
                         const batchSales = await tx.saleItem.aggregate({
-                            where: { 
-                                productId: item.product_id, 
-                                batchId: item.batch_id,
-                                sale: { status: { not: 'VOIDED' } }
-                            },
+                            where: { productId: item.product_id, batchId: item.batch_id },
                             _sum: { quantity: true }
                         });
                         const batch = await tx.purchaseItem.findUnique({ where: { id: item.batch_id } });
@@ -389,7 +377,7 @@ export const checkout = async (req: Request, res: Response) => {
                     } else {
                         saleItemsData.push({
                             productId: item.product_id,
-                            quantity: item.quantity,
+                            quantity: isReturn ? -item.quantity : item.quantity,
                             price: isReturn ? (returnUnitPrices.get(key) || new Decimal(item.unit_price)) : new Decimal(item.unit_price),
                             batchId: item.batch_id,
                             isOverSale: false,
@@ -406,11 +394,7 @@ export const checkout = async (req: Request, res: Response) => {
 
                     for (const batch of batches) {
                         const batchSales = await tx.saleItem.aggregate({
-                            where: { 
-                                productId: item.product_id, 
-                                batchId: batch.id,
-                                sale: { status: { not: 'VOIDED' } }
-                            },
+                            where: { productId: item.product_id, batchId: batch.id },
                             _sum: { quantity: true }
                         });
                         const batchPurchased = Number(batch.quantity || 0);
@@ -626,9 +610,6 @@ export const checkout = async (req: Request, res: Response) => {
             }
 
             return sale;
-        }, {
-            maxWait: 5000,
-            timeout: 20000
         });
 
         res.status(201).json(result);
@@ -646,7 +627,7 @@ export const checkout = async (req: Request, res: Response) => {
             res.status(400).json({ error: error.message });
         } else if (error.message && error.message.includes('Insufficient stock')) {
             res.status(409).json({ error: error.message }); // Conflict
-        } else if (error.message && error.message.includes('not found') && !error.message.includes('Transaction not found')) {
+        } else if (error.message && error.message.includes('not found')) {
             res.status(404).json({ error: error.message });
         } else {
             console.error(error);

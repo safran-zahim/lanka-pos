@@ -1,6 +1,12 @@
 # Feature Updates & Bug Fixes Changelog
 
-## [2026-03-07] - Return Module Refinements
+## [2026-03-26] - POS Setting & UI QA Fixes
+
+### Bug Fixes
+- **Duplicate Success Toasts (Products)**: Implemented an explicit `isSubmitting` tracking state combined with a synchronous `useRef` event lock within `AddProductModal.tsx` to completely disable the Save button and instantly reject duplicate synthetic submit events when users (or automated tools) double-click standard forms.
+- **Branding State Silently Failing**: Fixed a critical React infinite-loop memory leak ("Maximum update depth exceeded") in `SettingsPage.tsx`. The `onSaveReady` handler was passing an inline execution closure causing constant re-renders. Refactored to utilize stable `useCallback` identity, resulting in `BrandingPage.tsx` successfully persisting customized company names natively to the POS Receipt headers again. Added success and error `useToast` notifications for immediate visual feedback on the branding panel.
+- **Refund Logic Double Negation**: Resolved a stock-tracking bug in `sales.controller.ts` where returning an item incorrectly *decreased* available product stock due to an erroneous mathematical double-negative inside the Prisma schema update transaction. Returning items now correctly increments stock quantities.
+- **POS Checkout Transaction Threshold**: Addressed frequent 404/Timeout errors during high-load split-payment checkouts by increasing backend Prisma transactional limits configurations (`maxWait` and `timeout`) natively in the checkout flow.## [2026-03-07] - Return Module Refinements
 
 ## [2026-03-07] - Comprehensive POS UX/UI Enhancements & Return Module Overhaul
 

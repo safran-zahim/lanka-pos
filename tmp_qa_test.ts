@@ -60,6 +60,7 @@ async function runTests() {
             reference_no: `REF-${Date.now()}-1`,
             date: new Date().toISOString(),
             status: "RECEIVED",
+            total_amount: 1000,
             items: [{ product_id: product.id, quantity: 10, cost_price: 100, retail_price: 150 }]
         })).data;
         console.log(`✅ Purchase 1 Created (10 units)`);
@@ -69,6 +70,7 @@ async function runTests() {
             reference_no: `REF-${Date.now()}-2`,
             date: new Date().toISOString(),
             status: "RECEIVED",
+            total_amount: 2200,
             items: [{ product_id: product.id, quantity: 20, cost_price: 110, retail_price: 160 }]
         })).data;
         console.log(`✅ Purchase 2 Created (20 units)`);

@@ -255,3 +255,29 @@ When code or routes change, update this file together with:
 - `system-tracker/docs-updates/daily-doc-updates.md`
 
 This keeps architecture knowledge, docs, and tracker automation aligned.
+
+## 10. Core Database Logics & File Responsibilities
+
+### 10.1 `Product` & `PurchaseItem`
+- **Why it exists**: Tracks catalog entries and actual physical inventory batches.
+- **Data Flow**: `PurchaseItem` records define independent batch lifecycles (`batch_id`). Checkout deducts from oldest batches first (FIFO) managed by `sales.controller.ts`.
+- **Key Attributes**:
+  - `stock`: Global aggregated tracker maintained mathematically (`Purchases` - `Sales` + `Refunds`).
+  - `reorderLevel`: Defines the UI trigger point for "Low Stock" orange alerts.
+
+### 10.2 `Sale` & `SaleItem`
+- **Why it exists**: Records financial transactions, customer receipts, and dictates stock consumption.
+- **Data Flow**: `POST /sales/checkout` wraps all creations (Sale, SaleItem, Shift Updates, Credit Updates) into a singular heavy Prisma `$transaction`.
+- **Key Attributes**:
+  - `parentSaleId`: Essential for Refunds to map returning lines back to the origin timeline and prevent over-refunding mathematically.
+  - `dueAmount`: Tracks credit balances owed by specific `Customer` entities.
+
+### 10.3 `Setting` & `AppConfig`
+- **Why it exists**: Key-value metadata table bypassing the need for `.env` redeployments.
+- **Limitations**: Updated iteratively via frontend looping. A major React architecture constraint here is preventing referential equality re-renders (Infinite Loops) from spamming the DB with `PUT` updates. Required the explicit use of `useCallback` when passing update schemas to nested components.
+
+## 11. Architecture Update History
+
+*Every major logic/architectural change must be logged here to track what was done and when.*
+
+- **[2026-03-26]**: Documented core DB rules (`parentSaleId` necessity, `stock` math). Logged React functional state limits (preventing `Maximum update depth exceeded`) and Synthetic Event spam throttling necessities via `useRef` synchronous locks directly on UI forms (`AddProductModal.tsx`).
