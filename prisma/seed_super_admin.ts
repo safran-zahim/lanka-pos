@@ -11,6 +11,7 @@ async function main() {
         where: { name: 'Premium' },
         update: {},
         create: {
+            id: 1,
             name: 'Premium',
             price: 99.99,
             duration: 30,
