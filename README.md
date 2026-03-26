@@ -260,66 +260,44 @@ You can host this entire system for **$0/month** using the following services:
 1.  Sign up at [supabase.com](https://supabase.com).
 2.  Create a new Project.
 3.  Go to **Project Settings** -> **Database**.
-4.  Copy the **Connection String** (Mode: **Transaction**). This goes into `DATABASE_URL`.
-    - Port should be `6543`.
-5.  Copy the **Connection String** (Mode: **Session**). This goes into `DIRECT_URL`.
-    - Port should be `5432`.
-    - *Note*: You will need to add `DIRECT_URL` to your Render environment variables as well.
+4.  Copy the **Connection String** (Mode: **Transaction**) and put it into `DATABASE_URL`. (Ensure it has `?pgbouncer=true`).
+5.  Copy the **Connection String** (Mode: **Session**) and put it into `DIRECT_URL`.
 
-### 2. Backend: Render
+### 2. Backend API: Render
 **Service**: Web Service (Node.js)
 
-#### Step-by-Step Configuration:
-
 1.  **Sign up** at [render.com](https://render.com).
-2.  Click **New +** → **Web Service**.
-3.  **Connect Repository**: Select `safran-zahim/lanka-pos`.
-
-4.  **Basic Settings**:
-    - **Name**: `lanka-pos` (or any unique name)
-    - **Language**: `Docker` (Render auto-detects this)
-    - **Branch**: `main`
-    - **Region**: `Oregon (US West)` (or your preferred region)
-    - **Root Directory**: Leave empty (or `.`)
-
-5.  **Instance Type**:
-    - **Free**: `$0/month` (512 MB RAM, 0.1 CPU)
-      - ⚠️ Free instances spin down after inactivity
-    - **Starter**: `$7/month` (512 MB RAM, 0.5 CPU) - Recommended for testing
-    - **Standard**: `$25/month` (2 GB RAM, 1 CPU) - Recommended for production
-
-6.  **Environment Variables** (Click "Add Environment Variable"):
-    ```
-    DATABASE_URL = postgresql://postgres.gsolfnhrmdjysoscbmth:123@Lankapos@aws-0-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true
-    DIRECT_URL = postgresql://postgres.gsolfnhrmdjysoscbmth:123@Lankapos@aws-0-ap-south-1.pooler.supabase.com:5432/postgres
-    JWT_SECRET = your_random_secret_key_here
-    NODE_ENV = production
-    PORT = 3000
-    ```
-
-7.  **Advanced Settings**:
-    - **Docker Build Context Directory**: `.`
-    - **Dockerfile Path**: `./Dockerfile`
-    - **Pre-Deploy Command**: `npx prisma generate --schema=prisma/schema.postgresql.prisma && npx prisma db push --schema=prisma/schema.postgresql.prisma && npx prisma db seed`
-      - *This runs migrations and seeds the SuperAdmin user*
-    - **Health Check Path**: `/` (or leave default)
-    - **Auto-Deploy**: `On Commit` (enabled by default)
-
-8.  Click **Deploy web service**.
-
-### 3. Frontend: Vercel
-**Service**: Static Site Hosting
-1.  Sign up at [vercel.com](https://vercel.com).
-2.  **Add New Project** -> Import your GitHub repository.
+2.  Create a **New Web Service** linked to your GitHub repository.
 3.  **Settings**:
-    - **Framework Preset**: Vite
-    - **Root Directory**: `client` (Click Edit to select the client folder)
-    - **Build Command**: `npm run build`
-    - **Output Directory**: `dist`
+    - **Language**: Docker (or Node if you aren't using the Dockerfile)
+    - **Build Command**: `npm run render-build`
+    - **Start Command**: `npm run render-start`
+    - **Instance Type**: Free ($0/month)
 4.  **Environment Variables**:
-    - `VITE_API_URL`: (The URL of your Render backend, e.g., `https://lanka-pos.onrender.com`)
-    - *Note*: You may need to update your frontend code to use this variable instead of the proxy if deployed separately.
-5.  Deploy.
+    ```
+    DATABASE_URL = [YOUR_TRANSACTION_CONNECTION_STRING]
+    DIRECT_URL = [YOUR_SESSION_CONNECTION_STRING]
+    JWT_SECRET = [YOUR_SECURE_RANDOM_KEY]
+    NODE_ENV = production
+    PORT = 10000
+    ```
+5.  Click **Deploy**. Free instances spin down after inactivity, so the first request takes ~50s to wake up!
+
+### 3. Frontend App: Vercel
+**Service**: Static Site Hosting (React/Vite)
+1.  Sign up at [vercel.com](https://vercel.com) and import your repository.
+2.  **Settings**:
+    - **Framework Preset**: Vite
+    - **Root Directory**: `client`
+    - **Build Command**: `npm run build`
+3.  **Environment Variables**:
+    - `VITE_API_URL`: Your exact Render URL (e.g., `https://lanka-pos.onrender.com`)
+4.  Deploy.
+
+### 🚀 Initial Setup (Seeding the Database)
+Once your database is online, open your **local VS Code terminal** and run:
+`npm run seed`
+This securely connects to Supabase and automatically creates the `superadmin`, `admin`, `manager`, and `cashier` accounts so you can log in immediately on your live Vercel site!
 
 ---
 
