@@ -87,7 +87,10 @@ export const getProducts = async (req: Request, res: Response) => {
             }),
             prisma.saleItem.groupBy({
                 by: ['productId'],
-                where: { productId: { in: productIds } },
+                where: { 
+                    productId: { in: productIds },
+                    sale: { status: { not: 'VOIDED' } }
+                },
                 _sum: { quantity: true }
             }),
             prisma.purchaseItem.findMany({
@@ -177,7 +180,8 @@ export const getProductBatches = async (req: Request, res: Response) => {
             const batchSales = await prisma.saleItem.aggregate({
                 where: {
                     productId: id,
-                    batchId: batch.id
+                    batchId: batch.id,
+                    sale: { status: { not: 'VOIDED' } }
                 },
                 _sum: { quantity: true }
             });
@@ -354,7 +358,10 @@ export const getProductDetails = async (req: Request, res: Response) => {
                 _sum: { quantity: true }
             }),
             prisma.saleItem.aggregate({
-                where: { productId: id },
+                where: { 
+                    productId: id,
+                    sale: { status: { not: 'VOIDED' } }
+                },
                 _sum: { quantity: true }
             }),
             prisma.purchaseItem.findFirst({
@@ -448,7 +455,10 @@ export const getLowStock = async (req: Request, res: Response) => {
             }),
             prisma.saleItem.groupBy({
                 by: ['productId'],
-                where: { productId: { in: productIds } },
+                where: { 
+                    productId: { in: productIds },
+                    sale: { status: { not: 'VOIDED' } }
+                },
                 _sum: { quantity: true }
             })
         ]);

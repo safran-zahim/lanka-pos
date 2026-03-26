@@ -240,7 +240,10 @@ export const checkout = async (req: Request, res: Response) => {
                         _sum: { quantity: true }
                     }),
                     tx.saleItem.aggregate({
-                        where: { productId: item.product_id },
+                        where: { 
+                            productId: item.product_id,
+                            sale: { status: { not: 'VOIDED' } }
+                        },
                         _sum: { quantity: true }
                     })
                 ]);
@@ -272,7 +275,8 @@ export const checkout = async (req: Request, res: Response) => {
                     const batchSales = await tx.saleItem.aggregate({
                         where: {
                             productId: item.product_id,
-                            batchId: item.batch_id
+                            batchId: item.batch_id,
+                            sale: { status: { not: 'VOIDED' } }
                         },
                         _sum: { quantity: true }
                     });
@@ -295,7 +299,11 @@ export const checkout = async (req: Request, res: Response) => {
                     let remainingToAssign = item.quantity;
                     for (const batch of batches) {
                         const batchSales = await tx.saleItem.aggregate({
-                            where: { productId: item.product_id, batchId: batch.id },
+                            where: { 
+                                productId: item.product_id, 
+                                batchId: batch.id,
+                                sale: { status: { not: 'VOIDED' } }
+                            },
                             _sum: { quantity: true }
                         });
                         const batchPurchased = Number(batch.quantity || 0);
@@ -329,7 +337,11 @@ export const checkout = async (req: Request, res: Response) => {
 
                     if (item.quantity > 0 && !isReturn && item.batch_id) {
                         const batchSales = await tx.saleItem.aggregate({
-                            where: { productId: item.product_id, batchId: item.batch_id },
+                            where: { 
+                                productId: item.product_id, 
+                                batchId: item.batch_id,
+                                sale: { status: { not: 'VOIDED' } }
+                            },
                             _sum: { quantity: true }
                         });
                         const batch = await tx.purchaseItem.findUnique({ where: { id: item.batch_id } });
@@ -394,7 +406,11 @@ export const checkout = async (req: Request, res: Response) => {
 
                     for (const batch of batches) {
                         const batchSales = await tx.saleItem.aggregate({
-                            where: { productId: item.product_id, batchId: batch.id },
+                            where: { 
+                                productId: item.product_id, 
+                                batchId: batch.id,
+                                sale: { status: { not: 'VOIDED' } }
+                            },
                             _sum: { quantity: true }
                         });
                         const batchPurchased = Number(batch.quantity || 0);
