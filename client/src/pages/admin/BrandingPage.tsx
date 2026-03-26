@@ -12,9 +12,12 @@ interface BrandingPageProps {
     onSavingChange?: (saving: boolean) => void;
 }
 
+import { useToast } from '../../store/useToast';
+
 export const BrandingPage = ({ hideSave, onSaveReady, onSavingChange }: BrandingPageProps) => {
     const { updateSetting, loadSettings, loading } = useSettingsStore();
     const token = useAuthStore((state) => state.token);
+    const { addToast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
 
     const [companyName, setCompanyName] = useState(APP_CONFIG.appName);
@@ -72,8 +75,16 @@ export const BrandingPage = ({ hideSave, onSaveReady, onSavingChange }: Branding
             await updateSetting('companyPhone', phone || '');
             await updateSetting('companyEmail', email || '');
             await updateSetting('companyWebsite', website || '');
+            if (!hideSave) {
+                addToast('Branding settings saved successfully!', 'success');
+            } else {
+                // SettingsPage will handle its own "Settings saved" toast but if branding is active it uses this save,
+                // so we can issue a toast here. SettingsPage's Save button triggers this.
+                addToast('Branding saved successfully!', 'success');
+            }
         } catch (error) {
             console.error(error);
+            addToast('Failed to save branding settings.', 'error');
         } finally {
             setIsSaving(false);
             onSavingChange?.(false);

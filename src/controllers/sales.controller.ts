@@ -389,7 +389,7 @@ export const checkout = async (req: Request, res: Response) => {
                     } else {
                         saleItemsData.push({
                             productId: item.product_id,
-                            quantity: isReturn ? -item.quantity : item.quantity,
+                            quantity: item.quantity,
                             price: isReturn ? (returnUnitPrices.get(key) || new Decimal(item.unit_price)) : new Decimal(item.unit_price),
                             batchId: item.batch_id,
                             isOverSale: false,
@@ -626,6 +626,9 @@ export const checkout = async (req: Request, res: Response) => {
             }
 
             return sale;
+        }, {
+            maxWait: 5000,
+            timeout: 20000
         });
 
         res.status(201).json(result);
@@ -643,7 +646,7 @@ export const checkout = async (req: Request, res: Response) => {
             res.status(400).json({ error: error.message });
         } else if (error.message && error.message.includes('Insufficient stock')) {
             res.status(409).json({ error: error.message }); // Conflict
-        } else if (error.message && error.message.includes('not found')) {
+        } else if (error.message && error.message.includes('not found') && !error.message.includes('Transaction not found')) {
             res.status(404).json({ error: error.message });
         } else {
             console.error(error);

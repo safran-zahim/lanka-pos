@@ -180,8 +180,14 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
         }
     };
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const submitLock = useRef(false);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (submitLock.current) return;
+        submitLock.current = true;
+        setIsSubmitting(true);
         setFieldErrors({}); // Reset errors before submission
         try {
             if (!token) {
@@ -250,6 +256,9 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
             console.error('Product creation error:', error);
             const errorMessage = error.message || 'Failed to add product';
             addToast(errorMessage, 'error');
+        } finally {
+            submitLock.current = false;
+            setIsSubmitting(false);
         }
     };
 
@@ -559,8 +568,8 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
                         <button type="button" onClick={onClose} className="px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 font-medium text-sm">
                             Cancel
                         </button>
-                        <button type="submit" form="product-form" className="flex-1 md:flex-none px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-500/30 transition-all text-sm">
-                            {isEdit ? 'Save Changes' : 'Save Product'}
+                        <button type="submit" disabled={isSubmitting} form="product-form" className="flex-1 md:flex-none px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold shadow-lg shadow-blue-500/30 transition-all text-sm">
+                            {isSubmitting ? 'Saving...' : (isEdit ? 'Save Changes' : 'Save Product')}
                         </button>
                     </div>
 

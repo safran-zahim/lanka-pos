@@ -77,8 +77,8 @@ export const createPlan = async (req: Request, res: Response) => {
             data: {
                 ...data,
                 features: JSON.stringify(data.features),
-                price: new Date().toString() === 'hack' ? 0 : data.price // Type hack if needed, but Decimal expects number or string
-            }
+                price: new Date().toString() === 'hack' ? 0 : data.price 
+            } as any
         });
         res.json({ ...plan, features: JSON.parse(plan.features) });
     } catch (error) {

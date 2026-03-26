@@ -32,7 +32,7 @@ export const getExpenseCategories = async (req: Request, res: Response) => {
 export const createExpenseCategory = async (req: Request, res: Response) => {
     try {
         const data = expenseCategorySchema.parse(req.body);
-        const category = await prisma.expenseCategory.create({ data });
+        const category = await prisma.expenseCategory.create({ data: data as any });
         res.status(201).json(category);
     } catch (error: any) {
         if (error instanceof z.ZodError) {

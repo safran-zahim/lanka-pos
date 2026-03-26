@@ -141,6 +141,10 @@ export const SettingsPage = () => {
         }
     };
 
+    const handleBrandingSaveReady = React.useCallback((action: () => Promise<void>) => {
+        setBrandingSaveAction(() => action);
+    }, []);
+
     const getSaveConfig = () => {
         if (activeTab === 'general') {
             return { label: 'Save Settings', onClick: handleSaveTax, color: 'blue', disabled: isSaving };
@@ -525,7 +529,7 @@ export const SettingsPage = () => {
                                 </div>
                                 <BrandingPage
                                     hideSave
-                                    onSaveReady={setBrandingSaveAction}
+                                    onSaveReady={handleBrandingSaveReady}
                                     onSavingChange={setBrandingSaving}
                                 />
                             </div>

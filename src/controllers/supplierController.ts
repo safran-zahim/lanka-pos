@@ -103,7 +103,7 @@ export const getSupplierById = async (req: Request, res: Response) => {
 export const createSupplier = async (req: Request, res: Response) => {
     try {
         const data = supplierSchema.parse(req.body);
-        const supplier = await prisma.supplier.create({ data });
+        const supplier = await prisma.supplier.create({ data: data as any });
         res.status(201).json(supplier);
     } catch (error) {
         if (error instanceof z.ZodError) {
