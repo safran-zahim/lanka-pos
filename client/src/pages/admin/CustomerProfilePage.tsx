@@ -5,6 +5,8 @@ import { useToast } from '../../store/useToast';
 import { useCurrency } from '../../hooks/useCurrency';
 import { useAuthStore } from '../../store/useAuthStore';
 import { getApiUrl } from '../../config/api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
+import { Button } from '../../components/ui/Button';
 
 export const CustomerProfilePage = () => {
     const navigate = useNavigate();
@@ -144,7 +146,7 @@ export const CustomerProfilePage = () => {
                 </div>
             </div>
 
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 text-white shadow-lg">
+            <div className="bg-linear-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 text-white shadow-lg">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                     <div className="flex items-center gap-4">
                         <div className="h-16 w-16 rounded-2xl bg-white/20 flex items-center justify-center text-2xl font-bold">
@@ -218,7 +220,7 @@ export const CustomerProfilePage = () => {
                     <h2 className="font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                         <Receipt size={16} /> Sales History
                     </h2>
-                    <div className="max-h-[420px] overflow-y-auto">
+                    <div className="max-h-105 overflow-y-auto">
                         <table className="w-full text-sm">
                             <thead className="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
                                 <tr>
@@ -283,7 +285,7 @@ export const CustomerProfilePage = () => {
                     <h2 className="font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                         <Award size={16} /> Points History
                     </h2>
-                    <div className="max-h-[420px] overflow-y-auto space-y-2 text-sm">
+                    <div className="max-h-105 overflow-y-auto space-y-2 text-sm">
                         {pointsHistory?.map(p => (
                             <div key={p.id} className="flex justify-between items-center text-gray-700 dark:text-gray-300">
                                 <span className="flex items-center gap-2">
@@ -306,7 +308,7 @@ export const CustomerProfilePage = () => {
                 <h2 className="font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                     <History size={16} /> Repayment History
                 </h2>
-                <div className="max-h-[300px] overflow-y-auto">
+                <div className="max-h-75 overflow-y-auto">
                     <table className="w-full text-sm">
                         <thead className="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
                             <tr>
@@ -343,16 +345,18 @@ export const CustomerProfilePage = () => {
 
             {/* Payment Modal */}
             {isPaymentModalOpen && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-2xl shadow-2xl p-6 border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                <Wallet className="text-blue-500" /> Record Payment
-                            </h2>
-                            <button onClick={() => setIsPaymentModalOpen(false)} className="text-gray-400 hover:text-gray-600">
-                                <X size={24} />
-                            </button>
-                        </div>
+                <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
+                    <DialogContent className="w-full max-w-md p-6" showCloseButton={false}>
+                        <DialogHeader className="mb-6">
+                            <div className="flex items-center justify-between">
+                                <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <Wallet className="text-blue-500" /> Record Payment
+                                </DialogTitle>
+                                <Button type="button" onClick={() => setIsPaymentModalOpen(false)} variant="ghost" size="sm" className="text-gray-400 hover:text-gray-600">
+                                    <X size={24} />
+                                </Button>
+                            </div>
+                        </DialogHeader>
 
                         <div className="space-y-4">
                             <div>
@@ -377,16 +381,19 @@ export const CustomerProfilePage = () => {
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Payment Method</label>
                                 <div className="grid grid-cols-2 gap-2">
                                     {['cash', 'card', 'bank'].map(m => (
-                                        <button
+                                        <Button
                                             key={m}
+                                            type="button"
                                             onClick={() => setPaymentMethod(m)}
-                                            className={`py-2 rounded-lg text-sm font-bold capitalize border ${paymentMethod === m
-                                                ? 'bg-blue-600 border-blue-600 text-white shadow-md'
-                                                : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400'
+                                            variant={paymentMethod === m ? 'primary' : 'ghost'}
+                                            size="sm"
+                                            className={`py-2 text-sm font-bold capitalize border ${paymentMethod === m
+                                                ? 'border-blue-600 text-white shadow-md'
+                                                : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900'
                                                 }`}
                                         >
                                             {m}
-                                        </button>
+                                        </Button>
                                     ))}
                                 </div>
                             </div>
@@ -401,16 +408,18 @@ export const CustomerProfilePage = () => {
                                 />
                             </div>
 
-                            <button
+                            <Button
+                                type="button"
                                 onClick={handleProcessPayment}
                                 disabled={isProcessing || !paymentAmount}
-                                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-lg transition-all active:scale-95 disabled:opacity-50"
+                                fullWidth
+                                className="py-3 font-bold shadow-lg disabled:opacity-50"
                             >
                                 {isProcessing ? 'Processing...' : 'Confirm Repayment'}
-                            </button>
+                            </Button>
                         </div>
-                    </div>
-                </div>
+                    </DialogContent>
+                </Dialog>
             )}
         </div>
     );

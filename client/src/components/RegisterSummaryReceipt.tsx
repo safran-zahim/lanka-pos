@@ -4,6 +4,7 @@ import { useLocale } from '../hooks/useLocale';
 import { getApiUrl } from '../config/api';
 import { useAuthStore } from '../store/useAuthStore';
 import { APP_CONFIG } from '../config/appConfig';
+import { Button } from './ui/Button';
 
 interface RegisterSummaryReceiptProps {
     shiftData: any;
@@ -99,16 +100,16 @@ export const RegisterSummaryReceipt = ({ shiftData, countedCash, variance, close
 
 
     return (
-        <div id="receipt-modal" className="fixed inset-0 bg-black/80 z-[200] flex justify-center items-center text-black overflow-y-auto print:bg-white print:static print:h-auto print:flex print:items-start print:justify-center">
+        <div id="receipt-modal" className="fixed inset-0 bg-black/80 z-200 flex justify-center items-center text-black overflow-y-auto print:bg-white print:static print:h-auto print:flex print:items-start print:justify-center">
             <div className={`${printContainerWidth} max-h-[90vh] bg-white text-black p-5 ${isModern || isElegant || isBold ? 'font-sans' : 'font-mono'} ${isThermalCompact ? 'text-[10px]' : 'text-[12px]'} leading-tight shadow-none border-none mx-auto relative overflow-y-auto print:w-full print:shadow-none print:p-0 print:pt-0 print:pb-12 print:max-h-none print:overflow-visible print:mx-auto ${isCreative ? 'border-2 border-black print:border-black rounded-lg p-5' : ''} ${isElegant ? 'border border-gray-200 print:border-gray-300 rounded-2xl p-5' : ''} ${isBold ? 'border-2 border-black print:border-black rounded-xl p-5' : ''}`}>
                 {/* Print action buttons visible only on screen, hidden via @media print in index.css */}
                 <div className="absolute top-2 right-2 flex gap-2 print:hidden z-10">
-                    <button onClick={() => window.print()} className="bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-300">
+                    <Button type="button" onClick={() => window.print()} variant="secondary" size="sm" className="text-sm">
                         Print Again
-                    </button>
-                    <button onClick={onClose} className="bg-red-100 text-red-600 px-3 py-1 rounded text-sm hover:bg-red-200">
+                    </Button>
+                    <Button type="button" onClick={onClose} variant="ghost" size="sm" className="bg-red-100 text-red-600 hover:bg-red-200 text-sm">
                         Close
-                    </button>
+                    </Button>
                 </div>
 
                 {isModern || isBold ? (
@@ -127,7 +128,7 @@ export const RegisterSummaryReceipt = ({ shiftData, countedCash, variance, close
                         )}
                     </div>
                 ) : isElegant ? (
-                    <div className="bg-gradient-to-r from-gray-900 to-gray-700 text-white rounded-2xl p-5 mb-4">
+                    <div className="bg-linear-to-r from-gray-900 to-gray-700 text-white rounded-2xl p-5 mb-4">
                         <div className="flex items-center justify-between">
                             <div>
                                 <h1 className="text-xl font-bold tracking-wide mb-0.5">{header}</h1>
@@ -248,7 +249,7 @@ export const RegisterSummaryReceipt = ({ shiftData, countedCash, variance, close
                         </span>
                     </div>
                     {closeNote && (
-                        <div className="mt-2 text-[10px] text-gray-600 italic break-words">
+                        <div className="mt-2 text-[10px] text-gray-600 italic wrap-break-word">
                             Note: {closeNote}
                         </div>
                     )}

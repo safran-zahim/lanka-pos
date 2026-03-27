@@ -92,6 +92,13 @@
 - `system-tracker/daily/2026-03-27.md`: Added entry 23:18 for CategoryManager continuation batch and verification outcome.
 - `client/src/components/admin/ProductBatchHistoryModal.tsx`: Migrated overlay shell and close actions to shared shadcn `Dialog` + `Button` primitives while preserving batch history behavior.
 - `system-tracker/daily/2026-03-27.md`: Added entry 23:26 for ProductBatchHistoryModal continuation batch and successful build verification.
+- `client/src/components/admin/EditProductModal.tsx`: Migrated fixed overlay shell and action controls to shared shadcn `Dialog` + `Button` primitives.
+- `client/src/pages/admin/CustomerProfilePage.tsx`: Migrated repayment modal shell/actions to shared shadcn primitives and normalized style diagnostics.
+- `client/src/components/RegisterSummaryReceipt.tsx`: Standardized print-action controls with shared `Button` while preserving print-specific overlay behavior.
+- `system-tracker/daily/2026-03-27.md`: Added entries 23:39 and 23:52 documenting continuation batch implementation and successful verification.
+- `client/src/components/admin/EditProductModal.tsx`: Migrated legacy overlay shell and action controls to shared shadcn `Dialog` + `Button` primitives while preserving product update/delete behavior.
+- `client/src/pages/admin/CustomerProfilePage.tsx`: Migrated repayment modal shell/actions to shared shadcn `Dialog` + `Button` components and normalized utility diagnostics.
+- `system-tracker/daily/2026-03-27.md`: Added entry 23:39 for this continuation modal migration batch and verification outcome.
 
 ## 2026-03-27 (Phase 2 & 3 - Operational Excellence)
 

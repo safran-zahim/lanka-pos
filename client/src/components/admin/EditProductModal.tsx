@@ -5,6 +5,8 @@ import { CategoryManager } from '../CategoryManager';
 import { useToast } from '../../store/useToast';
 import { useAuthStore } from '../../store/useAuthStore';
 import { getApiUrl } from '../../config/api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Button } from '../ui/Button';
 
 interface EditProductModalProps {
     product: Product;
@@ -142,14 +144,16 @@ export const EditProductModal = ({ product, onClose, onSuccess }: EditProductMod
             {showCategoryManager && (
                 <CategoryManager onClose={() => setShowCategoryManager(false)} />
             )}
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-[500px] border border-gray-200 dark:border-gray-700 shadow-xl max-h-[90vh] overflow-y-auto">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Edit Product</h2>
-                        <button onClick={onClose} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white">
-                            <X size={24} />
-                        </button>
-                    </div>
+            <Dialog open={true} onOpenChange={(open) => { if (!open) onClose(); }}>
+                <DialogContent className="w-full max-w-125 p-6 max-h-[90vh] overflow-y-auto" showCloseButton={false}>
+                    <DialogHeader className="mb-6">
+                        <div className="flex justify-between items-center">
+                            <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white">Edit Product</DialogTitle>
+                            <Button type="button" onClick={onClose} variant="ghost" size="sm" className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white">
+                                <X size={24} />
+                            </Button>
+                        </div>
+                    </DialogHeader>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
@@ -163,14 +167,16 @@ export const EditProductModal = ({ product, onClose, onSuccess }: EditProductMod
                                         value={formData.sku_code}
                                         onChange={e => setFormData({ ...formData, sku_code: e.target.value })}
                                     />
-                                    <button
+                                    <Button
                                         type="button"
                                         onClick={handleGenerateSKU}
+                                        variant="ghost"
+                                        size="sm"
                                         className="absolute right-2 top-1.5 p-1 text-blue-600 hover:bg-blue-200/50 rounded transition-colors"
                                         title="Generate Sequential SKU"
                                     >
                                         <RefreshCw size={16} />
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
                             <div className="col-span-1">
@@ -188,14 +194,16 @@ export const EditProductModal = ({ product, onClose, onSuccess }: EditProductMod
                                         <option value="">Select Category</option>
                                         {categories?.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                     </select>
-                                    <button
+                                    <Button
                                         type="button"
                                         onClick={() => setShowCategoryManager(true)}
+                                        variant="secondary"
+                                        size="sm"
                                         className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white p-2 rounded"
                                         title="Manage Categories"
                                     >
                                         <Settings size={20} />
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
                             {formData.category_id && (
@@ -255,25 +263,29 @@ export const EditProductModal = ({ product, onClose, onSuccess }: EditProductMod
                         </div>
 
                         <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                            <button
+                            <Button
                                 type="button"
                                 onClick={handleDelete}
-                                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-95"
+                                variant="danger"
+                                fullWidth
+                                className="flex-1 font-semibold py-3 flex items-center justify-center gap-2"
                             >
                                 <Trash2 size={20} />
                                 Delete Product
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 type="submit"
-                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-95"
+                                variant="primary"
+                                fullWidth
+                                className="flex-1 font-semibold py-3 flex items-center justify-center gap-2"
                             >
                                 <Save size={20} />
                                 Save Changes
-                            </button>
+                            </Button>
                         </div>
                     </form>
-                </div>
-            </div>
+                </DialogContent>
+            </Dialog>
         </>
     );
 };
