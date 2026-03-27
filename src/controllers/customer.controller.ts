@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import { z } from 'zod';
 import { Decimal } from 'decimal.js';
+import { logAudit } from '../utils/auditLogger';
 
 
 const customerSchema = z.object({
@@ -51,17 +52,27 @@ export const getCustomers = async (req: Request, res: Response) => {
 
 export const createCustomer = async (req: Request, res: Response) => {
     try {
+        const actor = (req as any).user;
         const data = customerSchema.parse(req.body);
 
-        const customer = await prisma.customer.create({
-            data: data as any,
+        const customer = await prisma.$transaction(async (tx) => {
+            const created = await tx.customer.create({ data: data as any });
+            await logAudit(tx, {
+                staffId: actor?.id,
+                staffName: actor?.username,
+                action: 'CREATE_CUSTOMER',
+                resourceType: 'Customer',
+                resourceId: String(created.id),
+                newValue: { name: created.name, phone: created.phone, email: created.email },
+            });
+            return created;
         });
 
         res.status(201).json(customer);
     } catch (error: any) {
         if (error instanceof z.ZodError) {
             res.status(400).json({ error: error.errors });
-        } else if (error.code === 'P2002') { // Unique constraint violation (phone)
+        } else if (error.code === 'P2002') {
             res.status(409).json({ error: 'Customer with this phone number already exists' });
         } else {
             res.status(500).json({ error: 'Internal server error' });
@@ -154,15 +165,26 @@ export const getCustomerDetails = async (req: Request, res: Response) => {
 
 export const updateCustomer = async (req: Request, res: Response) => {
     try {
+        const actor = (req as any).user;
         const id = Number(req.params.id);
         if (!Number.isFinite(id)) {
             return res.status(400).json({ error: 'Invalid customer id' });
         }
         const data = customerUpdateSchema.parse(req.body);
+        const before = await prisma.customer.findUnique({ where: { id }, select: { name: true, phone: true, email: true, address: true } });
 
-        const updated = await prisma.customer.update({
-            where: { id },
-            data,
+        const updated = await prisma.$transaction(async (tx) => {
+            const customer = await tx.customer.update({ where: { id }, data });
+            await logAudit(tx, {
+                staffId: actor?.id,
+                staffName: actor?.username,
+                action: 'UPDATE_CUSTOMER',
+                resourceType: 'Customer',
+                resourceId: String(id),
+                oldValue: before,
+                newValue: { name: customer.name, phone: customer.phone, email: customer.email, address: customer.address },
+            });
+            return customer;
         });
 
         res.json(updated);
@@ -181,11 +203,23 @@ export const updateCustomer = async (req: Request, res: Response) => {
 
 export const deleteCustomer = async (req: Request, res: Response) => {
     try {
+        const actor = (req as any).user;
         const id = Number(req.params.id);
         if (!Number.isFinite(id)) {
             return res.status(400).json({ error: 'Invalid customer id' });
         }
-        await prisma.customer.delete({ where: { id } });
+        const before = await prisma.customer.findUnique({ where: { id }, select: { name: true, phone: true } });
+        await prisma.$transaction(async (tx) => {
+            await tx.customer.delete({ where: { id } });
+            await logAudit(tx, {
+                staffId: actor?.id,
+                staffName: actor?.username,
+                action: 'DELETE_CUSTOMER',
+                resourceType: 'Customer',
+                resourceId: String(id),
+                oldValue: before,
+            });
+        });
         res.json({ message: 'Customer deleted' });
     } catch (error: any) {
         if (error.code === 'P2025') {

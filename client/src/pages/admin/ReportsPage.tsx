@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { BarChart3, Calendar, Package, Users, Truck, TrendingDown, Download, ArrowLeft, PieChart, ShoppingBag, DollarSign, Printer } from 'lucide-react';
+import { BarChart3, Calendar, Package, Users, Truck, TrendingDown, Download, ArrowLeft, PieChart, ShoppingBag, DollarSign, Printer, Calculator } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCurrency } from '../../hooks/useCurrency';
 import { useLocale } from '../../hooks/useLocale';
@@ -7,6 +7,9 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { getApiUrl } from '../../config/api';
 import { ReceiptModal } from '../../components/ReceiptModal';
+import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
+import { Badge } from '../../components/ui/badge';
+import { Button } from '../../components/ui/Button';
 
 const formatDateInput = (d: Date) => d.toISOString().split('T')[0];
 
@@ -74,8 +77,9 @@ export const ReportsPage = () => {
     const [customTo, setCustomTo] = useState(formatDateInput(new Date()));
     const [profitThreshold, setProfitThreshold] = useState(-1);
     const [supplierFilter, setSupplierFilter] = useState<number | ''>('');
-    const [activeTab, setActiveTab] = useState<'overview' | 'sales' | 'inventory' | 'customers' | 'suppliers'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'sales' | 'inventory' | 'customers' | 'suppliers' | 'reconciliation'>('overview');
     const [selectedPrintTxn, setSelectedPrintTxn] = useState<any | null>(null);
+    const [reconciliationData, setReconciliationData] = useState<any[]>([]);
 
     // Fetch all report data from API
     useEffect(() => {
@@ -144,10 +148,6 @@ export const ReportsPage = () => {
         loadData();
     }, [token]);
 
-    const productMap = useMemo(() => new Map((products || []).map(p => [p.id || p.product_id, p])), [products]);
-    const customerMap = useMemo(() => new Map((customers || []).map(c => [c.id || c.customer_id, c])), [customers]);
-    const supplierMap = useMemo(() => new Map((suppliers || []).map(s => [s.id || s.supplier_id, s])), [suppliers]);
-
     const [fromDate, toDate] = useMemo(() => {
         const now = new Date();
         if (salesMode === 'daily') {
@@ -165,6 +165,28 @@ export const ReportsPage = () => {
         }
         return [new Date(customFrom), new Date(customTo + 'T23:59:59')];
     }, [salesMode, customFrom, customTo]);
+
+    // Fetch Reconciliation data separately or only when tab active
+    useEffect(() => {
+        if (!token || activeTab !== 'reconciliation') return;
+        const fetchReconciliation = async () => {
+            try {
+                const res = await fetch(getApiUrl(`/reports/reconciliation?start=${formatDateInput(fromDate)}&end=${formatDateInput(toDate)}`), {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    setReconciliationData(await res.json());
+                }
+            } catch (error) {
+                console.error('Failed to load reconciliation data', error);
+            }
+        };
+        fetchReconciliation();
+    }, [token, activeTab, fromDate, toDate]);
+
+    const productMap = useMemo(() => new Map((products || []).map(p => [p.id || p.product_id, p])), [products]);
+    const customerMap = useMemo(() => new Map((customers || []).map(c => [c.id || c.customer_id, c])), [customers]);
+    const supplierMap = useMemo(() => new Map((suppliers || []).map(s => [s.id || s.supplier_id, s])), [suppliers]);
 
     const salesTransactions = (transactions || []).filter(t => t.type === 'sale' || t.type === 'return' || !t.type);
 
@@ -331,6 +353,7 @@ export const ReportsPage = () => {
                         <TabButton id="inventory" label="Inventory/Stock" icon={Package} />
                         <TabButton id="customers" label="Customers" icon={Users} />
                         <TabButton id="suppliers" label="Purchases" icon={Truck} />
+                        <TabButton id="reconciliation" label="Reconciliation" icon={Calculator} />
                     </div>
                 </div>
 
@@ -345,7 +368,7 @@ export const ReportsPage = () => {
                     <div className="space-y-8 animate-in fade-in duration-500">
                         {/* Summary Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-800 p-6 rounded-xl border border-blue-100 dark:border-blue-900/30 shadow-sm relative overflow-hidden group">
+                            <div className="bg-linear-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-800 p-6 rounded-xl border border-blue-100 dark:border-blue-900/30 shadow-sm relative overflow-hidden group">
                                 <div className="absolute right-0 top-0 w-24 h-24 bg-blue-100 dark:bg-blue-800/20 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
                                 <div className="relative z-10">
                                     <div className="flex items-center justify-between mb-4">
@@ -360,7 +383,7 @@ export const ReportsPage = () => {
                             </div>
 
                             {taxEnabled && (
-                                <div className="bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/20 dark:to-gray-800 p-6 rounded-xl border border-indigo-100 dark:border-indigo-900/30 shadow-sm relative overflow-hidden group">
+                                <div className="bg-linear-to-br from-indigo-50 to-white dark:from-indigo-900/20 dark:to-gray-800 p-6 rounded-xl border border-indigo-100 dark:border-indigo-900/30 shadow-sm relative overflow-hidden group">
                                     <div className="absolute right-0 top-0 w-24 h-24 bg-indigo-100 dark:bg-indigo-800/20 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
                                     <div className="relative z-10">
                                         <div className="flex items-center justify-between mb-4">
@@ -375,7 +398,7 @@ export const ReportsPage = () => {
                                 </div>
                             )}
 
-                            <div className="bg-gradient-to-br from-orange-50 to-white dark:from-orange-900/20 dark:to-gray-800 p-6 rounded-xl border border-orange-100 dark:border-orange-900/30 shadow-sm relative overflow-hidden group">
+                            <div className="bg-linear-to-br from-orange-50 to-white dark:from-orange-900/20 dark:to-gray-800 p-6 rounded-xl border border-orange-100 dark:border-orange-900/30 shadow-sm relative overflow-hidden group">
                                 <div className="absolute right-0 top-0 w-24 h-24 bg-orange-100 dark:bg-orange-800/20 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
                                 <div className="relative z-10">
                                     <div className="flex items-center justify-between mb-4">
@@ -833,6 +856,117 @@ export const ReportsPage = () => {
                         </div>
                     </div>
                 )}
+
+                {activeTab === 'reconciliation' && (
+                    <Card className="overflow-hidden animate-in slide-in-from-bottom-4 duration-500">
+                        <CardHeader className="px-5 py-4 border-b border-border flex-row items-center justify-between gap-4 bg-emerald-50/30 dark:bg-emerald-900/10">
+                            <CardTitle className="flex items-center gap-2 text-base">
+                                <Calculator size={18} className="text-emerald-500" />
+                                Shift Cash Reconciliation
+                            </CardTitle>
+                            <div className="flex items-center gap-3">
+                                {/* Period mode selector */}
+                                <div className="flex items-center bg-card rounded-lg border border-border p-0.5">
+                                    {(['daily', 'weekly', 'monthly', 'custom'] as const).map((mode) => (
+                                        <Button
+                                            key={mode}
+                                            type="button"
+                                            size="sm"
+                                            variant={salesMode === mode ? 'primary' : 'ghost'}
+                                            onClick={() => setSalesMode(mode)}
+                                            className={`h-7 px-3 text-xs font-medium ${salesMode === mode ? '' : 'border-0'}`}
+                                        >
+                                            {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                                        </Button>
+                                    ))}
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => downloadCsv(
+                                        `reconciliation-report-${formatDateInput(fromDate)}-to-${formatDateInput(toDate)}.csv`,
+                                        ['Shift ID', 'Staff', 'End Time', 'Expected Cash', 'Counted Cash', 'Variance', 'Note'],
+                                        reconciliationData.map(s => [
+                                            s.id,
+                                            s.staffName,
+                                            s.endTime ? formatDateTime(new Date(s.endTime)) : 'N/A',
+                                            s.expectedCash.toFixed(2),
+                                            s.countedCash.toFixed(2),
+                                            s.variance.toFixed(2),
+                                            s.note || ''
+                                        ])
+                                    )}
+                                    className="h-8 w-8 p-0 text-muted-foreground hover:text-emerald-600"
+                                    title="Export CSV"
+                                >
+                                    <Download size={16} />
+                                </Button>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-0 overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead className="bg-muted/50 text-muted-foreground text-xs uppercase font-semibold">
+                                    <tr>
+                                        <th className="p-4 text-left">Shift & Staff</th>
+                                        <th className="p-4 text-left">Period End</th>
+                                        <th className="p-4 text-right">Expected Cash</th>
+                                        <th className="p-4 text-right">Counted Cash</th>
+                                        <th className="p-4 text-right">Variance</th>
+                                        <th className="p-4 text-left">Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border">
+                                    {reconciliationData.map(s => (
+                                        <tr key={s.id} className="hover:bg-muted/40 transition-colors">
+                                            <td className="p-4">
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-foreground">Shift #{s.id}</span>
+                                                    <span className="text-xs text-muted-foreground">{s.staffName}</span>
+                                                </div>
+                                            </td>
+                                            <td className="p-4 text-muted-foreground">
+                                                {s.endTime ? formatDateTime(new Date(s.endTime)) : 'N/A'}
+                                            </td>
+                                            <td className="p-4 text-right font-medium text-foreground">
+                                                {formatCurrency(s.expectedCash)}
+                                            </td>
+                                            <td className="p-4 text-right font-medium text-foreground">
+                                                {formatCurrency(s.countedCash)}
+                                            </td>
+                                            <td className="p-4 text-right">
+                                                <div className="flex flex-col items-end gap-1">
+                                                    <span className={`font-bold ${s.variance < 0 ? 'text-red-500' : s.variance > 0 ? 'text-blue-500' : 'text-emerald-500'}`}>
+                                                        {s.variance > 0 ? '+' : ''}{formatCurrency(s.variance)}
+                                                    </span>
+                                                    {s.variance !== 0 && (
+                                                        <Badge
+                                                            variant={s.variance < 0 ? 'destructive' : 'default'}
+                                                            className="text-[9px] h-4 px-1"
+                                                        >
+                                                            {s.variance < 0 ? 'Shortage' : 'Overage'}
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="p-4 text-xs text-muted-foreground max-w-xs truncate" title={s.note}>
+                                                {s.note || '-'}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {reconciliationData.length === 0 && (
+                                        <tr>
+                                            <td colSpan={6} className="p-12 text-center text-muted-foreground italic">
+                                                No closed shifts found for the selected period.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </CardContent>
+                    </Card>
+                )}
+
             </div>
             {selectedPrintTxn && (
                 <ReceiptModal

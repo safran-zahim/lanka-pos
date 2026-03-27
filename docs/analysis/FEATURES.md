@@ -1,7 +1,7 @@
 # Lanka POS — Feature Reference
 
 > **Stack:** Express + Prisma (SQLite) · React + Vite + Tailwind · TypeScript end-to-end
-> **Last Updated:** 2026-02-28 (Phase 13)
+> **Last Updated:** 2026-03-27 (UI Standardization In Progress)
 
 ---
 
@@ -217,6 +217,23 @@ All settings live at `/admin/settings`:
 | WhatsApp Share | Sends formatted text receipt via WhatsApp Web |
 | Register Summary | Auto-printed on shift close — shows cash, card, credit totals + variance |
 | Print Trigger | `window.print()` auto-called on shift closure |
+
+---
+
+## 15. UI Component Standardization (shadcn)
+
+| Area | Status |
+|---|---|
+| CLI Initialization | Completed (`components.json` + alias wiring) |
+| Shared Button | Completed with compatibility adapter (`variant`, `size`, `loading`, `icon`, `fullWidth`) |
+| Base Primitives | `Dialog`, `Card`, `Badge` added |
+| Migrated Modals | `DiscountModal`, `EditPriceModal`, `EditTaxModal`, `HoldSaleModal`, `EditCartItemModal`, `SelectBatchModal` |
+| Migrated Surfaces | `SubscriptionIndicator`, dashboard quick actions, low stock report action/filter/status/table wrappers |
+| Remaining Scope | Complex modals and additional admin/POS surfaces pending phased conversion |
+
+Notes:
+- Migration is intentionally incremental to minimize regressions.
+- Backend contracts are not changed as part of this workstream.
 
 ---
 

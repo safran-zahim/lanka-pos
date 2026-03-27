@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
-import { Store, Lock, AlertCircle } from 'lucide-react';
+import { Store, Lock, AlertCircle, ShieldOff } from 'lucide-react';
 import { getApiUrl } from '../config/api';
 
 import { APP_CONFIG } from '../config/appConfig';
@@ -10,12 +10,14 @@ export const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [isSubscriptionBlocked, setIsSubscriptionBlocked] = useState(false);
     const navigate = useNavigate();
     const login = useAuthStore((state) => state.login);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        setIsSubscriptionBlocked(false);
 
         try {
             const res = await fetch(getApiUrl('/auth/login'), {
@@ -24,12 +26,18 @@ export const Login = () => {
                 body: JSON.stringify({ username, password })
             });
 
+            const data = await res.json();
+
             if (!res.ok) {
-                setError('Invalid credentials');
+                if (res.status === 403 && data.code === 'SUBSCRIPTION_BLOCKED') {
+                    setIsSubscriptionBlocked(true);
+                    setError(data.error || 'System subscription is inactive. Please contact your developer.');
+                } else {
+                    setError('Invalid credentials');
+                }
                 return;
             }
 
-            const data = await res.json();
             const apiUser: any = {
                 user_id: data.staff.id,
                 username: data.staff.name,
@@ -37,11 +45,10 @@ export const Login = () => {
                 subscription_status: data.subscriptionStatus || 'active'
             };
             login(apiUser, data.token);
-            if (data.staff.role === 'admin' || data.staff.role === 'manager' || data.staff.role === 'super_admin') {
-                if (data.staff.role === 'super_admin') {
-                    navigate('/admin/plans');
-                    return;
-                }
+
+            if (data.staff.role === 'super_admin') {
+                navigate('/admin/system-subscription');
+            } else if (data.staff.role === 'admin' || data.staff.role === 'manager') {
                 navigate('/dashboard');
             } else {
                 navigate('/pos');
@@ -51,6 +58,7 @@ export const Login = () => {
             setError('Login failed. Please try again.');
         }
     };
+
 
     return (
         <div className="min-h-screen flex bg-gray-50 dark:bg-gray-900 transition-colors">

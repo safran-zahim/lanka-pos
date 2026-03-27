@@ -3,6 +3,7 @@ import prisma from '../utils/prisma';
 import { z } from 'zod';
 import { Decimal } from 'decimal.js';
 import bcrypt from 'bcryptjs';
+import { logAudit } from '../utils/auditLogger';
 
 // Schema for clock-in
 const clockInSchema = z.object({
@@ -41,6 +42,7 @@ export const getStaffList = async (req: Request, res: Response) => {
 
 export const createStaff = async (req: Request, res: Response) => {
     try {
+        const actor = (req as any).user;
         const data = staffCreateSchema.parse(req.body);
 
         const existing = await prisma.staff.findFirst({
@@ -53,14 +55,25 @@ export const createStaff = async (req: Request, res: Response) => {
 
         const hashedPassword = await bcrypt.hash(data.password, 12);
 
-        const staff = await prisma.staff.create({
-            data: {
-                name: data.name.toLowerCase(),
-                role: data.role,
-                password: hashedPassword,
-                hourlyRate: data.hourly_rate !== undefined ? new Decimal(data.hourly_rate) : null
-            },
-            select: { id: true, name: true, role: true, hourlyRate: true, createdAt: true }
+        const staff = await prisma.$transaction(async (tx) => {
+            const created = await tx.staff.create({
+                data: {
+                    name: data.name.toLowerCase(),
+                    role: data.role,
+                    password: hashedPassword,
+                    hourlyRate: data.hourly_rate !== undefined ? new Decimal(data.hourly_rate) : null
+                },
+                select: { id: true, name: true, role: true, hourlyRate: true, createdAt: true }
+            });
+            await logAudit(tx, {
+                staffId: actor?.id,
+                staffName: actor?.username,
+                action: 'CREATE_STAFF',
+                resourceType: 'Staff',
+                resourceId: String(created.id),
+                newValue: { name: created.name, role: created.role },
+            });
+            return created;
         });
 
         res.status(201).json(staff);
@@ -79,6 +92,7 @@ export const createStaff = async (req: Request, res: Response) => {
 
 export const updateStaff = async (req: Request, res: Response) => {
     try {
+        const actor = (req as any).user;
         const id = Number(req.params.id);
         if (!Number.isFinite(id)) {
             return res.status(400).json({ error: 'Invalid staff id' });
@@ -86,18 +100,30 @@ export const updateStaff = async (req: Request, res: Response) => {
         const data = staffUpdateSchema.parse(req.body);
 
         const updateData: any = { ...data };
-        if (data.name) {
-            updateData.name = data.name.toLowerCase();
-        }
+        if (data.name) updateData.name = data.name.toLowerCase();
         if (data.hourly_rate !== undefined) {
             updateData.hourlyRate = new Decimal(data.hourly_rate);
             delete updateData.hourly_rate;
         }
 
-        const staff = await prisma.staff.update({
-            where: { id },
-            data: updateData,
-            select: { id: true, name: true, role: true, hourlyRate: true, createdAt: true }
+        const before = await prisma.staff.findUnique({ where: { id }, select: { name: true, role: true, hourlyRate: true } });
+
+        const staff = await prisma.$transaction(async (tx) => {
+            const updated = await tx.staff.update({
+                where: { id },
+                data: updateData,
+                select: { id: true, name: true, role: true, hourlyRate: true, createdAt: true }
+            });
+            await logAudit(tx, {
+                staffId: actor?.id,
+                staffName: actor?.username,
+                action: 'UPDATE_STAFF',
+                resourceType: 'Staff',
+                resourceId: String(id),
+                oldValue: before,
+                newValue: { name: updated.name, role: updated.role, hourlyRate: updated.hourlyRate },
+            });
+            return updated;
         });
 
         res.json(staff);
@@ -118,11 +144,23 @@ export const updateStaff = async (req: Request, res: Response) => {
 
 export const deleteStaff = async (req: Request, res: Response) => {
     try {
+        const actor = (req as any).user;
         const id = Number(req.params.id);
         if (!Number.isFinite(id)) {
             return res.status(400).json({ error: 'Invalid staff id' });
         }
-        await prisma.staff.delete({ where: { id } });
+        const before = await prisma.staff.findUnique({ where: { id }, select: { name: true, role: true } });
+        await prisma.$transaction(async (tx) => {
+            await tx.staff.delete({ where: { id } });
+            await logAudit(tx, {
+                staffId: actor?.id,
+                staffName: actor?.username,
+                action: 'DELETE_STAFF',
+                resourceType: 'Staff',
+                resourceId: String(id),
+                oldValue: before,
+            });
+        });
         res.json({ message: 'Staff deleted' });
     } catch (error: any) {
         if (error.code === 'P2025') {
@@ -135,6 +173,7 @@ export const deleteStaff = async (req: Request, res: Response) => {
 
 export const resetStaffPassword = async (req: Request, res: Response) => {
     try {
+        const actor = (req as any).user;
         const id = Number(req.params.id);
         if (!Number.isFinite(id)) {
             return res.status(400).json({ error: 'Invalid staff id' });
@@ -143,9 +182,18 @@ export const resetStaffPassword = async (req: Request, res: Response) => {
 
         const hashedPassword = await bcrypt.hash(data.password, 12);
 
-        await prisma.staff.update({
-            where: { id },
-            data: { password: hashedPassword }
+        await prisma.$transaction(async (tx) => {
+            await tx.staff.update({
+                where: { id },
+                data: { password: hashedPassword }
+            });
+            await logAudit(tx, {
+                staffId: actor?.id,
+                staffName: actor?.username,
+                action: 'RESET_STAFF_PASSWORD',
+                resourceType: 'Staff',
+                resourceId: String(id),
+            });
         });
 
         res.json({ message: 'Password updated' });

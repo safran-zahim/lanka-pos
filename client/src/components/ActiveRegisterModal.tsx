@@ -5,6 +5,8 @@ import { getApiUrl } from '../config/api';
 import { useToast } from '../store/useToast';
 import { X, Save, TrendingUp, TrendingDown, Clock, Download, DollarSign, Wallet, FileText, ArrowRight, ArrowLeft, LogOut } from 'lucide-react';
 import { RegisterSummaryReceipt } from './RegisterSummaryReceipt';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Button } from './ui/Button';
 
 interface ActiveRegisterModalProps {
     isOpen: boolean;
@@ -148,16 +150,16 @@ export const ActiveRegisterModal: React.FC<ActiveRegisterModalProps> = ({ isOpen
     }
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-            <div className={`bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full ${showCloseRegister ? 'max-w-4xl' : 'max-w-2xl'} flex flex-col max-h-[90vh]`}>
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent className={`${showCloseRegister ? 'max-w-4xl' : 'max-w-2xl'} flex flex-col max-h-[90vh]`}>
                 {/* Header */}
-                <div className="flex justify-between items-center p-4 border-b border-gray-100 dark:border-gray-700">
+                <DialogHeader>
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
                             <Wallet className="w-6 h-6" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Active Register</h2>
+                            <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white">Active Register</DialogTitle>
                             {shiftData && (
                                 <p className="text-sm text-gray-500 dark:text-gray-400">
                                     Opened at {new Date(shiftData.startTime).toLocaleTimeString()}
@@ -165,10 +167,7 @@ export const ActiveRegisterModal: React.FC<ActiveRegisterModalProps> = ({ isOpen
                             )}
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-xl transition-colors">
-                        <X className="w-6 h-6" />
-                    </button>
-                </div>
+                </DialogHeader>
 
                 <div className="p-6 overflow-y-auto">
                     {isLoading ? (
@@ -245,12 +244,22 @@ export const ActiveRegisterModal: React.FC<ActiveRegisterModalProps> = ({ isOpen
 
                                     {/* Action Buttons */}
                                     <div className="flex gap-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                                        <button onClick={() => setShowPettyCash(true)} className="flex-1 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-blue-500 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 font-medium py-3 rounded-xl transition-all flex items-center justify-center gap-2">
+                                        <Button 
+                                            onClick={() => setShowPettyCash(true)} 
+                                            variant="ghost"
+                                            fullWidth
+                                            className="flex items-center justify-center gap-2"
+                                        >
                                             <DollarSign className="w-5 h-5" /> Petty Cash In/Out
-                                        </button>
-                                        <button onClick={() => setShowCloseRegister(true)} className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-3 rounded-xl transition-colors flex items-center justify-center gap-2">
+                                        </Button>
+                                        <Button 
+                                            onClick={() => setShowCloseRegister(true)} 
+                                            variant="danger"
+                                            fullWidth
+                                            className="flex items-center justify-center gap-2"
+                                        >
                                             <LogOut className="w-5 h-5" /> Close Register
-                                        </button>
+                                        </Button>
                                     </div>
                                 </>
                             )}
@@ -259,7 +268,14 @@ export const ActiveRegisterModal: React.FC<ActiveRegisterModalProps> = ({ isOpen
                             {showPettyCash && (
                                 <div className="space-y-6 animate-in slide-in-from-right-4">
                                     <div className="flex items-center gap-2 mb-4">
-                                        <button onClick={() => setShowPettyCash(false)} className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"><ArrowLeft className="w-5 h-5" /></button>
+                                        <Button 
+                                            onClick={() => setShowPettyCash(false)} 
+                                            variant="ghost"
+                                            size="sm"
+                                            className="p-0 h-auto"
+                                        >
+                                            <ArrowLeft className="w-5 h-5" />
+                                        </Button>
                                         <h3 className="text-lg font-bold text-gray-800 dark:text-white">Petty Cash Adjustment</h3>
                                     </div>
 
@@ -305,10 +321,22 @@ export const ActiveRegisterModal: React.FC<ActiveRegisterModalProps> = ({ isOpen
                                         </div>
 
                                         <div className="pt-4 flex gap-4">
-                                            <button type="button" onClick={() => setShowPettyCash(false)} className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-medium py-3 rounded-xl transition-colors">Cancel</button>
-                                            <button type="submit" disabled={isSubmittingPetty} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl transition-colors disabled:opacity-70">
+                                            <Button 
+                                                type="button" 
+                                                onClick={() => setShowPettyCash(false)} 
+                                                variant="ghost"
+                                                fullWidth
+                                            >
+                                                Cancel
+                                            </Button>
+                                            <Button 
+                                                type="submit" 
+                                                disabled={isSubmittingPetty} 
+                                                variant="primary"
+                                                fullWidth
+                                            >
                                                 {isSubmittingPetty ? 'Saving...' : 'Save Adjustment'}
-                                            </button>
+                                            </Button>
                                         </div>
                                     </form>
                                 </div>
@@ -318,7 +346,14 @@ export const ActiveRegisterModal: React.FC<ActiveRegisterModalProps> = ({ isOpen
                             {showCloseRegister && (
                                 <div className="space-y-6 animate-in slide-in-from-right-4">
                                     <div className="flex items-center gap-2 mb-4">
-                                        <button onClick={() => setShowCloseRegister(false)} className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"><ArrowLeft className="w-5 h-5" /></button>
+                                        <Button 
+                                            onClick={() => setShowCloseRegister(false)} 
+                                            variant="ghost"
+                                            size="sm"
+                                            className="p-0 h-auto"
+                                        >
+                                            <ArrowLeft className="w-5 h-5" />
+                                        </Button>
                                         <h3 className="text-lg font-bold text-gray-800 dark:text-white">Close Daily Register</h3>
                                     </div>
                                     <p className="text-gray-500 dark:text-gray-400 text-sm">Please count the physical cash in your drawer and enter the total below. This will be compared against the system's expected total.</p>
@@ -363,10 +398,23 @@ export const ActiveRegisterModal: React.FC<ActiveRegisterModalProps> = ({ isOpen
                                         </div>
 
                                         <div className="pt-4 flex gap-4">
-                                            <button type="button" onClick={() => setShowCloseRegister(false)} className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-medium py-3 rounded-xl transition-colors">Cancel</button>
-                                            <button type="submit" disabled={isClosing} className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-3 rounded-xl transition-colors disabled:opacity-70 flex items-center justify-center gap-2 shadow-lg shadow-red-200">
+                                            <Button 
+                                                type="button" 
+                                                onClick={() => setShowCloseRegister(false)} 
+                                                variant="ghost"
+                                                fullWidth
+                                            >
+                                                Cancel
+                                            </Button>
+                                            <Button 
+                                                type="submit" 
+                                                disabled={isClosing} 
+                                                variant="danger"
+                                                fullWidth
+                                                className="flex items-center justify-center gap-2"
+                                            >
                                                 {isClosing ? 'Closing...' : <><LogOut className="w-5 h-5" /> Confirm & Close Register</>}
-                                            </button>
+                                            </Button>
                                         </div>
                                     </form>
                                 </div>
@@ -374,7 +422,7 @@ export const ActiveRegisterModal: React.FC<ActiveRegisterModalProps> = ({ isOpen
                         </div>
                     )}
                 </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 };

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { X, Percent } from 'lucide-react';
+import { Percent } from 'lucide-react';
+import { Button } from './ui/Button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 
 interface EditTaxModalProps {
     currentRate: number;
@@ -21,17 +23,14 @@ export const EditTaxModal = ({ currentRate, onConfirm, onClose }: EditTaxModalPr
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-[360px] border border-gray-200 dark:border-gray-700 shadow-xl">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+        <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+            <DialogContent className="w-90 max-w-[92vw] p-6" showCloseButton>
+                <DialogHeader className="mb-6">
+                    <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                         <Percent className="text-blue-500" />
                         Edit Tax Rate
-                    </h2>
-                    <button onClick={onClose} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white">
-                        <X size={24} />
-                    </button>
-                </div>
+                    </DialogTitle>
+                </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
@@ -48,22 +47,23 @@ export const EditTaxModal = ({ currentRate, onConfirm, onClose }: EditTaxModalPr
                     </div>
 
                     <div className="flex gap-2 justify-end">
-                        <button
+                        <Button
                             type="button"
+                            variant="ghost"
+                            size="sm"
                             onClick={onClose}
-                            className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
                         >
                             Cancel
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             type="submit"
-                            className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                            size="sm"
                         >
                             Save
-                        </button>
+                        </Button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 };

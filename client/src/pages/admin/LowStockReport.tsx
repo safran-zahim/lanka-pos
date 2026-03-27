@@ -3,6 +3,9 @@ import { AlertTriangle, Package, ShoppingCart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 import { getApiUrl } from '../../config/api';
+import { Button } from '../../components/ui/Button';
+import { Card, CardContent } from '../../components/ui/card';
+import { Badge } from '../../components/ui/badge';
 
 export const LowStockReport = () => {
     const navigate = useNavigate();
@@ -100,24 +103,29 @@ export const LowStockReport = () => {
                     <p className="text-gray-500 text-sm mt-1">Items that have fallen below their alert quantity level.</p>
                 </div>
                 <div className="flex gap-2">
-                    <button
+                    <Button
+                        type="button"
+                        size="sm"
                         onClick={() => navigate('/admin/purchases')}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                        className="gap-2 px-4"
                     >
                         <ShoppingCart size={18} />
                         Create Purchase Order
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
                         onClick={() => window.print()}
-                        className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg"
                     >
                         Print/Export
-                    </button>
+                    </Button>
                 </div>
             </div>
 
             {/* Filters */}
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6 flex gap-4">
+            <Card className="mb-6">
+                <CardContent className="flex gap-4 p-4">
                 <select
                     className="p-2 rounded border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white"
                     value={filterBrand}
@@ -134,10 +142,12 @@ export const LowStockReport = () => {
                     <option value="">All Categories</option>
                     {categories?.map(c => <option key={c.id || c.category_id} value={c.name}>{c.name}</option>)}
                 </select>
-            </div>
+                </CardContent>
+            </Card>
 
             {/* Table */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <Card className="overflow-hidden">
+                <CardContent className="p-0">
                 <table className="w-full text-left text-sm">
                     <thead className="bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-400 font-semibold border-b border-gray-200 dark:border-gray-700">
                         <tr>
@@ -164,9 +174,9 @@ export const LowStockReport = () => {
                                         <div className="flex items-center gap-2">
                                             <span>{item.name}</span>
                                             {!item.isActive && !item.is_active && (
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
+                                                <Badge variant="destructive" className="text-xs font-bold">
                                                     INACTIVE
-                                                </span>
+                                                </Badge>
                                             )}
                                         </div>
                                     </td>
@@ -184,9 +194,9 @@ export const LowStockReport = () => {
                                     <td className="p-4 text-gray-500 dark:text-gray-400">{item.category?.name || item.category_name || '-'}</td>
                                     <td className="p-4 text-gray-500 dark:text-gray-400">{item.brand?.name || item.brand_name || '-'}</td>
                                     <td className="p-4 text-center">
-                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
+                                        <Badge variant="destructive">
                                             {stock}
-                                        </span>
+                                        </Badge>
                                     </td>
                                     <td className="p-4 text-center">
                                         <input
@@ -219,7 +229,8 @@ export const LowStockReport = () => {
                         )}
                     </tbody>
                 </table>
-            </div>
+                </CardContent>
+            </Card>
         </div>
     );
 };

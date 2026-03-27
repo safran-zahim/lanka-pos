@@ -7,6 +7,8 @@ import { useToast } from '../../store/useToast';
 import { useAuthStore } from '../../store/useAuthStore';
 import { getApiUrl } from '../../config/api';
 import type { Product } from '../../db/db';
+import { Button } from '../ui/Button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 
 type BarcodeType = 'C128' | 'C39' | 'EAN13' | 'EAN8' | 'UPCA' | 'UPCE';
 
@@ -263,17 +265,19 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
     };
 
     const ModalOverlay = ({ title, onClose, children, large }: any) => (
-        <div className="fixed inset-0 bg-black/60 z-60 flex items-center justify-center p-4">
-            <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full ${large ? 'max-w-4xl' : 'max-w-lg'} border border-gray-200 dark:border-gray-700 overflow-hidden`}>
-                <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700 bg-linear-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-900">
-                    <h3 className="text-xl font-bold text-gray-800 dark:text-white">{title}</h3>
-                    <button onClick={onClose} className="hover:bg-white/50 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors">
-                        <X size={24} className="text-gray-500 dark:text-gray-400" />
-                    </button>
-                </div>
+        <Dialog open={true} onOpenChange={onClose}>
+            <DialogContent className={`w-full ${large ? 'max-w-4xl' : 'max-w-lg'} p-0 overflow-hidden`}>
+                <DialogHeader className="p-6 border-b border-gray-200 dark:border-gray-700 bg-linear-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-900">
+                    <div className="flex justify-between items-center">
+                        <DialogTitle className="text-xl font-bold text-gray-800 dark:text-white">{title}</DialogTitle>
+                        <Button onClick={onClose} variant="ghost" size="sm" className="hover:bg-white/50 dark:hover:bg-gray-700">
+                            <X size={24} className="text-gray-500 dark:text-gray-400" />
+                        </Button>
+                    </div>
+                </DialogHeader>
                 <div className="p-6 overflow-y-auto max-h-[80vh]">{children}</div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 
     return (
@@ -356,17 +360,19 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
             )}
 
             {/* Main Modal */}
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-0 md:p-4 overflow-y-auto">
-                <div className="bg-white dark:bg-gray-900 w-full md:max-w-6xl md:rounded-xl shadow-2xl border border-gray-200 dark:border-gray-800 md:my-8 flex flex-col h-full md:h-auto md:max-h-[90vh]">
+            <Dialog open={true} onOpenChange={onClose}>
+                <DialogContent className="w-full md:max-w-6xl p-0 overflow-hidden flex flex-col h-full md:h-auto md:max-h-[90vh]">
 
                     {/* Header */}
                     {/* Header */}
-                    <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-t-xl sticky top-0 z-10">
-                        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{isEdit ? 'Edit Product' : 'Add New Product'}</h2>
-                        <button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white transition-colors">
-                            <X size={28} />
-                        </button>
-                    </div>
+                    <DialogHeader className="p-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 sticky top-0 z-10">
+                        <div className="flex justify-between items-center">
+                            <DialogTitle className="text-2xl font-bold text-gray-800 dark:text-white">{isEdit ? 'Edit Product' : 'Add New Product'}</DialogTitle>
+                            <Button onClick={onClose} variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
+                                <X size={28} />
+                            </Button>
+                        </div>
+                    </DialogHeader>
 
                     {/* Scrollable Content */}
                     <div className="flex-1 overflow-y-auto p-8">
@@ -399,14 +405,16 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
                                                 placeholder="SKU Code (Auto-generated)"
                                                 value={formData.sku_code} onChange={e => setFormData({ ...formData, sku_code: e.target.value })}
                                             />
-                                            <button
+                                            <Button
                                                 type="button"
                                                 onClick={handleGenerateSKU}
-                                                className="absolute right-2 top-1.5 p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-colors"
+                                                variant="ghost"
+                                                size="sm"
+                                                className="absolute right-2 top-1.5 p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md"
                                                 title="Regenerate SKU"
                                             >
                                                 <RefreshCw size={18} />
-                                            </button>
+                                            </Button>
                                         </div>
                                         {fieldErrors.skuCode && <p className="text-xs text-red-500 font-medium">{fieldErrors.skuCode}</p>}
                                         {!isEdit && !fieldErrors.skuCode && <p className="text-xs text-gray-500 dark:text-gray-400">SKU is automatically generated. Click refresh to regenerate.</p>}
@@ -445,7 +453,7 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
                                                 <option value="">Select Unit</option>
                                                 {units?.map(u => <option key={u.id} value={u.id}>{u.name} ({u.shortName || u.short_name})</option>)}
                                             </select>
-                                            <button type="button" onClick={() => setModalState({ ...modalState, showUnit: true })} className="p-2.5 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800"><Plus size={20} /></button>
+                                            <Button type="button" onClick={() => setModalState({ ...modalState, showUnit: true })} variant="ghost" size="sm" className="p-2.5 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800"><Plus size={20} /></Button>
                                         </div>
                                     </div>
                                     <div className="space-y-2">
@@ -456,7 +464,7 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
                                                 <option value="">Select Brand</option>
                                                 {brands?.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                                             </select>
-                                            <button type="button" onClick={() => setModalState({ ...modalState, showBrand: true })} className="p-2.5 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800"><Plus size={20} /></button>
+                                            <Button type="button" onClick={() => setModalState({ ...modalState, showBrand: true })} variant="ghost" size="sm" className="p-2.5 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800"><Plus size={20} /></Button>
                                         </div>
                                     </div>
                                     <div className="space-y-2">
@@ -473,7 +481,7 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
                                                 <option value="">Select Category</option>
                                                 {categories?.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                             </select>
-                                            <button type="button" onClick={() => setModalState({ ...modalState, showCategory: true })} className="p-2.5 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800"><Plus size={20} /></button>
+                                            <Button type="button" onClick={() => setModalState({ ...modalState, showCategory: true })} variant="ghost" size="sm" className="p-2.5 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800"><Plus size={20} /></Button>
                                         </div>
                                     </div>
 
@@ -565,16 +573,16 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
 
                     {/* Footer Actions */}
                     <div className="p-4 md:p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 md:rounded-b-xl flex justify-end gap-3 sticky bottom-0 z-10 safe-area-bottom">
-                        <button type="button" onClick={onClose} className="px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 font-medium text-sm">
+                        <Button type="button" onClick={onClose} variant="ghost" size="sm" className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 font-medium text-sm">
                             Cancel
-                        </button>
-                        <button type="submit" disabled={isSubmitting} form="product-form" className="flex-1 md:flex-none px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold shadow-lg shadow-blue-500/30 transition-all text-sm">
+                        </Button>
+                        <Button type="submit" disabled={isSubmitting} form="product-form" variant="primary" size="sm" className="flex-1 md:flex-none px-6 py-2.5 font-bold text-sm">
                             {isSubmitting ? 'Saving...' : (isEdit ? 'Save Changes' : 'Save Product')}
-                        </button>
+                        </Button>
                     </div>
 
-                </div>
-            </div>
+                </DialogContent>
+            </Dialog>
         </>
     );
 };

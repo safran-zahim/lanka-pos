@@ -3,6 +3,8 @@ import { X, User, Phone, Mail, Award, Receipt, Calendar } from 'lucide-react';
 import { type Customer } from '../../db/db';
 import { useAuthStore } from '../../store/useAuthStore';
 import { getApiUrl } from '../../config/api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Button } from '../ui/Button';
 
 interface CustomerProfileModalProps {
     customer: Customer;
@@ -43,17 +45,19 @@ export const CustomerProfileModal = ({ customer, onClose }: CustomerProfileModal
     }, [transactions]);
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-[900px] max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700 shadow-xl">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+        <Dialog open={true} onOpenChange={(open) => { if (!open) onClose(); }}>
+            <DialogContent className="w-full max-w-225 p-6 max-h-[90vh] overflow-y-auto" showCloseButton={false}>
+                <DialogHeader className="mb-6">
+                    <div className="flex justify-between items-center">
+                    <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                         <User className="text-blue-500" />
                         Customer Profile
-                    </h2>
-                    <button onClick={onClose} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white">
+                    </DialogTitle>
+                    <Button type="button" onClick={onClose} variant="ghost" size="sm" className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white">
                         <X size={24} />
-                    </button>
-                </div>
+                    </Button>
+                    </div>
+                </DialogHeader>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
@@ -139,7 +143,7 @@ export const CustomerProfileModal = ({ customer, onClose }: CustomerProfileModal
                         )}
                     </div>
                 </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 };

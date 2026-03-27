@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Search, Trash2, Plus, Minus, Calculator, Tag, CreditCard,
     User, Settings, LogOut, Package, RefreshCw, Layers,
@@ -27,8 +28,11 @@ import { POSCashModal } from '../components/POSCashModal';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useCurrency } from '../hooks/useCurrency';
 import { getApiUrl } from '../config/api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { Button } from '../components/ui/Button';
 
 export const POS = () => {
+    const navigate = useNavigate();
     const { items, addItem, removeItem, updateQuantity, subtotal, total, tax, discount, roundOffDiscount, pointsRedeemed, manualDiscountMode, manualDiscountValue, toggleRedeemPoints, clearCart, customer, setCustomer, setManualDiscount, updateItem } = useCartStore();
     const { user, token } = useAuthStore();
     const { addToast } = useToast();
@@ -92,6 +96,24 @@ export const POS = () => {
 
     const subscriptionStatus = String(user?.subscription_status || 'active').toLowerCase();
     const isSubscriptionInactive = user?.role !== 'super_admin' && subscriptionStatus !== 'active';
+    const [expiryDaysRemaining, setExpiryDaysRemaining] = useState<number | null>(null);
+    const [expiryBannerDismissed, setExpiryBannerDismissed] = useState(false);
+
+    useEffect(() => {
+        if (!token || user?.role === 'super_admin') return;
+        const checkExpiry = async () => {
+            try {
+                const r = await fetch(getApiUrl('/subscription/status'), {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (r.ok) {
+                    const d = await r.json();
+                    setExpiryDaysRemaining(d.daysRemaining ?? null);
+                }
+            } catch { /* silent */ }
+        };
+        checkExpiry();
+    }, [token]);
 
     useEffect(() => {
         const loadReferenceData = async () => {
@@ -791,6 +813,19 @@ export const POS = () => {
 
     return (
         <div className="flex w-full h-full relative flex-row bg-gray-100 dark:bg-gray-900 overflow-hidden">
+            {/* ── Subscription Expiry Warning Banner ─── */}
+            {!expiryBannerDismissed && expiryDaysRemaining !== null && expiryDaysRemaining <= 7 && expiryDaysRemaining > 0 && (
+                <div className={`absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-2 text-sm font-bold ${
+                    expiryDaysRemaining <= 1
+                        ? 'bg-red-600 text-white animate-pulse'
+                        : expiryDaysRemaining <= 3
+                            ? 'bg-orange-500 text-white'
+                            : 'bg-amber-400 text-amber-900'
+                }`}>
+                    <span>⚠️ System subscription expires in {expiryDaysRemaining} day{expiryDaysRemaining === 1 ? '' : 's'}. Contact your developer to renew.</span>
+                    <button onClick={() => setExpiryBannerDismissed(true)} className="ml-4 opacity-80 hover:opacity-100 text-lg leading-none">×</button>
+                </div>
+            )}
             {enableDailyRegister && !isRegisterOpen && (
                 <div className="absolute inset-0 bg-white/60 dark:bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
                     <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl flex flex-col items-center max-w-md text-center border border-gray-200 dark:border-gray-700 animate-in fade-in zoom-in duration-300">
@@ -830,7 +865,7 @@ export const POS = () => {
                         <select
                             value={selectedBrand}
                             onChange={(e) => setSelectedBrand(e.target.value)}
-                            className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-lg px-3 py-2.5 border-2 border-gray-300 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 max-w-[150px] font-medium"
+                            className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-lg px-3 py-2.5 border-2 border-gray-300 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 max-w-37.5 font-medium"
                         >
                             <option value="All">All Brands</option>
                             {brands?.map(b => (
@@ -915,6 +950,14 @@ export const POS = () => {
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white">Current Sale</h2>
                     <div className="flex items-center gap-2">
                         {items.length > 0 && <span className="text-sm text-gray-500 dark:text-gray-400">{items.reduce((acc, i) => acc + i.quantity, 0)} Items</span>}
+                        <button
+                            onClick={() => navigate('/dashboard')}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-gray-50 dark:bg-gray-900/30 text-gray-600 dark:text-gray-300 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            title="Dashboard"
+                        >
+                            <LayoutDashboard size={13} />
+                            Dashboard
+                        </button>
                         {enableDailyRegister && (
                             <button
                                 onClick={() => setShowActiveRegister(true)}
@@ -991,7 +1034,7 @@ export const POS = () => {
                                 </div>
                                 <button
                                     onClick={() => setShowCustomerModal(true)}
-                                    className="p-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white flex-shrink-0 shadow-sm transition-colors"
+                                    className="p-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white shrink-0 shadow-sm transition-colors"
                                     title="Add New Customer"
                                 >
                                     <UserPlus size={20} />
@@ -1059,9 +1102,9 @@ export const POS = () => {
                                         onClick={(e) => { e.stopPropagation(); setEditingItem(item); }}
                                         className="text-[10px] text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1 bg-gray-50 dark:bg-gray-700/50 p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors w-full text-left line-clamp-1 group"
                                     >
-                                        <StickyNote size={10} className="text-blue-500 flex-shrink-0" />
+                                        <StickyNote size={10} className="text-blue-500 shrink-0" />
                                         <span className="flex-1 truncate">Note: {item.note}</span>
-                                        <Edit2 size={10} className="text-gray-400 group-hover:text-blue-500 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        <Edit2 size={10} className="text-gray-400 group-hover:text-blue-500 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
                                     </button>
                                 ) : (
                                     <button
@@ -1436,20 +1479,25 @@ export const POS = () => {
             )}
 
             {showReturnLookup && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-                    <div className="bg-white dark:bg-gray-800 w-[560px] max-h-[80vh] rounded-xl border border-gray-200 dark:border-gray-700 shadow-xl flex flex-col">
-                        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Sales History</h3>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">Search history by transaction or customer ID</p>
+                <Dialog open={showReturnLookup} onOpenChange={setShowReturnLookup}>
+                    <DialogContent className="w-full max-w-140 p-0 max-h-[80vh] overflow-hidden" showCloseButton={false}>
+                        <DialogHeader className="p-4 border-b border-gray-200 dark:border-gray-700">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <DialogTitle className="text-lg font-bold text-gray-900 dark:text-white">Sales History</DialogTitle>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">Search history by transaction or customer ID</p>
+                                </div>
+                                <Button
+                                    type="button"
+                                    onClick={() => setShowReturnLookup(false)}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                                >
+                                    <X size={20} />
+                                </Button>
                             </div>
-                            <button
-                                onClick={() => setShowReturnLookup(false)}
-                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
+                        </DialogHeader>
                         <div className="p-4">
                             <div className="relative">
                                 <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
@@ -1487,21 +1535,24 @@ export const POS = () => {
                                             </div>
                                             <div className="flex items-center gap-4">
                                                 <div className="font-bold text-gray-900 dark:text-white">{formatCurrency(Number(txn.total || txn.total_amount || 0))}</div>
-                                                <button
+                                                <Button
+                                                    type="button"
                                                     onClick={(e) => handlePrintFromHistory(e, txn)}
+                                                    variant="ghost"
+                                                    size="sm"
                                                     className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
                                                     title="Print Receipt"
                                                 >
                                                     <Printer size={18} />
-                                                </button>
+                                                </Button>
                                             </div>
                                         </div>
                                     );
                                 })}
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </DialogContent>
+                </Dialog>
             )}
 
             {selectedReturnSaleId && (
@@ -1543,17 +1594,19 @@ export const POS = () => {
             )}
 
             {showNoteModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]">
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl w-[440px] border border-gray-200 dark:border-gray-700 shadow-2xl">
-                        <div className="flex justify-between items-center mb-5">
-                            <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                <StickyNote className="text-blue-500" />
-                                Add Bill Note
-                            </h2>
-                            <button onClick={() => setShowNoteModal(false)} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white">
-                                <X size={24} />
-                            </button>
-                        </div>
+                <Dialog open={showNoteModal} onOpenChange={setShowNoteModal}>
+                    <DialogContent className="w-full max-w-110 p-6" showCloseButton={false}>
+                        <DialogHeader className="mb-5">
+                            <div className="flex justify-between items-center">
+                                <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <StickyNote className="text-blue-500" />
+                                    Add Bill Note
+                                </DialogTitle>
+                                <Button type="button" onClick={() => setShowNoteModal(false)} variant="ghost" size="sm" className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white">
+                                    <X size={24} />
+                                </Button>
+                            </div>
+                        </DialogHeader>
                         <div className="space-y-4">
                             <p className="text-sm text-gray-500 dark:text-gray-400">Add special instructions, customer requests or delivery notes for this bill.</p>
                             <textarea
@@ -1564,26 +1617,31 @@ export const POS = () => {
                                 autoFocus
                             />
                             <div className="flex gap-3">
-                                <button
+                                <Button
+                                    type="button"
                                     onClick={() => {
                                         setCheckoutNote('');
                                         setShowNoteModal(false);
                                     }}
-                                    className="px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-sm font-bold border border-red-100 dark:border-red-900/50 transition-colors"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="border border-red-100 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                                 >
                                     Clear Note
-                                </button>
+                                </Button>
                                 <div className="flex-1" />
-                                <button
+                                <Button
+                                    type="button"
                                     onClick={() => setShowNoteModal(false)}
-                                    className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-blue-600/20"
+                                    size="sm"
+                                    className="px-6 font-bold"
                                 >
                                     Save Note
-                                </button>
+                                </Button>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </DialogContent>
+                </Dialog>
             )}
         </div>
     );

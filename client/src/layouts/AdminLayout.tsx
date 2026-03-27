@@ -3,9 +3,13 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Package, Users, LogOut, ShoppingCart, FileText, Truck, Settings, HelpCircle, Menu, X, AlertTriangle, BarChart3, Shield, Wallet } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { SubscriptionIndicator } from '../components/shared/SubscriptionIndicator';
+import { Button } from '../components/ui/Button';
 import { useToast } from '../store/useToast';
 import { useLocale } from '../hooks/useLocale';
 import { getApiUrl } from '../config/api';
+import { NotificationCenter } from '../components/NotificationCenter';
+import { useStockMonitor } from '../hooks/useStockMonitor';
 
 import { APP_CONFIG } from '../config/appConfig';
 
@@ -15,30 +19,40 @@ export const AdminLayout = () => {
     const token = useAuthStore((state) => state.token);
     const addToast = useToast((state) => state.addToast);
     const navigate = useNavigate();
+    useStockMonitor();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [time, setTime] = useState(new Date());
     const [settingsMap, setSettingsMap] = useState<Record<string, any>>({});
+    const [lowStockCount, setLowStockCount] = useState<number>(0);
     useEffect(() => {
-        const loadSettings = async () => {
+        const loadData = async () => {
             if (!token) return;
             try {
-                const response = await fetch(getApiUrl('/settings'), {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                if (!response.ok) return;
-                const settingsList = await response.json();
-                const map = (settingsList || []).reduce((acc: Record<string, any>, setting: any) => {
-                    acc[setting.key] = setting.value;
-                    return acc;
-                }, {});
-                setSettingsMap(map);
+                const [settingsRes, insightsRes] = await Promise.all([
+                    fetch(getApiUrl('/settings'), { headers: { Authorization: `Bearer ${token}` } }),
+                    fetch(getApiUrl('/reports/dashboard'), { headers: { Authorization: `Bearer ${token}` } })
+                ]);
+                
+                if (settingsRes.ok) {
+                    const settingsList = await settingsRes.json();
+                    const map = (settingsList || []).reduce((acc: Record<string, any>, setting: any) => {
+                        acc[setting.key] = setting.value;
+                        return acc;
+                    }, {});
+                    setSettingsMap(map);
+                }
+
+                if (insightsRes.ok) {
+                    const insights = await insightsRes.json();
+                    setLowStockCount(insights?.inventory?.lowStockCount || 0);
+                }
             } catch (error) {
-                console.error('Failed to load settings', error);
+                console.error('Failed to load layout data', error);
             }
         };
 
-        loadSettings();
+        loadData();
     }, [token]);
     const brandName = settingsMap['companyName'] || APP_CONFIG.appName;
     const brandLogo = settingsMap['companyLogo'] || '';
@@ -70,14 +84,18 @@ export const AdminLayout = () => {
         { path: '/admin/transactions', icon: <Wallet size={20} />, label: 'Transactions' },
         { path: '/admin/suppliers', icon: <Truck size={20} />, label: 'Suppliers' },
         { path: '/admin/purchases', icon: <Package size={20} />, label: 'Purchases' },
-        { path: '/admin/low-stock', icon: <AlertTriangle size={20} />, label: 'Low Stock' },
+        { path: '/admin/low-stock', icon: <AlertTriangle size={20} />, label: 'Low Stock', badge: lowStockCount > 0 ? lowStockCount : undefined },
         { path: '/admin/expenses', icon: <Wallet size={20} />, label: 'Expenses' },
         { path: '/admin/reports', icon: <BarChart3 size={20} />, label: 'Reports' },
         { path: '/admin/settings', icon: <Settings size={20} />, label: 'Settings' },
         { path: '/admin/receipts', icon: <FileText size={20} />, label: 'Receipts' },
         ...(user?.role === 'super_admin'
-            ? [{ path: '/admin/plans', icon: <Shield size={20} />, label: 'Subscription Plans' }]
-            : []),
+            ? [
+                { path: '/admin/system-subscription', icon: <Shield size={20} />, label: 'Subscription Control' },
+              ]
+            : [
+                { path: '/admin/plans', icon: <Shield size={20} />, label: 'Subscription Status' },
+              ]),
         { path: '/admin/help', icon: <HelpCircle size={20} />, label: 'Help' },
     ];
 
@@ -86,28 +104,41 @@ export const AdminLayout = () => {
             {/* Mobile Header */}
             <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-4 z-40">
                 <div className="flex items-center gap-2 overflow-hidden">
-                    <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 -ml-2 text-gray-600 dark:text-gray-300 flex-shrink-0">
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        className="-ml-2 h-9 px-2 text-gray-600 dark:text-gray-300 shrink-0 border-0"
+                    >
                         <Menu size={24} />
-                    </button>
-                    {brandLogo && <img src={brandLogo} alt="Logo" className="h-6 w-6 object-contain flex-shrink-0" />}
+                    </Button>
+                    {brandLogo && <img src={brandLogo} alt="Logo" className="h-6 w-6 object-contain shrink-0" />}
                     <span className="font-bold text-base text-blue-600 dark:text-blue-500 truncate">{brandName}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <button
+                    <Button
+                        type="button"
                         onClick={() => navigate('/pos')}
-                        className="flex items-center gap-1 bg-blue-600 text-white px-2 py-1.5 rounded text-[10px] font-bold uppercase transition-transform active:scale-95"
+                        size="sm"
+                        className="h-8 gap-1 px-2 py-1.5 text-[10px] font-bold uppercase"
                     >
                         <ShoppingCart size={14} />
                         <span className="hidden xs:inline">POS</span>
-                    </button>
+                    </Button>
+                    <NotificationCenter />
+                    <SubscriptionIndicator />
                     <ThemeToggle />
-                    <button
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
                         onClick={handleLogout}
-                        className="p-2 text-red-500 hover:text-red-600 active:scale-90 transition-transform"
+                        className="h-9 px-2 text-red-500 hover:text-red-600 border-0"
                         title="Logout"
                     >
                         <LogOut size={18} />
-                    </button>
+                    </Button>
                 </div>
             </div>
 
@@ -141,7 +172,9 @@ export const AdminLayout = () => {
 
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700 md:hidden flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
                     <span className="font-bold text-gray-700 dark:text-gray-200">Menu</span>
-                    <button onClick={() => setIsMobileMenuOpen(false)}><X size={20} /></button>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setIsMobileMenuOpen(false)} className="h-9 px-2 border-0">
+                        <X size={20} />
+                    </Button>
                 </div>
 
                 <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
@@ -160,7 +193,17 @@ export const AdminLayout = () => {
                         >
                             <span className="shrink-0">{item.icon}</span>
                             {!isSidebarCollapsed && (
-                                <span className="font-medium animate-in fade-in slide-in-from-left-2 duration-200">{item.label}</span>
+                                <div className="flex items-center justify-between flex-1 animate-in fade-in slide-in-from-left-2 duration-200">
+                                    <span className="font-medium text-sm">{item.label}</span>
+                                    {item.badge !== undefined && (
+                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${(item as any).path === '/admin/low-stock' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'}`}>
+                                            {item.badge}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+                            {isSidebarCollapsed && item.badge !== undefined && (
+                                <div className={`absolute top-2 right-2 w-2 h-2 rounded-full ${(item as any).path === '/admin/low-stock' ? 'bg-red-500' : 'bg-blue-500'} border-2 border-white dark:border-gray-800`}></div>
                             )}
                         </NavLink>
                     ))}
@@ -168,13 +211,17 @@ export const AdminLayout = () => {
 
                 {/* Collapse Toggle Button (Desktop Only) */}
                 <div className="hidden md:block p-4 border-t border-gray-200 dark:border-gray-700">
-                    <button
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
                         onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                        className="w-full flex items-center justify-center p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        fullWidth
+                        className="h-10 text-gray-500"
                         title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
                     >
                         {isSidebarCollapsed ? <Menu size={20} /> : <X size={20} />}
-                    </button>
+                    </Button>
                 </div>
             </aside>
 
@@ -183,12 +230,15 @@ export const AdminLayout = () => {
                 {/* Desktop Header */}
                 <div className="hidden md:flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                     <div className="flex items-center gap-4">
-                        <button
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
                             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                            className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            className="h-9 px-2 text-gray-500"
                         >
                             <Menu size={20} />
-                        </button>
+                        </Button>
                         <div>
                             <div className="text-sm text-gray-500 dark:text-gray-400">Welcome</div>
                             <div className="font-semibold text-gray-900 dark:text-white">{user?.username}</div>
@@ -198,21 +248,28 @@ export const AdminLayout = () => {
                         <div className="text-sm text-gray-500 dark:text-gray-400 font-mono">
                             {formatTime(time)}
                         </div>
-                        <button
+                        <Button
+                            type="button"
                             onClick={() => navigate('/pos')}
-                            className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                            size="sm"
+                            className="h-9"
                         >
                             <ShoppingCart size={18} />
                             <span>POS Terminal</span>
-                        </button>
+                        </Button>
+                        <NotificationCenter />
+                        <SubscriptionIndicator />
                         <ThemeToggle />
-                        <button
+                        <Button
+                            type="button"
+                            variant="danger"
+                            size="sm"
                             onClick={handleLogout}
-                            className="flex items-center gap-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-3 py-2 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                            className="h-9"
                         >
                             <LogOut size={18} />
                             <span>Logout</span>
-                        </button>
+                        </Button>
                     </div>
                 </div>
                 <Outlet />

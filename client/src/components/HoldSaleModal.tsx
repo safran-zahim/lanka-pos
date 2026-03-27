@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { X, PauseCircle } from 'lucide-react';
+import { PauseCircle } from 'lucide-react';
+import { Button } from './ui/Button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 
 interface HoldSaleModalProps {
     onConfirm: (note: string) => void;
@@ -15,17 +17,14 @@ export const HoldSaleModal = ({ onConfirm, onClose }: HoldSaleModalProps) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-[400px] border border-gray-200 dark:border-gray-700 shadow-xl">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+        <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+            <DialogContent className="w-100 max-w-[92vw] p-6" showCloseButton>
+                <DialogHeader className="mb-6">
+                    <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                         <PauseCircle className="text-orange-500" />
                         Hold Sale
-                    </h2>
-                    <button onClick={onClose} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white">
-                        <X size={24} />
-                    </button>
-                </div>
+                    </DialogTitle>
+                </DialogHeader>
 
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">
@@ -41,22 +40,24 @@ export const HoldSaleModal = ({ onConfirm, onClose }: HoldSaleModalProps) => {
                     </div>
 
                     <div className="flex gap-2 justify-end">
-                        <button
+                        <Button
                             type="button"
+                            variant="ghost"
+                            size="sm"
                             onClick={onClose}
-                            className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                         >
                             Cancel
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             type="submit"
-                            className="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded font-medium"
+                            variant="warning"
+                            size="sm"
                         >
                             Hold Sale
-                        </button>
+                        </Button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 };

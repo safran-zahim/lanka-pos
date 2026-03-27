@@ -9,6 +9,10 @@
       "DOM.Iterable"
     ],
     "module": "ESNext",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "types": [
       "vite/client"
     ],

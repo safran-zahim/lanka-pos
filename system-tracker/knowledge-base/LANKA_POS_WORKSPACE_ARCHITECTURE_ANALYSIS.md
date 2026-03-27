@@ -1,6 +1,6 @@
 # Lanka POS - Workspace Architecture Analysis
 
-Last updated: 2026-03-25
+Last updated: 2026-03-27
 
 ## 1. System Overview
 
@@ -52,7 +52,8 @@ Key responsibilities:
 - Product CRUD and active/inactive status
 - Stock computation from purchase and sale aggregates
 - Product batch lookup for FIFO and POS selection
-- Low-stock reporting
+- Low-stock reporting (Aggregated via `Product` stock vs `reorderLevel`)
+- Sidebar alerts: Real-time "Low Stock" badge in `AdminLayout` fetching from `/reports/dashboard`.
 
 ### 2.4 Purchases and Supplier Payments
 
@@ -75,6 +76,7 @@ Key responsibilities:
 - Points ledger tracking
 - Due amount and customer payment tracking
 - Customer transaction and history views
+- **Audit Logging**: Customer create, update, and delete mutations are wrapped in `prisma.$transaction` with `logAudit` calls capturing actor identity and before/after data snapshots.
 
 ### 2.6 Shifts, Drawer, and Cashflow
 
@@ -96,7 +98,8 @@ Key responsibilities:
 Key responsibilities:
 - Key-value settings management
 - Restricted developer settings handling
-- Subscription status/plan management (`super_admin` controlled)
+- Subscription status management: `super_admin` controlled single-entity configuration
+- Models: `AppConfig`, `SubscriptionHistory` (Audit Log)
 
 ### 2.8 Staff and Admin Operations
 
@@ -107,6 +110,8 @@ Key responsibilities:
 - Staff management and password reset
 - Bulk import/export operations
 - Expense and transaction dashboards
+- **Business Intelligence (BI)**: Centralized reporting via `src/controllers/reports.controller.ts` providing multi-dimensional aggregations (Top Performers, Brand Mix, Inventory Velocity).
+- **Audit Logging**: All staff mutations (create, update, delete, password reset) are wrapped in `prisma.$transaction` with `logAudit` for full traceability.
 
 ## 3. Frontend Feature Map
 
@@ -136,7 +141,9 @@ Representative pages:
 - `client/src/pages/admin/SettingsPage.tsx`
 - `client/src/pages/admin/ReceiptSettingsPage.tsx`
 - `client/src/pages/admin/ExpensesPage.tsx`
-- `client/src/pages/admin/SubscriptionPlans.tsx`
+- `client/src/pages/admin/SubscriptionStatusPage.tsx` (Replaced SubscriptionPlans.tsx)
+- `client/src/pages/admin/SystemSubscriptionPage.tsx`
+- `client/src/components/shared/SubscriptionIndicator.tsx`: Shared component for persistent billing status across POS and Admin headers.
 
 ### 3.4 State and Hooks
 
@@ -151,6 +158,17 @@ Hooks:
 - `client/src/hooks/useLocale.ts`
 - `client/src/hooks/useDigitalReceipt.ts`
 
+### 3.5 UI Standardization Workstream (In Progress)
+
+- Migration target: shadcn-style component system with incremental adapter rollout.
+- Sequence in execution: Phase 1 -> Phase 2 -> Phase 4 -> Phase 5.
+- Current status:
+  - Phase 1 foundation started in client (`cn` utility + semantic theme tokens).
+  - Phase 2 started by replacing shared `Button` with CVA-based adapter and beginning layout-level button migration.
+  - Phase 4 in progress with shadcn `Dialog` primitive adoption across low-risk POS modals.
+  - Phase 5 in progress with shadcn `Card` and `Badge` adoption in shared/admin dashboard surfaces.
+- Guardrail: Backend routes/controllers/middleware and API contracts are unchanged during UI migration.
+
 ## 4. Linkage Matrix (From -> To)
 
 ### 4.1 POS Checkout
@@ -158,8 +176,8 @@ Hooks:
 - From: `client/src/pages/POS.tsx` and checkout modal components
 - To API: `POST /sales/checkout`
 - Middleware: authenticate -> authorize -> requireActiveSubscription
-- Controller: `sales.controller.checkout`
-- DB models touched: `Sale`, `SaleItem`, `Shift`, `Customer`, `CustomerPointLedger`
+- Controller: `sales.controller.checkout` (Optimized with bulk batch fetching and grouped aggregates to prevent transaction timeouts during multi-item sales).
+- DB models touched: `Sale`, `SaleItem`, `Shift`, `Customer`, `CustomerPointLedger`, `PurchaseItem` (stock deduction).
 
 ### 4.2 Product Inventory Listing
 
@@ -187,7 +205,7 @@ Hooks:
 - From: settings/subscription admin pages
 - To API: `/settings/*`, `/subscription/*`
 - Controllers: settings/subscription controllers
-- DB models touched: `Setting`, `AppConfig`, `SubscriptionPlan`
+- DB models touched: `Setting`, `AppConfig`, `SubscriptionHistory`
 
 ## 5. Request Processing Lifecycle
 
@@ -243,8 +261,9 @@ Generic backend request processing:
 ## 8. Known Gaps (Architecture-level)
 
 - Customer credit limit enforcement path should be verified in checkout for strict policy behavior.
-- Audit log coverage for critical mutations should be expanded for compliance traceability.
-- Reconciliation/reporting for cash variance over time can be strengthened.
+- ~~Audit log coverage for critical mutations should be expanded for compliance traceability.~~ **CLOSED**: Audit logging now covers Products, Settings, Staff (4 actions), and Customers (3 actions).
+- ~~Reconciliation/reporting for cash variance over time can be strengthened.~~ **CLOSED**: Shift Reconciliation dashboard implemented in Reports section.
+- **Open**: Audit logging not yet applied to Expenses and Petty Cash mutations.
 
 ## 9. Maintenance
 
@@ -265,6 +284,20 @@ This keeps architecture knowledge, docs, and tracker automation aligned.
   - `stock`: Global aggregated tracker maintained mathematically (`Purchases` - `Sales` + `Refunds`).
   - `reorderLevel`: Defines the UI trigger point for "Low Stock" orange alerts.
 
+### 2. Receipt Configuration Settings
+The system supports extensive receipt customization via the `Setting` model (JSON-based key-value pairs).
+- **Core Fields:**
+    - `receiptHeader`: Business name.
+    - `receiptDescription`: Business description/tagline. [NEW]
+    - `receiptAddress`: Address Line 1.
+    - `receiptAddressLine2`: Address Line 2. [NEW]
+    - `receiptPhone`, `receiptEmail`: Contact details.
+    - `taxID`: Relocated to Business Info.
+- **Footer Logic:**
+    - `receiptFooter`: Defaults to "Thank you for your business!".
+    - `developerFooter`: Managed by Super Admin, defaults to developer branding.
+    - `developerFooterEnabled`: Toggle for developer branding.
+
 ### 10.2 `Sale` & `SaleItem`
 - **Why it exists**: Records financial transactions, customer receipts, and dictates stock consumption.
 - **Data Flow**: `POST /sales/checkout` wraps all creations (Sale, SaleItem, Shift Updates, Credit Updates) into a singular heavy Prisma `$transaction`.
@@ -280,4 +313,8 @@ This keeps architecture knowledge, docs, and tracker automation aligned.
 
 *Every major logic/architectural change must be logged here to track what was done and when.*
 
-- **[2026-03-26]**: Documented core DB rules (`parentSaleId` necessity, `stock` math). Logged React functional state limits (preventing `Maximum update depth exceeded`) and Synthetic Event spam throttling necessities via `useRef` synchronous locks directly on UI forms (`AddProductModal.tsx`).
+- **[2026-03-26]**: Simplified Subscription System. Removed `SubscriptionPlan` catalog. Moved to single-system config in `AppConfig`. Added `SubscriptionHistory` for audit trails. Implemented read-only status view for admins and developer control panel for super_admins. Centralized gating at login.
+- **[2026-03-27]**: Dashboard Intelligence & UI Overhaul. Created `reports.controller.ts` for advanced BI (Top Performers, Brand Mix, Slow Movers). Refactored `Dashboard.tsx` with premium gradient KPI cards. Integrated dynamic low-stock badge into `AdminLayout` sidebar. Optimized `sales.controller.ts` checkout logic for bulk data processing.
+- **[2026-03-27]**: Shadcn UI migration kickoff (Phase 1 + Phase 2 Batch A). Added client UI foundations (`class-variance-authority`, Radix `Slot`, shared `cn` utility), introduced semantic Modern Retail tokens in `client/src/index.css`, replaced `client/src/components/ui/Button.tsx` with adapter-compatible CVA implementation, and migrated layout-level button usage in `AdminLayout` and `POSLayout`. Backend/middleware contracts remain unchanged.
+- **[2026-03-27]**: Shadcn migration expansion (Phase 4 + Phase 5 partial). Added shadcn `Dialog`, `Card`, and `Badge` primitives; migrated low-risk modal set (`DiscountModal`, `EditPriceModal`, `EditTaxModal`, `HoldSaleModal`) to dialog-based patterns; standardized shared/dashboard/admin surfaces (`SubscriptionIndicator`, dashboard quick actions, low stock report wrappers/badges/actions). API payload contracts and backend middleware behavior remain unchanged.
+- **[2026-03-27]**: Operational Excellence Phase 2 & 3. Deployed `AuditLog` Prisma model and `logAudit` atomic utility. Instrumented Product, Settings, Staff (4 actions), and Customer (3 actions) mutations with full audit trails. Added `getShiftReconciliation` backend endpoint and Reconciliation tab in Reports Dashboard with CSV export. Deployed global `NotificationCenter` (Zustand store + shadcn UI) with background `useStockMonitor` hook to both Admin and POS layouts. Refactored `NotificationCenter.tsx` and Reconciliation tab to use shadcn `Card`, `Button`, `Badge` primitives.

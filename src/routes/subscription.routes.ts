@@ -1,15 +1,16 @@
 import { Router } from 'express';
-import { authenticate, authorize, requireActiveSubscription } from '../middleware/auth.middleware';
-import { getSubscriptionStatus, updateSubscriptionStatus, createPlan, getPlans, updatePlan } from '../controllers/subscription.controller';
+import { authenticate, authorize } from '../middleware/auth.middleware';
+import { getSubscriptionStatus, updateSubscriptionStatus, getSubscriptionHistory } from '../controllers/subscription.controller';
 
 const router = Router();
 
-router.get('/status', authenticate, requireActiveSubscription, getSubscriptionStatus);
+// Status — all authenticated users can read (used by Dashboard + POS banner)
+router.get('/status', authenticate, getSubscriptionStatus);
+
+// Update — super_admin only
 router.patch('/status', authenticate, authorize(['super_admin']), updateSubscriptionStatus);
 
-router.post('/plans', authenticate, authorize(['super_admin']), createPlan);
-router.get('/plans', authenticate, authorize(['super_admin']), getPlans);
-router.patch('/plans/:id', authenticate, authorize(['super_admin']), updatePlan);
-router.put('/plans/:id', authenticate, authorize(['super_admin']), updatePlan);
+// History — all authenticated users can read (admin/manager view on Subscription Status page)
+router.get('/history', authenticate, getSubscriptionHistory);
 
 export default router;

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { X, Upload, FileSpreadsheet, AlertCircle, CheckCircle, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { Button } from '../ui/Button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 
 interface BulkUploadModalProps {
     isOpen: boolean;
@@ -173,17 +175,19 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClos
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg border border-gray-200 dark:border-gray-700">
-                <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
-                    <h2 className="text-xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
-                        <Upload size={24} className="text-blue-600" />
-                        Bulk Import {type === 'products' ? 'Products' : 'Customers'}
-                    </h2>
-                    <button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-                        <X size={24} />
-                    </button>
-                </div>
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent className="w-full max-w-lg p-0 overflow-hidden">
+                <DialogHeader className="p-6 border-b border-gray-200 dark:border-gray-700">
+                    <div className="flex justify-between items-center">
+                        <DialogTitle className="text-xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
+                            <Upload size={24} className="text-blue-600" />
+                            Bulk Import {type === 'products' ? 'Products' : 'Customers'}
+                        </DialogTitle>
+                        <Button onClick={onClose} variant="ghost" size="sm">
+                            <X size={24} />
+                        </Button>
+                    </div>
+                </DialogHeader>
 
                 <div className="p-6 space-y-6">
                     {/* Removed top-right sample button to align in footer */}
@@ -228,27 +232,31 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClos
                     )}
 
                     <div className="flex justify-between items-center gap-3">
-                        <button
+                        <Button
                             onClick={handleDownloadSample}
-                            className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-1 transition-colors"
+                            variant="ghost"
+                            size="sm"
+                            className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-1"
                         >
                             <Download size={16} /> Download Sample Template
-                        </button>
+                        </Button>
                         <div className="flex gap-3">
-                            <button onClick={onClose} className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                            <Button onClick={onClose} variant="ghost" size="sm">
                                 Cancel
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 onClick={handleUpload}
                                 disabled={!file || uploading}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                                variant="primary"
+                                size="sm"
+                                className="flex items-center gap-2"
                             >
                                 {uploading ? 'Importing...' : 'Start Import'}
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 };

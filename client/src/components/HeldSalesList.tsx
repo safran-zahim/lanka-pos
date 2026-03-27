@@ -4,6 +4,8 @@ import type { HeldSale } from '../db/db';
 import { useCurrency } from '../hooks/useCurrency';
 import { getApiUrl } from '../config/api';
 import { useAuthStore } from '../store/useAuthStore';
+import { Button } from './ui/Button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 
 interface HeldSalesListProps {
     onRestore: (sale: HeldSale) => void;
@@ -45,17 +47,19 @@ export const HeldSalesList = ({ onRestore, onClose }: HeldSalesListProps) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-[600px] border border-gray-200 dark:border-gray-700 shadow-xl max-h-[80vh] flex flex-col">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <Clock className="text-blue-500" />
-                        Held Sales
-                    </h2>
-                    <button onClick={onClose} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white">
-                        <X size={24} />
-                    </button>
-                </div>
+        <Dialog open={true} onOpenChange={onClose}>
+            <DialogContent className="w-150 max-h-[80vh] p-6 flex flex-col">
+                <DialogHeader className="mb-6">
+                    <div className="flex justify-between items-center">
+                        <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                            <Clock className="text-blue-500" />
+                            Held Sales
+                        </DialogTitle>
+                        <Button variant="ghost" size="sm" onClick={onClose}>
+                            <X size={24} />
+                        </Button>
+                    </div>
+                </DialogHeader>
 
                 <div className="flex-1 overflow-y-auto space-y-3">
                     {heldSales?.map((sale) => (
@@ -72,20 +76,24 @@ export const HeldSalesList = ({ onRestore, onClose }: HeldSalesListProps) => {
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                <button
+                                <Button
                                     onClick={() => handleDelete(sale.id!)}
-                                    className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 rounded"
+                                    variant="ghost"
+                                    size="sm"
                                     title="Discard"
+                                    className="text-red-500 hover:text-red-600"
                                 >
                                     <Trash2 size={20} />
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                     onClick={() => onRestore(sale)}
-                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded flex items-center gap-2"
+                                    variant="primary"
+                                    size="sm"
+                                    className="flex items-center gap-2"
                                 >
                                     <PlayCircle size={18} />
                                     Restore
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     ))}
@@ -96,7 +104,7 @@ export const HeldSalesList = ({ onRestore, onClose }: HeldSalesListProps) => {
                         </div>
                     )}
                 </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 };

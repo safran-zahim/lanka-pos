@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import { z } from 'zod';
+import { logAudit } from '../utils/auditLogger';
 
 const settingSchema = z.object({
     value: z.any()
@@ -32,13 +33,32 @@ export const updateSetting = async (req: Request, res: Response) => {
 
         const data = settingSchema.parse(req.body);
 
-        const setting = await prisma.setting.upsert({
-            where: { key },
-            update: { value: data.value },
-            create: { key, value: data.value }
+        const result = await prisma.$transaction(async (tx) => {
+            const oldSetting = await tx.setting.findUnique({ where: { key } });
+            
+            const setting = await tx.setting.upsert({
+                where: { key },
+                update: { value: data.value },
+                create: { key, value: data.value }
+            });
+
+            const staff = (req as any).user;
+            await logAudit(tx, {
+                staffId: staff?.id,
+                staffName: staff?.name,
+                action: 'UPDATE_SETTING',
+                resourceType: 'SETTING',
+                resourceId: key,
+                oldValue: oldSetting?.value ?? null,
+                newValue: data.value,
+                ipAddress: req.ip,
+                userAgent: req.get('user-agent')
+            });
+
+            return setting;
         });
 
-        res.json(setting);
+        res.json(result);
     } catch (error: any) {
         if (error instanceof z.ZodError) {
             const formattedErrors = error.errors.map(err => ({

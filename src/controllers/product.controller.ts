@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import { z } from 'zod';
 import { Decimal } from 'decimal.js';
+import { logAudit } from '../utils/auditLogger';
 
 const optionalId = z.preprocess(
     (value) => {
@@ -289,18 +290,38 @@ export const updateProduct = async (req: Request, res: Response) => {
             }
         }
 
-        const product = await prisma.product.update({
-            where: { id },
-            data: data,
-            include: {
-                categoryRel: true,
-                subCategory: true,
-                brand: true,
-                unit: true
-            }
+        const result = await prisma.$transaction(async (tx) => {
+            const oldProduct = await tx.product.findUnique({ where: { id } });
+            if (!oldProduct) throw new Error("Product not found");
+
+            const product = await tx.product.update({
+                where: { id },
+                data: data,
+                include: {
+                    categoryRel: true,
+                    subCategory: true,
+                    brand: true,
+                    unit: true
+                }
+            });
+
+            const staff = (req as any).user;
+            await logAudit(tx, {
+                staffId: staff?.id,
+                staffName: staff?.name,
+                action: 'UPDATE_PRODUCT',
+                resourceType: 'PRODUCT',
+                resourceId: String(id),
+                oldValue: oldProduct,
+                newValue: product,
+                ipAddress: req.ip,
+                userAgent: req.get('user-agent')
+            });
+
+            return product;
         });
 
-        res.json(product);
+        res.json(result);
     } catch (error) {
         if (error instanceof z.ZodError) {
             // Return structured Zod errors
@@ -548,18 +569,35 @@ export const toggleProductStatus = async (req: Request, res: Response) => {
         const currentStatus = product.isActive ?? true;
         const newStatus = !currentStatus;
 
-        const updatedProduct = await prisma.product.update({
-            where: { id },
-            data: { isActive: newStatus },
-            include: {
-                categoryRel: true,
-                subCategory: true,
-                brand: true,
-                unit: true
-            }
+        const result = await prisma.$transaction(async (tx) => {
+            const updated = await tx.product.update({
+                where: { id },
+                data: { isActive: newStatus },
+                include: {
+                    categoryRel: true,
+                    subCategory: true,
+                    brand: true,
+                    unit: true
+                }
+            });
+
+            const staff = (req as any).user;
+            await logAudit(tx, {
+                staffId: staff?.id,
+                staffName: staff?.name,
+                action: newStatus ? 'ACTIVATE_PRODUCT' : 'DEACTIVATE_PRODUCT',
+                resourceType: 'PRODUCT',
+                resourceId: String(id),
+                oldValue: { isActive: currentStatus },
+                newValue: { isActive: newStatus },
+                ipAddress: req.ip,
+                userAgent: req.get('user-agent')
+            });
+
+            return updated;
         });
 
-        res.json(updatedProduct);
+        res.json(result);
     } catch (error) {
         console.error('[ToggleStatus] Error toggling product status:', error);
         res.status(500).json({

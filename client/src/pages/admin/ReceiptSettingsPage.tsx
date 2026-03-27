@@ -24,10 +24,12 @@ export const ReceiptSettingsPage = () => {
 
     // Receipt Content Settings
     const [header, setHeader] = useState(APP_CONFIG.appName);
+    const [description, setDescription] = useState('');
     const [address, setAddress] = useState(APP_CONFIG.company.address);
+    const [addressLine2, setAddressLine2] = useState('');
     const [phone, setPhone] = useState(APP_CONFIG.company.supportPhone);
     const [email, setEmail] = useState('');
-    const [footer, setFooter] = useState('Developed by Tap Lanka POS 0705083388');
+    const [footer, setFooter] = useState('Thank you for your business!');
     const [logoUrl, setLogoUrl] = useState('');
     const [showTaxID, setShowTaxID] = useState(true);
     const [taxID, setTaxID] = useState('');
@@ -67,7 +69,9 @@ export const ReceiptSettingsPage = () => {
 
             // Content
             if (settingsMap['receiptHeader']) setHeader(settingsMap['receiptHeader']);
+            if (settingsMap['receiptDescription']) setDescription(settingsMap['receiptDescription']);
             if (settingsMap['receiptAddress']) setAddress(settingsMap['receiptAddress']);
+            if (settingsMap['receiptAddressLine2']) setAddressLine2(settingsMap['receiptAddressLine2']);
             if (settingsMap['receiptPhone']) setPhone(settingsMap['receiptPhone']);
             if (settingsMap['receiptEmail']) setEmail(settingsMap['receiptEmail']);
             if (settingsMap['receiptFooter']) setFooter(settingsMap['receiptFooter']);
@@ -100,7 +104,9 @@ export const ReceiptSettingsPage = () => {
 
             // Content
             await updateSetting('receiptHeader', header);
+            await updateSetting('receiptDescription', description);
             await updateSetting('receiptAddress', address);
+            await updateSetting('receiptAddressLine2', addressLine2);
             await updateSetting('receiptPhone', phone);
             await updateSetting('receiptEmail', email);
             await updateSetting('receiptFooter', footer);
@@ -335,14 +341,61 @@ export const ReceiptSettingsPage = () => {
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Address</label>
+                                            <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Business Description</label>
                                             <input
                                                 type="text"
                                                 className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
-                                                value={address}
-                                                onChange={(e) => setAddress(e.target.value)}
-                                                placeholder="123 Main Street, City"
+                                                value={description}
+                                                onChange={(e) => setDescription(e.target.value)}
+                                                placeholder="Retail & Wholesale"
                                             />
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Address Line 1</label>
+                                                <input
+                                                    type="text"
+                                                    className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
+                                                    value={address}
+                                                    onChange={(e) => setAddress(e.target.value)}
+                                                    placeholder="123 Main Street"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Address Line 2 (City / State)</label>
+                                                <input
+                                                    type="text"
+                                                    className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
+                                                    value={addressLine2}
+                                                    onChange={(e) => setAddressLine2(e.target.value)}
+                                                    placeholder="Colombo 05"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="p-4 bg-gray-50 dark:bg-gray-900/40 rounded-xl border border-gray-100 dark:border-gray-800">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div>
+                                                    <p className="font-bold text-sm text-gray-700 dark:text-gray-300">Show Tax/VAT ID</p>
+                                                    <p className="text-xs text-gray-500">Enable Tax identification on receipts</p>
+                                                </div>
+                                                <label className="relative inline-flex items-center cursor-pointer">
+                                                    <input type="checkbox" checked={showTaxID} onChange={(e) => setShowTaxID(e.target.checked)} className="sr-only peer" />
+                                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                                                </label>
+                                            </div>
+                                            {showTaxID && (
+                                                <div className="space-y-2 animate-fadeIn">
+                                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Tax ID / VAT Number</label>
+                                                    <input
+                                                        type="text"
+                                                        className="w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-white p-3 rounded-lg border-2 border-gray-100 dark:border-gray-800 focus:border-blue-500 outline-none transition-all"
+                                                        value={taxID}
+                                                        onChange={(e) => setTaxID(e.target.value)}
+                                                        placeholder="VAT123..."
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-2">
@@ -393,13 +446,6 @@ export const ReceiptSettingsPage = () => {
                                                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                                                 </label>
                                             </div>
-                                            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/40 rounded-xl border border-gray-100 dark:border-gray-800 md:col-span-2">
-                                                <span className="font-bold text-sm text-gray-700 dark:text-gray-300">Show Tax/VAT ID</span>
-                                                <label className="relative inline-flex items-center cursor-pointer">
-                                                    <input type="checkbox" checked={showTaxID} onChange={(e) => setShowTaxID(e.target.checked)} className="sr-only peer" />
-                                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-                                                </label>
-                                            </div>
                                         </div>
 
                                         {showLogo && (
@@ -414,20 +460,6 @@ export const ReceiptSettingsPage = () => {
                                                 />
                                             </div>
                                         )}
-
-                                        {showTaxID && (
-                                            <div className="space-y-2 animate-fadeIn">
-                                                <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Tax ID / VAT Number</label>
-                                                <input
-                                                    type="text"
-                                                    className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
-                                                    value={taxID}
-                                                    onChange={(e) => setTaxID(e.target.value)}
-                                                    placeholder="VAT123..."
-                                                />
-                                            </div>
-                                        )}
-
                                         <div className="space-y-2">
                                             <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Footer Message</label>
                                             <textarea
@@ -435,7 +467,7 @@ export const ReceiptSettingsPage = () => {
                                                 className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all resize-none"
                                                 value={footer}
                                                 onChange={(e) => setFooter(e.target.value)}
-                                                placeholder="Developed by Tap Lanka POS 0705083388"
+                                                placeholder="Thank you for your business!"
                                             />
                                         </div>
                                     </div>
@@ -566,6 +598,7 @@ export const ReceiptSettingsPage = () => {
                                             <div className="bg-blue-600 text-white rounded-xl p-4 mb-6 flex items-center justify-between">
                                                 <div>
                                                     <div className="text-lg font-bold">{header || 'TAPLANKA POS'}</div>
+                                                    {description && <div className="text-[10px] opacity-90">{description}</div>}
                                                     <div className="text-[10px] opacity-90">{address || '123 Main Street, Colombo'}</div>
                                                 </div>
                                                 {showLogo && (
@@ -583,7 +616,8 @@ export const ReceiptSettingsPage = () => {
                                                 <div className="flex items-center justify-between">
                                                     <div>
                                                         <div className="text-lg font-bold tracking-wide">{header || 'TAPLANKA POS'}</div>
-                                                        <div className="text-[10px] opacity-80">{address || '123 Main Street, Colombo'}</div>
+                                                        <div className="text-[10px] opacity-80">{address || '123 Main Street'}</div>
+                                                        {addressLine2 && <div className="text-[10px] opacity-80">{addressLine2}</div>}
                                                         {phone && <div className="text-[10px] opacity-80">Tel: {phone}</div>}
                                                     </div>
                                                     {showLogo && (
@@ -612,9 +646,13 @@ export const ReceiptSettingsPage = () => {
                                         {!(isModern || isElegant || isBold) && (
                                             <div className="text-center font-bold text-sm mb-1 uppercase tracking-tighter">{header || 'TAPLANKA POS'}</div>
                                         )}
+                                        {!(isModern || isElegant || isBold) && description && (
+                                            <div className="text-center text-[10px] font-medium opacity-70 mb-1">{description}</div>
+                                        )}
                                         {!(isModern || isElegant || isBold) && (
                                             <div className="text-center space-y-0.5 opacity-80 mb-6">
-                                                <div className="break-words">{address || '123 Main Street, Colombo'}</div>
+                                                <div className="break-words">{address || '123 Main Street'}</div>
+                                                {addressLine2 && <div className="break-words">{addressLine2}</div>}
                                                 {phone && <div>Tel: {phone}</div>}
                                                 {email && <div>{email}</div>}
                                                 {showTaxID && taxID && <div className="mt-1 font-bold">VAT: {taxID}</div>}

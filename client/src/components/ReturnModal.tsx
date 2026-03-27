@@ -7,6 +7,8 @@ import { useCurrency } from '../hooks/useCurrency';
 import { useToast } from '../store/useToast';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { getApiUrl } from '../config/api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Button } from './ui/Button';
 
 interface ReturnModalProps {
     saleId: string;
@@ -380,40 +382,44 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
     };
 
     if (loading) {
-        return <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl flex items-center gap-3 shadow-xl">
-                <RefreshCcw className="animate-spin text-orange-500" size={20} />
-                <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Loading bill...</span>
-            </div>
-        </div>;
+        return (
+            <Dialog open={true}>
+                <DialogContent className="flex items-center justify-center">
+                    <div className="flex items-center gap-3">
+                        <RefreshCcw className="animate-spin text-orange-500" size={20} />
+                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Loading bill...</span>
+                    </div>
+                </DialogContent>
+            </Dialog>
+        );
     }
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-gray-900 w-full max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200 dark:border-gray-800 animate-in fade-in zoom-in duration-150">
+        <Dialog open={true} onOpenChange={onClose}>
+            <DialogContent className="max-w-5xl max-h-[90vh] p-0 flex flex-col">
                 {/* Header */}
-                <div className="flex justify-between items-center p-4 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 rounded-lg">
-                            <RefreshCcw size={18} />
+                <div className="p-4 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+                    <DialogHeader>
+                        <div className="flex justify-between items-center w-full">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 rounded-lg">
+                                    <RefreshCcw size={18} />
+                                </div>
+                                <div>
+                                    <DialogTitle className="text-base font-bold text-gray-900 dark:text-white leading-tight">Return & Bill Details</DialogTitle>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Sale ID: {saleId}</p>
+                                </div>
+                            </div>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handlePrintOriginal}
+                                title="Reprint Original"
+                            >
+                                <Printer size={18} />
+                            </Button>
                         </div>
-                        <div>
-                            <h2 className="text-base font-bold text-gray-900 dark:text-white leading-tight">Return & Bill Details</h2>
-                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Sale ID: {saleId}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={handlePrintOriginal}
-                            className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
-                            title="Reprint Original"
-                        >
-                            <Printer size={18} />
-                        </button>
-                        <button onClick={onClose} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
-                            <X size={20} />
-                        </button>
-                    </div>
+                    </DialogHeader>
                 </div>
 
                 <div className="flex-1 overflow-hidden flex flex-col md:flex-row min-h-0 bg-gray-50 dark:bg-gray-900/20">
@@ -486,19 +492,33 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                                     <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Bill Note</h3>
                                 </div>
                                 {!isEditingNote ? (
-                                    <button
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
                                         onClick={() => {
                                             setEditingNoteValue(sale?.note || '');
                                             setIsEditingNote(true);
                                         }}
-                                        className="text-[10px] font-black text-orange-600 hover:underline flex items-center gap-1"
                                     >
-                                        EDIT
-                                    </button>
+                                        <span className="text-[10px] font-black text-orange-600">EDIT</span>
+                                    </Button>
                                 ) : (
                                     <div className="flex gap-3">
-                                        <button onClick={() => setIsEditingNote(false)} className="text-[10px] font-black text-gray-400">CANCEL</button>
-                                        <button onClick={handleUpdateOriginalNote} className="text-[10px] font-black text-green-600">SAVE</button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setIsEditingNote(false)}
+                                        >
+                                            <span className="text-[10px] font-black text-gray-400">CANCEL</span>
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={handleUpdateOriginalNote}
+                                            disabled={isUpdatingNote}
+                                        >
+                                            <span className="text-[10px] font-black text-green-600">SAVE</span>
+                                        </Button>
                                     </div>
                                 )}
                             </div>
@@ -506,7 +526,7 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                                 <textarea
                                     value={editingNoteValue}
                                     onChange={(e) => setEditingNoteValue(e.target.value)}
-                                    className="w-full bg-gray-50 dark:bg-gray-900/50 border border-orange-200 dark:border-orange-900/50 rounded-xl p-3 text-xs font-medium focus:ring-2 focus:ring-orange-500 outline-none min-h-[80px]"
+                                    className="w-full bg-gray-50 dark:bg-gray-900/50 border border-orange-200 dark:border-orange-900/50 rounded-xl p-3 text-xs font-medium focus:ring-2 focus:ring-orange-500 outline-none min-h-20"
                                     autoFocus
                                 />
                             ) : (
@@ -582,7 +602,7 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                                                         <Plus size={12} />
                                                     </button>
                                                 </div>
-                                                <div className="text-right min-w-[70px] text-xs font-black text-gray-900 dark:text-white">
+                                                <div className="text-right min-w-17.5 text-xs font-black text-gray-900 dark:text-white">
                                                     {formatCurrency(item.price * returnQty)}
                                                 </div>
                                             </div>
@@ -594,7 +614,7 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                     </div>
 
                     {/* Right Panel - Sticky Refund & Checkout */}
-                    <div className="w-full md:w-[360px] border-l border-gray-100 dark:border-gray-800 p-6 flex flex-col gap-6 bg-white dark:bg-gray-900">
+                    <div className="w-full md:w-90 border-l border-gray-100 dark:border-gray-800 p-6 flex flex-col gap-6 bg-white dark:bg-gray-900">
                         <div className="space-y-4">
                             <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Refund Summary</h3>
                             <div className="space-y-2.5 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800">
@@ -628,17 +648,19 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                             <div className="grid grid-cols-3 gap-2">
                                 {(['cash', 'card', 'credit'] as const).map((method) => {
                                     return (
-                                        <button
+                                        <Button
                                             key={method}
                                             onClick={() => setRefundMethod(method)}
                                             disabled={method === 'credit' && !sale?.customerId}
-                                            className={`py-2 px-1 rounded-xl text-[10px] font-black uppercase transition-all border-2 ${refundMethod === method
-                                                ? 'bg-orange-500 border-orange-500 text-white shadow-lg shadow-orange-500/20'
-                                                : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 text-gray-400 hover:border-orange-200'
-                                                } disabled:opacity-30`}
+                                            variant={refundMethod === method ? 'primary' : 'ghost'}
+                                            size="sm"
+                                            className={`text-[10px] font-black uppercase ${refundMethod === method
+                                                ? 'bg-orange-500 text-white hover:bg-orange-600'
+                                                : ''
+                                                }`}
                                         >
                                             {method}
-                                        </button>
+                                        </Button>
                                     );
                                 })}
                             </div>
@@ -674,27 +696,25 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                                 <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Internal Note</h3>
                                 <textarea
                                     placeholder="Add refund reason..."
-                                    className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-3 text-xs focus:ring-2 focus:ring-orange-500 outline-none min-h-[70px] transition-all"
+                                    className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-3 text-xs focus:ring-2 focus:ring-orange-500 outline-none min-h-17.5 transition-all"
                                     value={refundNote}
                                     onChange={(e) => setRefundNote(e.target.value)}
                                     disabled={!!sale?.parentSaleId || items.every(i => i.max_qty <= 0)}
                                 />
                             </div>
 
-                            <button
+                            <Button
                                 onClick={handleProcessReturn}
                                 disabled={processing || refundTotal <= 0 || isCashRefundCapped || !!sale?.parentSaleId || items.every(i => i.max_qty <= 0)}
-                                className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${refundTotal > 0 && !isCashRefundCapped && !processing && !sale?.parentSaleId && !items.every(i => i.max_qty <= 0)
-                                    ? 'bg-orange-600 hover:bg-orange-700 text-white shadow-xl shadow-orange-500/30 active:scale-[0.98]'
-                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
-                                    }`}
+                                variant={refundTotal > 0 && !isCashRefundCapped && !processing && !sale?.parentSaleId && !items.every(i => i.max_qty <= 0) ? 'primary' : 'ghost'}
+                                className="w-full h-12 font-black text-xs uppercase tracking-widest"
                             >
                                 {processing ? 'Processing...' : (!!sale?.parentSaleId || items.every(i => i.max_qty <= 0) ? 'Already Refunded' : 'Complete Refund')}
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </div>
-            </div>
+            </DialogContent>
 
             {receiptTransaction && receiptItems.length > 0 && (
                 <ReceiptModal
@@ -710,6 +730,6 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                     }}
                 />
             )}
-        </div>
+        </Dialog>
     );
 };

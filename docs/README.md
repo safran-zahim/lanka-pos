@@ -18,6 +18,18 @@ This folder is the centralized home for project documentation.
 - `docs/guides/BUILD.md`
 - `docs/operations/CREDENTIALS.md`
 - `docs/specs/srs.md`
+- `docs/analysis/SHADCN_UI_MIGRATION_PROGRESS.md`
+
+## Current Implementation Status (2026-03-27)
+
+- Frontend UI standardization to shadcn is in progress.
+- Completed slices:
+	- shadcn CLI initialization in client workspace.
+	- Shared `Button` compatibility adapter aligned to existing app props.
+	- Base primitives added: Dialog, Card, Badge.
+	- Migrated low-risk modal set and selected admin/dashboard/shared surfaces.
+- Scope guardrail:
+	- Migration is UI-focused and keeps backend routes, middleware, and API payload contracts unchanged.
 
 ## Rule
 

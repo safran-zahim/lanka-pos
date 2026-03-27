@@ -6,6 +6,8 @@ import { useCurrency } from '../hooks/useCurrency';
 import { useLocale } from '../hooks/useLocale';
 import { getApiUrl } from '../config/api';
 import { useAuthStore } from '../store/useAuthStore';
+import { Dialog, DialogContent } from './ui/dialog';
+import { Button } from './ui/Button';
 
 import { APP_CONFIG } from '../config/appConfig';
 
@@ -154,14 +156,14 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
 
     if (loadingSettings) {
         return (
-            <div id="receipt-modal" className="fixed inset-0 bg-black/80 flex items-center justify-center z-[200]">
-                <div className="bg-white text-black p-6 rounded-lg w-80">
+            <Dialog open={true}>
+                <DialogContent className="max-w-sm">
                     <div className="flex items-center gap-2 text-gray-600">
                         <Loader size={18} className="animate-spin" />
                         <span>Loading receipt...</span>
                     </div>
-                </div>
-            </div>
+                </DialogContent>
+            </Dialog>
         );
     }
 
@@ -212,8 +214,8 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
     const printReceiptWidth = receiptType === 'thermal' ? `print:w-[${thermalWidth}]` : 'print:w-full';
 
     return (
-        <div id="receipt-modal" className="fixed inset-0 bg-black/80 flex items-center justify-center z-[200] print:bg-white print:static print:h-auto print:w-full print:flex print:items-start print:justify-center">
-            <div className={`bg-white text-black p-8 rounded-lg ${receiptWidth} ${receiptHeight} max-h-[90vh] overflow-y-auto ${printReceiptWidth} print:shadow-none print:p-0 print:pt-0 print:pb-12 print:max-h-none print:mx-auto print:mt-0`}>
+        <Dialog open={true} onOpenChange={onClose}>
+            <DialogContent className={`${receiptWidth} ${receiptHeight} max-h-[90vh] overflow-y-auto`}>
 
                 {/* Actions (Hidden on Print) */}
                 <div className="flex justify-between items-center mb-6 print:hidden">
@@ -221,9 +223,6 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                         <Check size={24} />
                         <span>Success!</span>
                     </div>
-                    <button onClick={onClose} className="text-gray-500 hover:text-black">
-                        <X size={24} />
-                    </button>
                 </div>
 
                 {settingsError && (
@@ -251,7 +250,7 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                             )}
                         </div>
                     ) : isElegant ? (
-                        <div className="bg-gradient-to-r from-gray-900 to-gray-700 text-white rounded-2xl p-5">
+                        <div className="bg-linear-to-r from-gray-900 to-gray-700 text-white rounded-2xl p-5">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <h1 className="text-xl font-bold tracking-wide">{header}</h1>
@@ -344,7 +343,7 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                                         <div className="text-[10px] opacity-60 mt-0.5 italic">{item.note}</div>
                                     )}
                                 </div>
-                                <div className="font-bold flex-shrink-0">
+                                <div className="font-bold shrink-0">
                                     {formatCurrency(item.price_at_sale * item.quantity)}
                                 </div>
                             </div>
@@ -502,37 +501,42 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
 
                 {/* Print & Digital Actions */}
                 <div className="mt-6 flex flex-col gap-2 print:hidden">
-                    <button
+                    <Button
                         onClick={handlePrint}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded flex items-center justify-center space-x-2"
+                        variant="primary"
+                        fullWidth
+                        className="flex items-center justify-center space-x-2"
                     >
                         <Printer size={20} />
                         <span>{transaction.type === 'return' ? 'Print Return Receipt' : 'Print Receipt'}</span>
-                    </button>
+                    </Button>
 
                     {/* WhatsApp Share Button - Controlled by Setting */}
                     {settings['enableWhatsAppShare'] !== false && (
-                        <button
+                        <Button
                             onClick={handleWhatsAppShare}
-                            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded flex items-center justify-center space-x-2"
+                            variant="success"
+                            fullWidth
+                            className="flex items-center justify-center space-x-2"
                         >
                             <MessageCircle size={20} />
                             <span>Send via WhatsApp{customer?.phone ? ` (${customer.phone})` : ''}</span>
-                        </button>
+                        </Button>
                     )}
 
                     {settings['enableDigitalReceipts'] && customer?.phone && (
-                        <button
+                        <Button
                             onClick={handleSendDigital}
                             disabled={sending}
-                            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded flex items-center justify-center space-x-2 disabled:opacity-50"
+                            variant="warning"
+                            fullWidth
+                            className="flex items-center justify-center space-x-2"
                         >
                             {sending ? <Loader size={20} className="animate-spin" /> : <MessageSquare size={20} />}
                             <span>Send to API ({customer.phone})</span>
-                        </button>
+                        </Button>
                     )}
                 </div>
-            </div>
 
             <style>{`
                 @media print {
@@ -549,6 +553,7 @@ export const ReceiptModal = ({ transaction, items, customer, user, autoPrint, on
                     }
                 }
             `}</style>
-        </div >
+            </DialogContent>
+        </Dialog>
     );
 };

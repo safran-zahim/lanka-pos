@@ -3,6 +3,8 @@ import { X } from 'lucide-react';
 import { useCurrency } from '../../hooks/useCurrency';
 import { useAuthStore } from '../../store/useAuthStore';
 import { getApiUrl } from '../../config/api';
+import { Button } from '../ui/Button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 
 interface AddUserModalProps {
     onClose: () => void;
@@ -54,14 +56,16 @@ export const AddUserModal = ({ onClose, onSuccess }: AddUserModalProps) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-gray-800 p-6 rounded-lg w-[400px] border border-gray-700">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold text-white">Add New User</h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-white">
-                        <X size={24} />
-                    </button>
-                </div>
+        <Dialog open={true} onOpenChange={onClose}>
+            <DialogContent className="w-100 bg-gray-800 border border-gray-700 text-white p-6" showCloseButton={false}>
+                <DialogHeader className="mb-6">
+                    <div className="flex justify-between items-center">
+                        <DialogTitle className="text-xl font-bold text-white">Add New User</DialogTitle>
+                        <Button onClick={onClose} variant="ghost" size="sm" className="text-gray-400 hover:text-white">
+                            <X size={24} />
+                        </Button>
+                    </div>
+                </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
@@ -107,14 +111,16 @@ export const AddUserModal = ({ onClose, onSuccess }: AddUserModalProps) => {
                         />
                     </div>
 
-                    <button
+                    <Button
                         type="submit"
-                        className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded mt-4"
+                        variant="primary"
+                        fullWidth
+                        className="font-bold py-3 mt-4"
                     >
                         Create Account
-                    </button>
+                    </Button>
                 </form>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 };

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, User, Phone, Mail, Save, AlertCircle, Award } from 'lucide-react';
+import { Dialog, DialogContent } from '../ui/dialog';
+import { Button } from '../ui/Button';
 
 interface CustomerModalProps {
     customer?: any | null;
@@ -88,19 +90,19 @@ export const CustomerModal = ({ customer, onClose, onSuccess }: CustomerModalPro
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all" onClick={onClose}>
-            <div
-                className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-800 overflow-hidden animate-in fade-in zoom-in duration-200"
-                onClick={(e) => e.stopPropagation()}
-            >
+        <Dialog open={true} onOpenChange={onClose}>
+            <DialogContent className="w-full max-w-md p-0 rounded-2xl overflow-hidden" showCloseButton={false}>
                 {/* Header Graphic */}
-                <div className="relative h-32 bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center">
-                    <button
+                <div className="relative h-32 bg-linear-to-br from-blue-600 to-indigo-700 flex items-center justify-center">
+                    <Button
+                        type="button"
                         onClick={onClose}
-                        className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors bg-white/10 p-2 rounded-full backdrop-blur-md"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors bg-white/10 rounded-full backdrop-blur-md"
                     >
                         <X size={20} />
-                    </button>
+                    </Button>
                     <div className="bg-white dark:bg-gray-900 p-4 rounded-3xl shadow-xl flex items-center justify-center translate-y-8 border-4 border-gray-50 dark:border-gray-900">
                         <User size={40} className="text-blue-600" />
                     </div>
@@ -169,17 +171,20 @@ export const CustomerModal = ({ customer, onClose, onSuccess }: CustomerModalPro
                         </div>
 
                         <div className="pt-6 flex gap-3">
-                            <button
+                            <Button
                                 type="button"
                                 onClick={onClose}
-                                className="flex-1 px-6 py-4 rounded-xl border-2 border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-400 font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-all active:scale-95"
+                                variant="ghost"
+                                fullWidth
+                                className="flex-1 border-2 border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
                             >
                                 Cancel
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 type="submit"
                                 disabled={isSaving}
-                                className="flex-[2] bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-70"
+                                variant="primary"
+                                className="flex-2 font-bold shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 disabled:opacity-70"
                             >
                                 {isSaving ? (
                                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -187,7 +192,7 @@ export const CustomerModal = ({ customer, onClose, onSuccess }: CustomerModalPro
                                     <Save size={20} />
                                 )}
                                 {customer ? 'Update Profile' : 'Create Profile'}
-                            </button>
+                            </Button>
                         </div>
                     </form>
 
@@ -203,7 +208,7 @@ export const CustomerModal = ({ customer, onClose, onSuccess }: CustomerModalPro
                         </div>
                     )}
                 </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 };

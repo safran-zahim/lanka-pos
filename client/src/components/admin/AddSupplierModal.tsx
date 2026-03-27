@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { X, Save } from 'lucide-react';
 import { getApiUrl } from '../../config/api';
 import { useToast } from '../../store/useToast';
+import { Button } from '../ui/Button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 
 interface Supplier {
     id?: string;
@@ -82,16 +84,18 @@ export const AddSupplierModal: React.FC<AddSupplierModalProps> = ({ isOpen, onCl
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md shadow-2xl border border-gray-200 dark:border-gray-700">
-                <div className="flex justify-between items-center mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
-                    <h2 className="text-xl font-bold text-gray-800 dark:text-white">
-                        {supplier ? 'Edit Supplier' : 'Add New Supplier'}
-                    </h2>
-                    <button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
-                        <X size={24} />
-                    </button>
-                </div>
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent className="w-full max-w-md p-6">
+                <DialogHeader className="mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
+                    <div className="flex justify-between items-center">
+                        <DialogTitle className="text-xl font-bold text-gray-800 dark:text-white">
+                            {supplier ? 'Edit Supplier' : 'Add New Supplier'}
+                        </DialogTitle>
+                        <Button variant="ghost" size="sm" onClick={onClose}>
+                            <X size={24} />
+                        </Button>
+                    </div>
+                </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
@@ -171,24 +175,25 @@ export const AddSupplierModal: React.FC<AddSupplierModalProps> = ({ isOpen, onCl
                     </div>
 
                     <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <button
+                        <Button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            variant="ghost"
                         >
                             Cancel
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             type="submit"
                             disabled={loading}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 shadow-sm disabled:opacity-50 transition-colors"
+                            variant="primary"
+                            className="flex items-center gap-2"
                         >
                             <Save size={18} />
                             {loading ? 'Saving...' : 'Save Supplier'}
-                        </button>
+                        </Button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 };

@@ -3,6 +3,8 @@ import { X, Plus, Trash2, Folder, Package, FolderOpen, List, Edit2, Check } from
 import { useToast } from '../store/useToast';
 import { useAuthStore } from '../store/useAuthStore';
 import { getApiUrl } from '../config/api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Button } from './ui/Button';
 
 interface CategoryManagerProps {
     onClose: () => void;
@@ -241,21 +243,21 @@ export const CategoryManager = ({ onClose, onCategoryCreated }: CategoryManagerP
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-60 p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-6xl max-h-[90vh] flex flex-col border-2 border-gray-200 dark:border-gray-700 shadow-2xl overflow-hidden">
+        <Dialog open={true} onOpenChange={(open) => { if (!open) onClose(); }}>
+            <DialogContent className="w-full max-w-6xl max-h-[90vh] p-0 overflow-hidden" showCloseButton={false}>
 
                 {/* Header */}
-                <div className="bg-linear-to-r from-blue-600 to-purple-600 dark:from-blue-700 dark:to-purple-700 p-6">
+                <DialogHeader className="bg-linear-to-r from-blue-600 to-purple-600 dark:from-blue-700 dark:to-purple-700 p-6">
                     <div className="flex justify-between items-center">
                         <div>
-                            <h2 className="text-2xl font-bold text-white">Manage Categories & Subcategories</h2>
+                            <DialogTitle className="text-2xl font-bold text-white">Manage Categories & Subcategories</DialogTitle>
                             <p className="text-sm text-blue-100 dark:text-blue-200 mt-1">Organize your product catalog with categories and subcategories</p>
                         </div>
-                        <button onClick={onClose} className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-lg transition-all">
+                        <Button type="button" onClick={onClose} variant="ghost" size="sm" className="text-white/80 hover:text-white hover:bg-white/20 rounded-lg">
                             <X size={24} />
-                        </button>
+                        </Button>
                     </div>
-                </div>
+                </DialogHeader>
 
                 <div className="flex-1 flex gap-6 overflow-hidden p-6">
                     {/* Categories Panel - Left Side */}
@@ -273,14 +275,15 @@ export const CategoryManager = ({ onClose, onCategoryCreated }: CategoryManagerP
                                     value={newCategoryName}
                                     onChange={(e) => setNewCategoryName(e.target.value)}
                                 />
-                                <button
+                                <Button
                                     type="submit"
+                                    variant="primary"
                                     className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg font-semibold transition-all shadow-lg shadow-blue-500/30 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                                     disabled={!newCategoryName.trim()}
                                 >
                                     <Plus size={20} />
                                     Add
-                                </button>
+                                </Button>
                             </form>
                         </div>
                         <div className="flex-1 overflow-y-auto p-4 space-y-2">
@@ -322,39 +325,48 @@ export const CategoryManager = ({ onClose, onCategoryCreated }: CategoryManagerP
                                     </div>
                                     <div className="flex items-center gap-2">
                                         {Number(editingCategoryId) === Number(category.id) ? (
-                                            <button
+                                            <Button
+                                                type="button"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleUpdateCategory(category.id, editingCategoryName);
                                                 }}
+                                                variant="ghost"
+                                                size="sm"
                                                 className="inline-flex items-center gap-1 text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 font-medium transition-all"
                                                 title="Save"
                                             >
                                                 <Check size={18} />
-                                            </button>
+                                            </Button>
                                         ) : (
-                                            <button
+                                            <Button
+                                                type="button"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     setEditingCategoryId(category.id);
                                                     setEditingCategoryName(category.name);
                                                 }}
+                                                variant="ghost"
+                                                size="sm"
                                                 className="opacity-0 group-hover:opacity-100 inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium transition-all"
                                                 title="Edit Category"
                                             >
                                                 <Edit2 size={18} />
-                                            </button>
+                                            </Button>
                                         )}
-                                        <button
+                                        <Button
+                                            type="button"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleDeleteCategory(category.id);
                                             }}
+                                            variant="ghost"
+                                            size="sm"
                                             className="opacity-0 group-hover:opacity-100 inline-flex items-center gap-2 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium transition-all"
                                             title="Delete Category"
                                         >
                                             <Trash2 size={18} />
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
                             ))}
@@ -390,14 +402,15 @@ export const CategoryManager = ({ onClose, onCategoryCreated }: CategoryManagerP
                                             value={newSubCategoryName}
                                             onChange={(e) => setNewSubCategoryName(e.target.value)}
                                         />
-                                        <button
+                                        <Button
                                             type="submit"
+                                            variant="primary"
                                             className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-5 py-3 rounded-lg font-semibold transition-all shadow-lg shadow-purple-500/30 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                                             disabled={!newSubCategoryName.trim()}
                                         >
                                             <Plus size={20} />
                                             Add
-                                        </button>
+                                        </Button>
                                     </form>
                                 </div>
                                 <div className="flex-1 overflow-y-auto p-4 space-y-2">
@@ -430,32 +443,41 @@ export const CategoryManager = ({ onClose, onCategoryCreated }: CategoryManagerP
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     {Number(editingSubCategoryId) === Number(subCategory.id) ? (
-                                                        <button
+                                                        <Button
+                                                            type="button"
                                                             onClick={() => handleUpdateSubCategory(subCategory.id, editingSubCategoryName)}
+                                                            variant="ghost"
+                                                            size="sm"
                                                             className="inline-flex items-center gap-1 text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 font-medium transition-all"
                                                             title="Save"
                                                         >
                                                             <Check size={16} />
-                                                        </button>
+                                                        </Button>
                                                     ) : (
-                                                        <button
+                                                        <Button
+                                                            type="button"
                                                             onClick={() => {
                                                                 setEditingSubCategoryId(subCategory.id);
                                                                 setEditingSubCategoryName(subCategory.name);
                                                             }}
+                                                            variant="ghost"
+                                                            size="sm"
                                                             className="opacity-0 group-hover:opacity-100 inline-flex items-center gap-1 text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 font-medium transition-all"
                                                             title="Edit Subcategory"
                                                         >
                                                             <Edit2 size={16} />
-                                                        </button>
+                                                        </Button>
                                                     )}
-                                                    <button
+                                                    <Button
+                                                        type="button"
                                                         onClick={() => handleDeleteSubCategory(subCategory.id)}
+                                                        variant="ghost"
+                                                        size="sm"
                                                         className="opacity-0 group-hover:opacity-100 inline-flex items-center gap-2 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium transition-all"
                                                         title="Delete Subcategory"
                                                     >
                                                         <Trash2 size={16} />
-                                                    </button>
+                                                    </Button>
                                                 </div>
                                             </div>
                                         ))}
@@ -479,7 +501,7 @@ export const CategoryManager = ({ onClose, onCategoryCreated }: CategoryManagerP
                         )}
                     </div>
                 </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 };

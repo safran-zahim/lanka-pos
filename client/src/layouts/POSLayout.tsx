@@ -2,8 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Clock, LogOut } from 'lucide-react';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { useAuthStore } from '../store/useAuthStore';
+import { SubscriptionIndicator } from '../components/shared/SubscriptionIndicator';
+import { Button } from '../components/ui/Button';
+import { NotificationCenter } from '../components/NotificationCenter';
 import { useNavigate } from 'react-router-dom';
 import { useLocale } from '../hooks/useLocale';
+import { useStockMonitor } from '../hooks/useStockMonitor';
 import { getApiUrl } from '../config/api';
 
 import { APP_CONFIG } from '../config/appConfig';
@@ -12,6 +16,7 @@ export const POSLayout: React.FC<{ children: React.ReactNode }> = ({ children })
     const [time, setTime] = useState(new Date());
     const { user, logout } = useAuthStore();
     const navigate = useNavigate();
+    useStockMonitor();
     const token = useAuthStore((state) => state.token);
     const [settingsMap, setSettingsMap] = useState<Record<string, any>>({});
     useEffect(() => {
@@ -68,14 +73,18 @@ export const POSLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                 <div className="flex items-center space-x-6 text-sm">
                     {/* Admin Dashboard Link */}
                     {(user?.role === 'admin' || user?.role === 'manager') && (
-                        <button
+                        <Button
+                            type="button"
                             onClick={() => navigate('/dashboard')}
-                            className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded text-xs font-bold"
+                            size="sm"
+                            className="h-8 text-xs font-bold"
                         >
                             Dashboard
-                        </button>
+                        </Button>
                     )}
 
+                    <SubscriptionIndicator />
+                    <NotificationCenter />
                     <ThemeToggle />
 
 
@@ -83,13 +92,16 @@ export const POSLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                         <Clock size={16} />
                         <span className="hidden sm:inline">{formatTime(time)}</span>
                     </div>
-                    <button
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
                         onClick={handleLogout}
-                        className="flex items-center space-x-1 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+                        className="h-8 px-2 text-red-600 dark:text-red-400 border-0"
                         title="Logout"
                     >
                         <LogOut size={18} />
-                    </button>
+                    </Button>
                 </div>
             </header>
 

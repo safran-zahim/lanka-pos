@@ -19,6 +19,7 @@ model Staff {
   sales      Sale[]
   expenses   Expense[]
   pettyCashLogs PettyCash[]
+  auditLogs  AuditLog[]
 }
 
 model Shift {
@@ -137,6 +138,8 @@ model PurchaseItem {
   costPrice   Decimal
   retailPrice Decimal?
   saleItems   SaleItem[]
+
+  @@index([productId])
 }
 
 model PurchasePayment {
@@ -265,6 +268,9 @@ model SaleItem {
   batch      PurchaseItem? @relation(fields: [batchId], references: [id])
   isOverSale Boolean       @default(false)
   note       String?
+
+  @@index([productId])
+  @@index([batchId])
 }
 
 
@@ -296,22 +302,41 @@ model CustomerPointLedger {
 }
 
 model AppConfig {
-  key                String            @id
-  subscriptionStatus String            @default("active")
-  subscriptionPlanId Int?
-  subscriptionPlan   SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id])
-  updatedAt          DateTime          @updatedAt
+  key                    String    @id
+  subscriptionStatus     String    @default("active") // active, blocked, canceled, past_due
+  paymentCycle           String    @default("monthly") // monthly, yearly
+  subscriptionExpiresAt  DateTime?
+  isNeverEnd             Boolean   @default(false)
+  isSystemDisabled       Boolean   @default(false)
+  clientNote             String?
+  updatedAt              DateTime  @updatedAt
 }
 
+// SubscriptionPlan kept in schema for potential future use but no longer linked to AppConfig
 model SubscriptionPlan {
-  id        Int         @id @default(autoincrement())
-  name      String      @unique
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
   price     Decimal
-  duration  Int         @default(30) // in days
-  features  String // JSON string of enabled features
-  active    Boolean     @default(true)
-  createdAt DateTime    @default(now())
-  AppConfig AppConfig[]
+  duration  Int      @default(30) // in days
+  features  String   // JSON string of enabled features
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model SubscriptionHistory {
+  id               Int      @id @default(autoincrement())
+  changedByStaffId Int?     // null if changed by system
+  changedByName    String?  // snapshot of who made the change
+  action           String   // e.g. "status_change", "expiry_set", "system_disabled", "never_end_toggled"
+  previousStatus   String?
+  newStatus        String?
+  previousExpiresAt DateTime?
+  newExpiresAt     DateTime?
+  paymentCycle     String?  // monthly or yearly — snapshot at time of change
+  isNeverEnd       Boolean? // snapshot of the flag at time of change
+  isSystemDisabled Boolean? // snapshot of the flag at time of change
+  note             String?  // optional reason/annotation for the change
+  createdAt        DateTime @default(now())
 }
 
 model CustomerPayment {
@@ -332,4 +357,20 @@ model Setting {
   key       String   @id
   value     Json
   updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id           Int      @id @default(autoincrement())
+  staffId      Int?
+  staff        Staff?   @relation(fields: [staffId], references: [id])
+  staffName    String?  // Snapshot of staff name
+  action       String   // e.g., "UPDATE", "DELETE", "PRICE_CHANGE"
+  resourceType String   // e.g., "PRODUCT", "SETTING", "USER"
+  resourceId   String?  // ID of the touched resource
+  oldValue     Json?
+  newValue     Json?
+  note         String?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
 }

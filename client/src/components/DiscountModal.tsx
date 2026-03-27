@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { X, Tag, Percent, DollarSign, Trash2 } from 'lucide-react';
+import { Tag, Percent, DollarSign, Trash2 } from 'lucide-react';
 import { useCurrency } from '../hooks/useCurrency';
+import { Button } from './ui/Button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 
 interface DiscountModalProps {
     subtotal: number;
@@ -50,22 +52,16 @@ export const DiscountModal = ({
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl w-[440px] border border-gray-200 dark:border-gray-700 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+            <DialogContent className="w-110 max-w-[92vw] p-6 max-h-[90vh] overflow-y-auto" showCloseButton>
 
                 {/* Header */}
-                <div className="flex justify-between items-center mb-5">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <DialogHeader className="mb-5">
+                    <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                         <Tag className="text-blue-500" />
                         Apply Bill Discount
-                    </h2>
-                    <button
-                        onClick={onClose}
-                        className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors"
-                    >
-                        <X size={24} />
-                    </button>
-                </div>
+                    </DialogTitle>
+                </DialogHeader>
 
                 {/* Quick Presets */}
                 <div className="mb-4">
@@ -74,25 +70,28 @@ export const DiscountModal = ({
                     </p>
                     <div className="grid grid-cols-5 gap-2">
                         {QUICK_PRESETS.map((preset) => (
-                            <button
+                            <Button
                                 key={preset}
                                 type="button"
                                 onClick={() => handlePreset(preset)}
+                                size="sm"
                                 className={`py-2 rounded-lg text-sm font-bold border-2 transition-all ${mode === 'percent' && numValue === preset
                                     ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200 dark:shadow-blue-900/30'
                                     : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-600 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
                                     }`}
                             >
                                 {preset}%
-                            </button>
+                            </Button>
                         ))}
                     </div>
                 </div>
 
                 {/* Mode Toggle */}
                 <div className="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-lg mb-4">
-                    <button
+                    <Button
                         type="button"
+                        variant={mode === 'percent' ? 'primary' : 'ghost'}
+                        size="sm"
                         onClick={() => setMode('percent')}
                         className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-1 ${mode === 'percent'
                             ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-white shadow'
@@ -101,9 +100,11 @@ export const DiscountModal = ({
                     >
                         <Percent size={14} />
                         Percentage
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         type="button"
+                        variant={mode === 'amount' ? 'primary' : 'ghost'}
+                        size="sm"
                         onClick={() => setMode('amount')}
                         className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-1 ${mode === 'amount'
                             ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-white shadow'
@@ -112,7 +113,7 @@ export const DiscountModal = ({
                     >
                         <DollarSign size={14} />
                         Amount ({currencySymbol})
-                    </button>
+                    </Button>
                 </div>
 
                 {/* Discount Input */}
@@ -144,32 +145,37 @@ export const DiscountModal = ({
 
                     <div className="flex gap-2 mb-4">
                         {currentDiscount > 0 && (
-                            <button
+                            <Button
                                 type="button"
+                                variant="danger"
+                                size="sm"
                                 onClick={handleRemoveDiscount}
-                                className="flex items-center gap-1.5 px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-lg text-sm font-medium transition-colors"
+                                className="flex items-center gap-1.5"
                             >
                                 <Trash2 size={14} />
                                 Remove Discount
-                            </button>
+                            </Button>
                         )}
-                        <button
+                        <Button
                             type="button"
+                            variant="ghost"
+                            size="sm"
                             onClick={onClose}
-                            className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-sm transition-colors"
                         >
                             Cancel
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             type="submit"
-                            className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold text-sm transition-colors shadow-md shadow-blue-200 dark:shadow-blue-900/30"
+                            fullWidth
+                            size="sm"
+                            className="flex-1"
                         >
                             Apply Discount
-                        </button>
+                        </Button>
                     </div>
                 </form>
 
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 };

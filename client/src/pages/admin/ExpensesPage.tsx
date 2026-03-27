@@ -4,6 +4,8 @@ import { useCurrency } from '../../hooks/useCurrency';
 import { getApiUrl } from '../../config/api';
 import { useToast } from '../../store/useToast';
 import { Plus, Search, Filter, Trash2, Edit2, Wallet, Tag, X } from 'lucide-react';
+import { Button } from '../../components/ui/Button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 
 export const ExpensesPage = () => {
     const { token } = useAuthStore();
@@ -99,18 +101,20 @@ export const ExpensesPage = () => {
                     <p className="text-gray-500 dark:text-gray-400">Manage daily operation costs and view expense history.</p>
                 </div>
                 <div className="flex gap-3">
-                    <button
+                    <Button
                         onClick={() => setShowCategoryModal(true)}
-                        className="bg-white dark:bg-gray-800 border dark:border-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 font-medium transition-colors"
+                        variant="ghost"
+                        className="border dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 font-medium"
                     >
                         <Tag className="w-4 h-4" /> Manage Categories
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         onClick={() => setShowExpenseModal(true)}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium transition-colors"
+                        variant="primary"
+                        className="flex items-center gap-2 font-medium"
                     >
                         <Plus className="w-4 h-4" /> Log Expense
-                    </button>
+                    </Button>
                 </div>
             </div>
 
@@ -149,7 +153,7 @@ export const ExpensesPage = () => {
                                             </span>
                                         </td>
                                         <td className="p-4 text-sm text-gray-600 dark:text-gray-400">{exp.description}</td>
-                                        <td className="p-4 text-sm text-gray-600 dark:text-gray-400 uppercase text-xs tracking-wider">{exp.paymentMethod}</td>
+                                        <td className="p-4 text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider">{exp.paymentMethod}</td>
                                         <td className="p-4 text-sm font-bold text-gray-900 dark:text-white text-right">{formatCurrency(exp.amount)}</td>
                                     </tr>
                                 ))
@@ -161,14 +165,16 @@ export const ExpensesPage = () => {
 
             {/* Modals...*/}
             {showCategoryModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl w-full max-w-md p-6 shadow-2xl">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Add Expense Category</h2>
-                            <button onClick={() => setShowCategoryModal(false)} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
+                <Dialog open={showCategoryModal} onOpenChange={setShowCategoryModal}>
+                    <DialogContent className="w-full max-w-md p-6" showCloseButton={false}>
+                        <DialogHeader className="mb-4">
+                            <div className="flex justify-between items-center">
+                                <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white">Add Expense Category</DialogTitle>
+                                <Button onClick={() => setShowCategoryModal(false)} variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                                    <X className="w-5 h-5" />
+                                </Button>
+                            </div>
+                        </DialogHeader>
                         <form onSubmit={handleCreateCategory} className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
@@ -179,23 +185,25 @@ export const ExpensesPage = () => {
                                 <input type="text" value={newCategory.description} onChange={e => setNewCategory({ ...newCategory, description: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
                             </div>
                             <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                <button type="button" onClick={() => setShowCategoryModal(false)} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">Cancel</button>
-                                <button type="submit" className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Save Category</button>
+                                <Button type="button" onClick={() => setShowCategoryModal(false)} variant="ghost" fullWidth className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Cancel</Button>
+                                <Button type="submit" variant="primary" fullWidth>Save Category</Button>
                             </div>
                         </form>
-                    </div>
-                </div>
+                    </DialogContent>
+                </Dialog>
             )}
 
             {showExpenseModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl w-full max-w-md p-6 shadow-2xl">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Log Expense</h2>
-                            <button onClick={() => setShowExpenseModal(false)} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
+                <Dialog open={showExpenseModal} onOpenChange={setShowExpenseModal}>
+                    <DialogContent className="w-full max-w-md p-6" showCloseButton={false}>
+                        <DialogHeader className="mb-4">
+                            <div className="flex justify-between items-center">
+                                <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white">Log Expense</DialogTitle>
+                                <Button onClick={() => setShowExpenseModal(false)} variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                                    <X className="w-5 h-5" />
+                                </Button>
+                            </div>
+                        </DialogHeader>
                         <form onSubmit={handleCreateExpense} className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Amount</label>
@@ -225,12 +233,12 @@ export const ExpensesPage = () => {
                                 <input type="date" required value={newExpense.date} onChange={e => setNewExpense({ ...newExpense, date: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" />
                             </div>
                             <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                <button type="button" onClick={() => setShowExpenseModal(false)} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">Cancel</button>
-                                <button type="submit" className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Save Expense</button>
+                                <Button type="button" onClick={() => setShowExpenseModal(false)} variant="ghost" fullWidth className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Cancel</Button>
+                                <Button type="submit" variant="primary" fullWidth>Save Expense</Button>
                             </div>
                         </form>
-                    </div>
-                </div>
+                    </DialogContent>
+                </Dialog>
             )}
         </div>
     );

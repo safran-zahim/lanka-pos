@@ -23,7 +23,8 @@ import { SettingsPage } from './pages/admin/SettingsPage';
 import { ReceiptSettingsPage } from './pages/admin/ReceiptSettingsPage';
 import { HelpPage } from './pages/admin/HelpPage';
 import { ReportsPage } from './pages/admin/ReportsPage';
-import { SubscriptionPlans } from './pages/admin/SubscriptionPlans';
+import { SubscriptionStatusPage } from './pages/admin/SubscriptionStatusPage';
+import { SystemSubscriptionPage } from './pages/admin/SystemSubscriptionPage';
 import { ExpensesPage } from './pages/admin/ExpensesPage';
 import { ThemeProvider } from './components/ThemeProvider';
 import { ToastContainer } from './components/ui/ToastContainer';
@@ -105,9 +106,16 @@ function App() {
             </Route>
           </Route>
 
+          {/* Subscription Status — visible to admin, manager, super_admin */}
+          <Route element={<ProtectedRoute allowedRoles={['admin', 'manager', 'super_admin']} />}>
+            <Route element={<AdminLayout />}>
+              <Route path="/admin/plans" element={<SubscriptionStatusPage />} />
+            </Route>
+          </Route>
+          {/* Subscription Control — super_admin only */}
           <Route element={<ProtectedRoute allowedRoles={['super_admin']} />}>
             <Route element={<AdminLayout />}>
-              <Route path="/admin/plans" element={<SubscriptionPlans />} />
+              <Route path="/admin/system-subscription" element={<SystemSubscriptionPage />} />
             </Route>
           </Route>
         </Routes>

@@ -5,6 +5,8 @@ import { useCurrency } from '../../hooks/useCurrency';
 import { useLocale } from '../../hooks/useLocale';
 import { useAuthStore } from '../../store/useAuthStore';
 import { getApiUrl } from '../../config/api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Button } from '../ui/Button';
 
 interface ProductBatchHistoryModalProps {
     product: Product;
@@ -43,24 +45,26 @@ export const ProductBatchHistoryModal = ({ product, onClose }: ProductBatchHisto
     }, [token, product.product_id]);
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
-            <div className="bg-white dark:bg-gray-900 w-full max-w-4xl rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 flex flex-col max-h-[90vh]">
+        <Dialog open={true} onOpenChange={(open) => { if (!open) onClose(); }}>
+            <DialogContent className="w-full max-w-4xl p-0 rounded-2xl max-h-[90vh] overflow-hidden" showCloseButton={false}>
 
                 {/* Header */}
-                <div className="p-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-t-2xl flex justify-between items-center">
+                <DialogHeader className="p-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-t-2xl">
+                    <div className="flex justify-between items-center">
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-xl">
                             <History size={24} />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Price History & Batches</h2>
+                            <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white">Price History & Batches</DialogTitle>
                             <p className="text-sm text-gray-500 dark:text-gray-400">{product.name} (SKU: {product.sku_code})</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors">
+                    <Button type="button" onClick={onClose} variant="ghost" size="sm" className="text-gray-400 hover:text-gray-600 dark:hover:text-white">
                         <X size={28} />
-                    </button>
-                </div>
+                    </Button>
+                    </div>
+                </DialogHeader>
 
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-6">
@@ -154,15 +158,17 @@ export const ProductBatchHistoryModal = ({ product, onClose }: ProductBatchHisto
                         <div className="text-sm text-gray-500">
                             Total Current Stock: <span className="font-bold text-gray-900 dark:text-white uppercase">{(product as any).stock_quantity || (product as any).stock || 0} {product.unit_id || 'units'}</span>
                         </div>
-                        <button
+                        <Button
+                            type="button"
                             onClick={onClose}
-                            className="px-6 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white rounded-lg font-bold transition-all"
+                            variant="secondary"
+                            className="px-6 font-bold"
                         >
                             Close
-                        </button>
+                        </Button>
                     </div>
                 </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 };

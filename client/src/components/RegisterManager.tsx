@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useToast } from '../store/useToast';
 import { getApiUrl } from '../config/api';
+import { Button } from './ui/Button';
+import { Dialog, DialogContent } from './ui/dialog';
 
 interface RegisterManagerProps {
     onRegisterStatusKnown: (isOpen: boolean) => void;
@@ -97,18 +99,20 @@ export const RegisterManager: React.FC<RegisterManagerProps> = ({ onRegisterStat
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6 border border-gray-200 dark:border-gray-700 relative">
+        <Dialog open={true} onOpenChange={handleClose}>
+            <DialogContent className="w-full max-w-md p-6 relative">
 
-                <button
+                <Button
                     onClick={handleClose}
-                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute top-4 right-4"
                     aria-label="Close"
                 >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                </button>
+                </Button>
 
                 <div className="text-center mb-6 mt-2">
                     <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-200 dark:border-blue-800">
@@ -145,23 +149,27 @@ export const RegisterManager: React.FC<RegisterManagerProps> = ({ onRegisterStat
                         </div>
                     </div>
 
-                    <button
+                    <Button
                         type="submit"
                         disabled={isSubmitting}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-colors disabled:opacity-70 shadow-lg shadow-blue-200 dark:shadow-none"
+                        variant="primary"
+                        fullWidth
+                        className="font-bold py-3.5"
                     >
                         {isSubmitting ? 'Opening Register...' : 'Open Register'}
-                    </button>
+                    </Button>
 
-                    <button
+                    <Button
                         type="button"
                         onClick={handleClose}
-                        className="w-full mt-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 font-medium py-2 transition-colors"
+                        variant="ghost"
+                        fullWidth
+                        className="mt-3 font-medium py-2"
                     >
                         Cancel (View Only Mode)
-                    </button>
+                    </Button>
                 </form>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 };

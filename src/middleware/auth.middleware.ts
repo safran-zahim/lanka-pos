@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../utils/jwt';
-import { getAppConfig } from '../utils/appConfig';
+import { getAppConfig, isSubscriptionValid } from '../utils/appConfig';
 
 interface AuthRequest extends Request {
     user?: any;
@@ -31,17 +31,32 @@ export const authorize = (roles: string[]) => {
     };
 };
 
+/**
+ * Blocks any non-super_admin API request if the subscription is invalid.
+ * This is a safety net for mid-session requests after a subscription expires.
+ */
 export const requireActiveSubscription = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
+        // Developer (super_admin) is NEVER blocked — always bypass
         if (req.user?.role === 'super_admin') {
             return next();
         }
+
         const config = await getAppConfig();
-        if (config.subscriptionStatus !== 'active') {
+        const check = isSubscriptionValid({
+            subscriptionStatus: config.subscriptionStatus,
+            isSystemDisabled: config.isSystemDisabled,
+            isNeverEnd: config.isNeverEnd,
+            subscriptionExpiresAt: config.subscriptionExpiresAt,
+        });
+
+        if (!check.valid) {
             return res.status(402).json({
-                error: 'Subscription inactive. Please contact developer to activate the system.'
+                error: check.reason,
+                code: 'SUBSCRIPTION_BLOCKED'
             });
         }
+
         next();
     } catch (error) {
         console.error(error);
