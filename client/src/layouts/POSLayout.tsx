@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLocale } from '../hooks/useLocale';
 import { useStockMonitor } from '../hooks/useStockMonitor';
 import { getApiUrl } from '../config/api';
+import { PageShell } from '../components/layout/PageShell';
 
 import { APP_CONFIG } from '../config/appConfig';
 
@@ -107,7 +108,9 @@ export const POSLayout: React.FC<{ children: React.ReactNode }> = ({ children })
 
             {/* Main Content Area */}
             <main className="flex-1 flex overflow-hidden pt-12">
-                {children}
+                <PageShell className="max-w-none p-0 sm:p-0">
+                    {children}
+                </PageShell>
             </main>
         </div>
     );

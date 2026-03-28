@@ -2,7 +2,7 @@
 
 This registry tracks all repository Markdown files in one place.
 
-Last updated: 2026-03-27
+Last updated: 2026-03-28
 
 ## Root
 
@@ -13,11 +13,15 @@ Last updated: 2026-03-27
 
 - docs/README.md
 - docs/api_documentation.md
+- docs/DESIGN_SYSTEM.md
+- docs/SHADCN_COMPONENT_ROADMAP.md
 - docs/analysis/FEATURES.md
 - docs/analysis/ISSUES.md
 - docs/analysis/SHADCN_UI_MIGRATION_PROGRESS.md
 - docs/analysis/SYSTEM_INTEGRATION_ANALYSIS.md
 - docs/analysis/SUBSCRIPTION_SYSTEM_DESIGN.md
+- docs/analysis/UI_MODERNIZATION_AUDIT.md
+- docs/analysis/UI_MODERNIZATION_SUMMARY.md
 - docs/batch/BATCH_FIXES_SUMMARY.md
 - docs/batch/BATCH_SYSTEM.md
 - docs/batch/BATCH_SYSTEM_QUICK_REFERENCE.md
@@ -49,6 +53,7 @@ Last updated: 2026-03-27
 - system-tracker/daily/2026-03-25.md
 - system-tracker/daily/2026-03-26.md
 - system-tracker/daily/2026-03-27.md
+- system-tracker/daily/2026-03-28.md
 - system-tracker/docs-updates/README.md
 - system-tracker/docs-updates/daily-doc-updates.md
 - system-tracker/templates/daily-template.md

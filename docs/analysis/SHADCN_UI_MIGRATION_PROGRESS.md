@@ -1,6 +1,6 @@
 # Shadcn UI Migration Progress
 
-Last updated: 2026-03-27
+Last updated: 2026-03-28
 
 ## Objective
 
@@ -45,6 +45,15 @@ Standardize the frontend UI on shadcn-style primitives with minimal risk and no 
 - `Dialog`
 - `Card`
 - `Badge`
+- `Alert`, `AlertDialog`, `Avatar`, `Breadcrumb`
+- `Calendar`, `Checkbox`, `Collapsible`, `Command`
+- `ContextMenu`, `Drawer`, `DropdownMenu`, `Form`
+- `HoverCard`, `Label`, `Menubar`, `NavigationMenu`
+- `Pagination`, `Popover`, `Progress`, `RadioGroup`
+- `Resizable`, `ScrollArea`, `Select`, `Separator`
+- `Sheet`, `Skeleton`, `Slider`, `Switch`
+- `Table`, `Tabs`, `Textarea`, `Tooltip`
+- `Accordion`, `AspectRatio`
 
 ### Migrated Modal Batch
 
@@ -54,12 +63,31 @@ Standardize the frontend UI on shadcn-style primitives with minimal risk and no 
 - `HoldSaleModal`
 - `EditCartItemModal`
 - `SelectBatchModal`
+- `POSCashModal`
+- `ReturnModal`
+- `ReceiptModal`
+- `UnifiedCheckoutModal`
+- `ActiveRegisterModal`
+- `HeldSalesList`
 
 ### Migrated Surface Batch
 
 - Shared subscription indicator UI.
 - Dashboard quick action buttons.
 - Low stock report key wrappers/actions/status chips.
+- Shared page shell pattern applied via primary layout wrappers for consistent page framing.
+- POS inline overlays (return-history and bill-note) converted to dialog pattern.
+- Customer admin modal shell aligned to shared dialog/button primitives.
+
+## Current Coverage Snapshot
+
+- `client/src/components/ui` now contains a broad shadcn-style primitive set (40+ files).
+- Core interaction categories are covered:
+  - Layout/shell and navigation primitives
+  - Form and input primitives
+  - Feedback and overlay primitives
+  - Data display and utility primitives
+- Migration posture: foundation and component library are substantially in place; remaining work is page-by-page adoption consistency.
 
 ## Verification Summary
 
@@ -73,9 +101,10 @@ Standardize the frontend UI on shadcn-style primitives with minimal risk and no 
 - Migration performed in incremental batches to isolate regressions.
 - Existing business logic and API contracts preserved.
 - Compile validation executed after each major migration batch.
+- Mobile responsiveness is treated as a standing requirement for all subsequent UI migration work.
 
 ## Next Steps
 
-1. Continue complex modal migrations (`ReturnModal`, `POSCashModal`, `ReceiptModal`, `ActiveRegisterModal`, `UnifiedCheckoutModal`).
-2. Expand card/badge/button consistency in remaining admin and POS pages.
+1. Continue page-level adoption to ensure all remaining admin/POS surfaces use shared primitives consistently.
+2. Enforce responsive-first checks (small-screen layout, overflow, touch targets) in each migration batch.
 3. Resolve frontend test harness issues (fetch mocking and Router test wrapper) to improve CI confidence during ongoing migration.

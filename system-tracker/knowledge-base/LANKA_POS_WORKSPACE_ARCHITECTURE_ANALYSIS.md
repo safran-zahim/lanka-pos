@@ -1,6 +1,6 @@
 # Lanka POS - Workspace Architecture Analysis
 
-Last updated: 2026-03-27
+Last updated: 2026-03-28
 
 ## 1. System Overview
 
@@ -318,3 +318,5 @@ The system supports extensive receipt customization via the `Setting` model (JSO
 - **[2026-03-27]**: Shadcn UI migration kickoff (Phase 1 + Phase 2 Batch A). Added client UI foundations (`class-variance-authority`, Radix `Slot`, shared `cn` utility), introduced semantic Modern Retail tokens in `client/src/index.css`, replaced `client/src/components/ui/Button.tsx` with adapter-compatible CVA implementation, and migrated layout-level button usage in `AdminLayout` and `POSLayout`. Backend/middleware contracts remain unchanged.
 - **[2026-03-27]**: Shadcn migration expansion (Phase 4 + Phase 5 partial). Added shadcn `Dialog`, `Card`, and `Badge` primitives; migrated low-risk modal set (`DiscountModal`, `EditPriceModal`, `EditTaxModal`, `HoldSaleModal`) to dialog-based patterns; standardized shared/dashboard/admin surfaces (`SubscriptionIndicator`, dashboard quick actions, low stock report wrappers/badges/actions). API payload contracts and backend middleware behavior remain unchanged.
 - **[2026-03-27]**: Operational Excellence Phase 2 & 3. Deployed `AuditLog` Prisma model and `logAudit` atomic utility. Instrumented Product, Settings, Staff (4 actions), and Customer (3 actions) mutations with full audit trails. Added `getShiftReconciliation` backend endpoint and Reconciliation tab in Reports Dashboard with CSV export. Deployed global `NotificationCenter` (Zustand store + shadcn UI) with background `useStockMonitor` hook to both Admin and POS layouts. Refactored `NotificationCenter.tsx` and Reconciliation tab to use shadcn `Card`, `Button`, `Badge` primitives.
+- **[2026-03-28]**: Build verification and portability note. Full-system build was executed from root with backend dependency install, Prisma client generation, and client production build. A cross-platform script gap was confirmed: root `build` uses `tsc || true`, which fails on Windows because `true` is Unix-only. Current reliable Windows sequence: `npm install --include=dev`, `npx prisma generate`, `npm --prefix client run build`.
+- **[2026-03-28]**: Component migration documentation sync. Shadcn progress docs were reconciled with implemented frontend component inventory (expanded primitive set under `client/src/components/ui` including navigation, form, feedback, data-display, and advanced primitives), complex modal migration coverage, and ongoing shared layout-shell standardization. Responsive-first behavior is now treated as a standing migration requirement.

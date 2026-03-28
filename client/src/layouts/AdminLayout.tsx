@@ -10,6 +10,7 @@ import { useLocale } from '../hooks/useLocale';
 import { getApiUrl } from '../config/api';
 import { NotificationCenter } from '../components/NotificationCenter';
 import { useStockMonitor } from '../hooks/useStockMonitor';
+import { PageShell } from '../components/layout/PageShell';
 
 import { APP_CONFIG } from '../config/appConfig';
 
@@ -272,7 +273,9 @@ export const AdminLayout = () => {
                         </Button>
                     </div>
                 </div>
-                <Outlet />
+                <PageShell>
+                    <Outlet />
+                </PageShell>
             </main>
         </div>
     );

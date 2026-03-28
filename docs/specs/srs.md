@@ -40,6 +40,9 @@ Lanka POS is a client-server application:
 - Reporting and transaction history
 - Staff management
 - Subscription plan and status handling
+- Audit logging for critical mutations
+- Shift cash reconciliation reporting
+- Global notification center for operational alerts
 - Local demo/offline capability for basic use
 
 ### 2.3 User Classes and Characteristics
@@ -103,11 +106,16 @@ Lanka POS is a client-server application:
 - FR-17: The system shall provide sales summaries and performance data.
 - FR-28: The system shall provide end-of-shift reports calculating Expected Cash based on sales, expenses, petty cash, supplier payouts, and customer debt payments.
 
-### 3.7 Subscription Handling
+### 3.7 Operational Monitoring and Traceability
+- FR-29: The system shall record audit logs for critical create, update, delete, and reset mutations with actor identity and before/after snapshots.
+- FR-30: The system shall provide a reconciliation report for closed shifts including expected cash, counted cash, and variance.
+- FR-31: The system shall provide a global notification center for operational alerts, including low-stock warnings.
+
+### 3.8 Subscription Handling
 - FR-18: The system shall store the current subscription plan and status.
 - FR-19: The system shall expose subscription status to the frontend after login.
 
-### 3.8 Local Demo/Offline Mode
+### 3.9 Local Demo/Offline Mode
 - FR-20: The system shall support local demo credentials stored in IndexedDB.
 - FR-21: The system shall allow POS workflows with local demo data.
 - FR-23: The system shall allow managing suppliers (create, update, view profile).
@@ -132,6 +140,10 @@ Lanka POS is a client-server application:
 ### 4.4 Usability
 - NFR-7: The POS interface shall be usable on standard desktop resolutions.
 - NFR-8: The login flow shall provide clear error feedback.
+- NFR-12: Core POS and admin flows should remain usable on mobile and tablet breakpoints during responsive UI migration.
+
+### 4.6 Observability and Compliance
+- NFR-13: Audit records should be immutable at the application layer and retained for traceability of critical business mutations.
 
 ### 4.5 Maintainability
 - NFR-9: The system shall separate backend and frontend concerns.

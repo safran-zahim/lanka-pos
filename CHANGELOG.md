@@ -1,5 +1,26 @@
 # Feature Updates & Bug Fixes Changelog
 
+## [2026-03-28] - Build Portability Check & Documentation Alignment
+
+### Build Verification
+- Executed full-system build validation from the workspace root.
+- Confirmed reliable Windows-safe build path:
+  - `npm install --include=dev`
+  - `npx prisma generate`
+  - `npm --prefix client run build`
+
+### Build Portability Note
+- Identified a cross-platform script issue in root build chain using `tsc || true`.
+- On Windows, `true` is not recognized, so `npm run build:all` fails after TypeScript errors are reported.
+
+### Documentation Synchronization
+- Updated SRS requirements to reflect current system capabilities:
+  - audit traceability,
+  - shift reconciliation reporting,
+  - global operational notifications,
+  - responsive-first UI requirement during migration.
+- Synced shadcn migration progress and architecture knowledge base entries with implemented component inventory and migration status.
+
 ## [2026-03-27] - Audit Traceability Matrix & UI Consistency (Phase 3)
 
 ### 🛡️ Extended Audit Coverage
