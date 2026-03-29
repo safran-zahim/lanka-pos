@@ -7,6 +7,9 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { getApiUrl } from '../../config/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { Label } from '../ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 interface EditProductModalProps {
     product: Product;
@@ -148,8 +151,8 @@ export const EditProductModal = ({ product, onClose, onSuccess }: EditProductMod
                 <DialogContent className="w-full max-w-125 p-6 max-h-[90vh] overflow-y-auto" showCloseButton={false}>
                     <DialogHeader className="mb-6">
                         <div className="flex justify-between items-center">
-                            <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white">Edit Product</DialogTitle>
-                            <Button type="button" onClick={onClose} variant="ghost" size="sm" className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white">
+                            <DialogTitle className="text-xl font-bold text-foreground">Edit Product</DialogTitle>
+                            <Button type="button" onClick={onClose} variant="ghost" size="sm" className="text-muted-foreground hover:text-gray-700 dark:hover:text-white">
                                 <X size={24} />
                             </Button>
                         </div>
@@ -158,12 +161,12 @@ export const EditProductModal = ({ product, onClose, onSuccess }: EditProductMod
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">SKU Code</label>
+                                <Label className="block text-sm text-muted-foreground mb-1">SKU Code</Label>
                                 <div className="relative">
-                                    <input
+                                    <Input
                                         required
                                         type="text"
-                                        className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white p-2 pr-10 rounded focus:ring-2 focus:ring-blue-500 outline-none border border-gray-300 dark:border-transparent"
+                                        className="pr-10"
                                         value={formData.sku_code}
                                         onChange={e => setFormData({ ...formData, sku_code: e.target.value })}
                                     />
@@ -172,64 +175,69 @@ export const EditProductModal = ({ product, onClose, onSuccess }: EditProductMod
                                         onClick={handleGenerateSKU}
                                         variant="ghost"
                                         size="sm"
-                                        className="absolute right-2 top-1.5 p-1 text-blue-600 hover:bg-blue-200/50 rounded transition-colors"
+                                        className="absolute right-1 top-1 h-8 w-8 p-0 text-primary hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded transition-colors"
                                         title="Generate Sequential SKU"
                                     >
-                                        <RefreshCw size={16} />
+                                        <RefreshCw size={14} />
                                     </Button>
                                 </div>
                             </div>
                             <div className="col-span-1">
-                                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Category</label>
+                                <Label className="block text-sm text-muted-foreground mb-1">Category</Label>
                                 <div className="flex gap-2">
-                                    <select
-                                        className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none border border-gray-300 dark:border-transparent"
+                                    <Select
                                         value={formData.category_id}
-                                        onChange={e => setFormData({
+                                        onValueChange={(val) => setFormData({
                                             ...formData,
-                                            category_id: e.target.value,
+                                            category_id: val,
                                             sub_category_id: ''
                                         })}
                                     >
-                                        <option value="">Select Category</option>
-                                        {categories?.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                    </select>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select Category" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {categories?.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
                                     <Button
                                         type="button"
                                         onClick={() => setShowCategoryManager(true)}
                                         variant="secondary"
                                         size="sm"
-                                        className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white p-2 rounded"
+                                        className="h-10 w-10 p-0"
                                         title="Manage Categories"
                                     >
-                                        <Settings size={20} />
+                                        <Settings size={18} />
                                     </Button>
                                 </div>
                             </div>
                             {formData.category_id && (
                                 <div className="col-span-2">
-                                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Sub Category</label>
-                                    <select
-                                        className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none border border-gray-300 dark:border-transparent"
+                                    <Label className="block text-sm text-muted-foreground mb-1">Sub Category</Label>
+                                    <Select
                                         value={formData.sub_category_id}
-                                        onChange={e => setFormData({ ...formData, sub_category_id: e.target.value })}
+                                        onValueChange={(val) => setFormData({ ...formData, sub_category_id: val })}
                                     >
-                                        <option value="">Select Sub Category</option>
-                                        {subCategories?.map((sub) => (
-                                            <option key={sub.id} value={sub.id}>{sub.name}</option>
-                                        ))}
-                                        {subCategories?.length === 0 && <option disabled>No subcategories available</option>}
-                                    </select>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select Sub Category" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {subCategories?.map((sub) => (
+                                                <SelectItem key={sub.id} value={String(sub.id)}>{sub.name}</SelectItem>
+                                            ))}
+                                            {subCategories?.length === 0 && <SelectItem value="none" disabled>No subcategories available</SelectItem>}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             )}
                         </div>
 
                         <div>
-                            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Product Name</label>
-                            <input
+                            <Label className="block text-sm text-muted-foreground mb-1">Product Name</Label>
+                            <Input
                                 required
                                 type="text"
-                                className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none border border-gray-300 dark:border-transparent"
                                 value={formData.name}
                                 onChange={e => setFormData({ ...formData, name: e.target.value })}
                             />
@@ -238,21 +246,20 @@ export const EditProductModal = ({ product, onClose, onSuccess }: EditProductMod
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Reorder Level</label>
-                                <input
+                                <Label className="block text-sm text-muted-foreground mb-1">Reorder Level</Label>
+                                <Input
                                     type="number"
                                     step="any"
-                                    className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none border border-gray-300 dark:border-transparent"
                                     value={formData.reorder_level}
                                     onChange={e => setFormData({ ...formData, reorder_level: e.target.value })}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm text-gray-500 dark:text-gray-400 mb-1">Current Stock</label>
-                                <input
+                                <Label className="block text-sm text-muted-foreground mb-1">Current Stock</Label>
+                                <Input
                                     disabled
                                     type="text"
-                                    className="w-full bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400 p-2 rounded cursor-not-allowed border border-gray-300 dark:border-transparent"
+                                    className="bg-muted cursor-not-allowed opacity-70"
                                     value={product.stock_quantity}
                                 />
                             </div>
@@ -262,7 +269,7 @@ export const EditProductModal = ({ product, onClose, onSuccess }: EditProductMod
                             Note: Stock Quantity cannot be edited here. Use the <b>Add Stock</b> button in the inventory list to update stock.
                         </div>
 
-                        <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <div className="flex gap-3 mt-6 pt-4 border-t border-border">
                             <Button
                                 type="button"
                                 onClick={handleDelete}

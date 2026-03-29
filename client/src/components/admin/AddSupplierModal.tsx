@@ -86,7 +86,7 @@ export const AddSupplierModal: React.FC<AddSupplierModalProps> = ({ isOpen, onCl
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="w-full max-w-md p-6">
-                <DialogHeader className="mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
+                <DialogHeader className="mb-6 border-b border-border pb-4">
                     <div className="flex justify-between items-center">
                         <DialogTitle className="text-xl font-bold text-gray-800 dark:text-white">
                             {supplier ? 'Edit Supplier' : 'Add New Supplier'}
@@ -103,7 +103,7 @@ export const AddSupplierModal: React.FC<AddSupplierModalProps> = ({ isOpen, onCl
                         <input
                             type="text"
                             required
-                            className="w-full p-2.5 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                            className="w-full p-2.5 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-ring outline-none transition-all"
                             value={formData.name || ''}
                             onChange={e => setFormData({ ...formData, name: e.target.value })}
                             placeholder="Enter company name"
@@ -113,7 +113,7 @@ export const AddSupplierModal: React.FC<AddSupplierModalProps> = ({ isOpen, onCl
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contact Person</label>
                         <input
                             type="text"
-                            className="w-full p-2.5 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                            className="w-full p-2.5 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-ring outline-none transition-all"
                             value={formData.contactPerson || ''}
                             onChange={e => setFormData({ ...formData, contactPerson: e.target.value })}
                             placeholder="Enter contact person name"
@@ -124,7 +124,7 @@ export const AddSupplierModal: React.FC<AddSupplierModalProps> = ({ isOpen, onCl
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phone</label>
                             <input
                                 type="tel"
-                                className="w-full p-2.5 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                className="w-full p-2.5 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-ring outline-none transition-all"
                                 value={formData.phone || ''}
                                 onChange={e => setFormData({ ...formData, phone: e.target.value })}
                                 placeholder="Phone number"
@@ -134,7 +134,7 @@ export const AddSupplierModal: React.FC<AddSupplierModalProps> = ({ isOpen, onCl
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
                             <input
                                 type="email"
-                                className="w-full p-2.5 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                className="w-full p-2.5 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-ring outline-none transition-all"
                                 value={formData.email || ''}
                                 onChange={e => setFormData({ ...formData, email: e.target.value })}
                                 placeholder="Email address"
@@ -144,7 +144,7 @@ export const AddSupplierModal: React.FC<AddSupplierModalProps> = ({ isOpen, onCl
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address</label>
                         <textarea
-                            className="w-full p-2.5 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                            className="w-full p-2.5 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-ring outline-none transition-all"
                             rows={3}
                             value={formData.address || ''}
                             onChange={e => setFormData({ ...formData, address: e.target.value })}
@@ -156,7 +156,7 @@ export const AddSupplierModal: React.FC<AddSupplierModalProps> = ({ isOpen, onCl
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tax ID</label>
                             <input
                                 type="text"
-                                className="w-full p-2.5 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                className="w-full p-2.5 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-ring outline-none transition-all"
                                 value={formData.taxId || ''}
                                 onChange={e => setFormData({ ...formData, taxId: e.target.value })}
                                 placeholder="Business tax ID"
@@ -166,7 +166,7 @@ export const AddSupplierModal: React.FC<AddSupplierModalProps> = ({ isOpen, onCl
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
                             <input
                                 type="text"
-                                className="w-full p-2.5 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                className="w-full p-2.5 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-ring outline-none transition-all"
                                 value={formData.notes || ''}
                                 onChange={e => setFormData({ ...formData, notes: e.target.value })}
                                 placeholder="Internal notes"
@@ -174,7 +174,7 @@ export const AddSupplierModal: React.FC<AddSupplierModalProps> = ({ isOpen, onCl
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border">
                         <Button
                             type="button"
                             onClick={onClose}

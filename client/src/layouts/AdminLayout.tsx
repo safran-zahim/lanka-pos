@@ -101,21 +101,21 @@ export const AdminLayout = () => {
     ];
 
     return (
-        <div className="flex h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans transition-colors duration-200 overflow-hidden">
+        <div className="flex h-screen bg-muted text-gray-900 dark:text-gray-100 font-sans transition-colors duration-200 overflow-hidden">
             {/* Mobile Header */}
-            <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-4 z-40">
+            <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-card text-card-foreground border-b border-border flex items-center justify-between px-4 z-40">
                 <div className="flex items-center gap-2 overflow-hidden">
                     <Button
                         type="button"
                         variant="ghost"
                         size="sm"
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        className="-ml-2 h-9 px-2 text-gray-600 dark:text-gray-300 shrink-0 border-0"
+                        className="-ml-2 h-9 px-2 text-muted-foreground shrink-0 border-0"
                     >
                         <Menu size={24} />
                     </Button>
                     {brandLogo && <img src={brandLogo} alt="Logo" className="h-6 w-6 object-contain shrink-0" />}
-                    <span className="font-bold text-base text-blue-600 dark:text-blue-500 truncate">{brandName}</span>
+                    <span className="font-bold text-base text-primary dark:text-primary truncate">{brandName}</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <Button
@@ -153,26 +153,26 @@ export const AdminLayout = () => {
 
             {/* Sidebar */}
             <aside className={`
-                fixed md:static inset-y-0 left-0 z-50 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-300 ease-in-out
+                fixed md:static inset-y-0 left-0 z-50 bg-card text-card-foreground border-r border-border flex flex-col transition-all duration-300 ease-in-out
                 ${isSidebarCollapsed ? 'md:w-20' : 'md:w-64'}
                 ${isMobileMenuOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0'}
             `}>
-                <div className={`p-6 border-b border-gray-200 dark:border-gray-700 md:flex hidden justify-between items-center ${isSidebarCollapsed ? 'px-4' : ''}`}>
+                <div className={`p-6 border-b border-border md:flex hidden justify-between items-center ${isSidebarCollapsed ? 'px-4' : ''}`}>
                     <div className="overflow-hidden">
                         <div className="flex items-center gap-3">
                             {brandLogo && <img src={brandLogo} alt="Logo" className="h-8 w-8 object-contain shrink-0" />}
                             {!isSidebarCollapsed && (
                                 <div className="animate-in fade-in slide-in-from-left-2 duration-300">
-                                    <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-500 truncate">{brandName}</h1>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">Admin Control Center</p>
+                                    <h1 className="text-2xl font-bold text-primary dark:text-primary truncate">{brandName}</h1>
+                                    <p className="text-xs text-muted-foreground mt-1 truncate">Admin Control Center</p>
                                 </div>
                             )}
                         </div>
                     </div>
                 </div>
 
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700 md:hidden flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
-                    <span className="font-bold text-gray-700 dark:text-gray-200">Menu</span>
+                <div className="p-4 border-b border-border md:hidden flex justify-between items-center bg-muted/50">
+                    <span className="font-bold text-foreground">Menu</span>
                     <Button type="button" variant="ghost" size="sm" onClick={() => setIsMobileMenuOpen(false)} className="h-9 px-2 border-0">
                         <X size={20} />
                     </Button>
@@ -188,7 +188,7 @@ export const AdminLayout = () => {
                             className={({ isActive }) =>
                                 `flex items-center rounded-lg transition-all duration-200 ${isSidebarCollapsed ? 'justify-center p-3' : 'space-x-3 px-4 py-3'} ${isActive
                                     ? 'bg-blue-600 text-white'
-                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
+                                    : 'text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
                                 }`
                             }
                         >
@@ -211,7 +211,7 @@ export const AdminLayout = () => {
                 </nav>
 
                 {/* Collapse Toggle Button (Desktop Only) */}
-                <div className="hidden md:block p-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="hidden md:block p-4 border-t border-border">
                     <Button
                         type="button"
                         variant="ghost"
@@ -227,9 +227,9 @@ export const AdminLayout = () => {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900 transition-colors duration-200 pt-16 md:pt-0">
+            <main className="flex-1 overflow-auto bg-muted transition-colors duration-200 pt-16 md:pt-0">
                 {/* Desktop Header */}
-                <div className="hidden md:flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                <div className="hidden md:flex items-center justify-between px-6 py-4 border-b border-border bg-card text-card-foreground">
                     <div className="flex items-center gap-4">
                         <Button
                             type="button"
@@ -241,12 +241,12 @@ export const AdminLayout = () => {
                             <Menu size={20} />
                         </Button>
                         <div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400">Welcome</div>
-                            <div className="font-semibold text-gray-900 dark:text-white">{user?.username}</div>
+                            <div className="text-sm text-muted-foreground">Welcome</div>
+                            <div className="font-semibold text-foreground">{user?.username}</div>
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
-                        <div className="text-sm text-gray-500 dark:text-gray-400 font-mono">
+                        <div className="text-sm text-muted-foreground font-mono">
                             {formatTime(time)}
                         </div>
                         <Button

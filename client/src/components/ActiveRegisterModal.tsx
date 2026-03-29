@@ -155,13 +155,13 @@ export const ActiveRegisterModal: React.FC<ActiveRegisterModalProps> = ({ isOpen
                 {/* Header */}
                 <DialogHeader>
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
+                        <div className="p-2 bg-primary/20 text-primary rounded-lg">
                             <Wallet className="w-6 h-6" />
                         </div>
                         <div>
-                            <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white">Active Register</DialogTitle>
+                            <DialogTitle className="text-xl font-bold text-foreground">Active Register</DialogTitle>
                             {shiftData && (
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                <p className="text-sm text-muted-foreground">
                                     Opened at {new Date(shiftData.startTime).toLocaleTimeString()}
                                 </p>
                             )}
@@ -173,7 +173,7 @@ export const ActiveRegisterModal: React.FC<ActiveRegisterModalProps> = ({ isOpen
                     {isLoading ? (
                         <div className="flex justify-center items-center py-20"><div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" /></div>
                     ) : !shiftData ? (
-                        <div className="text-center py-10 text-gray-500 dark:text-gray-400">No active register found.</div>
+                        <div className="text-center py-10 text-muted-foreground">No active register found.</div>
                     ) : (
                         <div className="space-y-6">
 
@@ -181,9 +181,9 @@ export const ActiveRegisterModal: React.FC<ActiveRegisterModalProps> = ({ isOpen
                                 <>
                                     {/* Dashboard Highlights */}
                                     <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-                                        <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-3 lg:p-4 border border-gray-100 dark:border-gray-700/50 overflow-hidden">
-                                            <p className="text-xs lg:text-sm text-gray-500 dark:text-gray-400 font-medium truncate">Expected Drawer</p>
-                                            <p className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white mt-1 truncate" title={formatCurrency(shiftData.liveExpectedCash)}>{formatCurrency(shiftData.liveExpectedCash)}</p>
+                                        <div className="bg-muted/50 rounded-xl p-3 lg:p-4 border border-border/50 overflow-hidden">
+                                            <p className="text-xs lg:text-sm text-muted-foreground font-medium truncate">Expected Drawer</p>
+                                            <p className="text-xl lg:text-2xl font-bold text-foreground mt-1 truncate" title={formatCurrency(shiftData.liveExpectedCash)}>{formatCurrency(shiftData.liveExpectedCash)}</p>
                                         </div>
                                         <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-3 lg:p-4 border border-green-100 dark:border-green-900/30 overflow-hidden">
                                             <p className="text-xs lg:text-sm text-green-700 dark:text-green-400 font-medium truncate">Cash Sales</p>
@@ -193,49 +193,49 @@ export const ActiveRegisterModal: React.FC<ActiveRegisterModalProps> = ({ isOpen
                                             <p className="text-xs lg:text-sm text-orange-700 dark:text-orange-400 font-medium truncate">Cash Expenses</p>
                                             <p className="text-lg lg:text-xl font-bold text-orange-900 dark:text-orange-300 mt-1 truncate" title={`-${formatCurrency(shiftData.totalExpenses)}`}>-{formatCurrency(shiftData.totalExpenses)}</p>
                                         </div>
-                                        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 lg:p-4 border border-blue-100 dark:border-blue-900/30 overflow-hidden">
+                                        <div className="bg-primary/20 rounded-xl p-3 lg:p-4 border border-blue-100 dark:border-blue-900/30 overflow-hidden">
                                             <p className="text-xs lg:text-sm text-blue-700 dark:text-blue-400 font-medium truncate">Starting Float</p>
                                             <p className="text-lg lg:text-xl font-bold text-blue-900 dark:text-blue-300 mt-1 truncate" title={formatCurrency(shiftData.startingCash)}>{formatCurrency(shiftData.startingCash)}</p>
                                         </div>
                                     </div>
 
                                     {/* Deep Breakdown */}
-                                    <div className="bg-white dark:bg-gray-800 border text-sm border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
-                                        <div className="bg-gray-50 dark:bg-gray-900/50 px-4 py-3 border-b border-gray-200 dark:border-gray-700"><h3 className="font-semibold text-gray-700 dark:text-gray-300">Detailed Breakdown</h3></div>
+                                    <div className="bg-card text-card-foreground border text-sm border-border rounded-xl overflow-hidden">
+                                        <div className="bg-muted/50 px-4 py-3 border-b border-border"><h3 className="font-semibold text-gray-700 dark:text-gray-300">Detailed Breakdown</h3></div>
                                         <div className="divide-y divide-gray-100 dark:divide-gray-700/50">
                                             <div className="flex justify-between px-4 py-3 text-gray-700 dark:text-gray-300">
-                                                <span className="text-gray-600 dark:text-gray-400">Starting Cash</span>
+                                                <span className="text-muted-foreground">Starting Cash</span>
                                                 <span className="font-medium">{formatCurrency(shiftData.startingCash)}</span>
                                             </div>
                                             <div className="flex justify-between px-4 py-3 bg-green-50/30 dark:bg-green-900/10">
-                                                <span className="text-gray-600 dark:text-gray-400">Cash Sales <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">(+)</span></span>
-                                                <span className="font-medium text-green-600 dark:text-green-400">{formatCurrency(shiftData.totalCashSales)}</span>
+                                                <span className="text-muted-foreground">Cash Sales <span className="text-xs text-muted-foreground ml-2">(+)</span></span>
+                                                <span className="font-medium text-success">{formatCurrency(shiftData.totalCashSales)}</span>
                                             </div>
                                             <div className="flex justify-between px-4 py-3 bg-blue-50/30 dark:bg-blue-900/10">
-                                                <span className="text-gray-600 dark:text-gray-400">Card Sales <span className="text-xs text-blue-400 dark:text-blue-500 ml-2">(Non-Cash)</span></span>
-                                                <span className="font-medium text-blue-600 dark:text-blue-400">{formatCurrency(shiftData.totalCardSales || 0)}</span>
+                                                <span className="text-muted-foreground">Card Sales <span className="text-xs text-blue-400 dark:text-primary ml-2">(Non-Cash)</span></span>
+                                                <span className="font-medium text-primary">{formatCurrency(shiftData.totalCardSales || 0)}</span>
                                             </div>
                                             <div className="flex justify-between px-4 py-3 bg-purple-50/30 dark:bg-purple-900/10">
-                                                <span className="text-gray-600 dark:text-gray-400">Credit Sales <span className="text-xs text-purple-400 dark:text-purple-500 ml-2">(Non-Cash)</span></span>
+                                                <span className="text-muted-foreground">Credit Sales <span className="text-xs text-purple-400 dark:text-purple-500 ml-2">(Non-Cash)</span></span>
                                                 <span className="font-medium text-purple-600 dark:text-purple-400">{formatCurrency(shiftData.totalCreditSales || 0)}</span>
                                             </div>
                                             <div className="flex justify-between px-4 py-3 bg-green-50/30 dark:bg-green-900/10">
-                                                <span className="text-gray-600 dark:text-gray-400">Customer Debt Repaid <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">(+)</span></span>
-                                                <span className="font-medium text-green-600 dark:text-green-400">{formatCurrency(shiftData.totalCustomerPayments)}</span>
+                                                <span className="text-muted-foreground">Customer Debt Repaid <span className="text-xs text-muted-foreground ml-2">(+)</span></span>
+                                                <span className="font-medium text-success">{formatCurrency(shiftData.totalCustomerPayments)}</span>
                                             </div>
                                             <div className="flex justify-between px-4 py-3 bg-red-50/30 dark:bg-red-900/10">
-                                                <span className="text-gray-600 dark:text-gray-400">Cash Refunds <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">(-)</span></span>
-                                                <span className="font-medium text-red-600 dark:text-red-400">{formatCurrency(shiftData.totalCashRefunds)}</span>
+                                                <span className="text-muted-foreground">Cash Refunds <span className="text-xs text-muted-foreground ml-2">(-)</span></span>
+                                                <span className="font-medium text-destructive">{formatCurrency(shiftData.totalCashRefunds)}</span>
                                             </div>
                                             <div className="flex justify-between px-4 py-3 bg-red-50/30 dark:bg-red-900/10">
-                                                <span className="text-gray-600 dark:text-gray-400">Supplier Paid Out <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">(-)</span></span>
-                                                <span className="font-medium text-red-600 dark:text-red-400">{formatCurrency(shiftData.totalSupplierPayments)}</span>
+                                                <span className="text-muted-foreground">Supplier Paid Out <span className="text-xs text-muted-foreground ml-2">(-)</span></span>
+                                                <span className="font-medium text-destructive">{formatCurrency(shiftData.totalSupplierPayments)}</span>
                                             </div>
                                             <div className="flex justify-between px-4 py-3 bg-red-50/30 dark:bg-red-900/10">
-                                                <span className="text-gray-600 dark:text-gray-400">General Expenses <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">(-)</span></span>
-                                                <span className="font-medium text-red-600 dark:text-red-400">{formatCurrency(shiftData.totalExpenses)}</span>
+                                                <span className="text-muted-foreground">General Expenses <span className="text-xs text-muted-foreground ml-2">(-)</span></span>
+                                                <span className="font-medium text-destructive">{formatCurrency(shiftData.totalExpenses)}</span>
                                             </div>
-                                            <div className="flex justify-between px-4 py-4 bg-gray-50 dark:bg-gray-900/50 font-bold border-t-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">
+                                            <div className="flex justify-between px-4 py-4 bg-muted/50 font-bold border-t-2 border-border text-foreground">
                                                 <span>Calculated Expected Drawer</span>
                                                 <span className="text-lg">{formatCurrency(shiftData.liveExpectedCash)}</span>
                                             </div>
@@ -243,7 +243,7 @@ export const ActiveRegisterModal: React.FC<ActiveRegisterModalProps> = ({ isOpen
                                     </div>
 
                                     {/* Action Buttons */}
-                                    <div className="flex gap-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                                    <div className="flex gap-4 pt-4 border-t border-border">
                                         <Button 
                                             onClick={() => setShowPettyCash(true)} 
                                             variant="ghost"
@@ -281,11 +281,11 @@ export const ActiveRegisterModal: React.FC<ActiveRegisterModalProps> = ({ isOpen
 
                                     <form onSubmit={handlePettyCashSubmit} className="space-y-4">
                                         <div className="grid grid-cols-2 gap-4">
-                                            <label className={`cursor-pointer flex items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all ${pettyType === 'IN' ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600'}`}>
+                                            <label className={`cursor-pointer flex items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all ${pettyType === 'IN' ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' : 'border-border text-muted-foreground hover:border-gray-300 dark:hover:border-gray-600'}`}>
                                                 <input type="radio" name="type" className="sr-only" checked={pettyType === 'IN'} onChange={() => setPettyType('IN')} />
                                                 <TrendingUp className="w-5 h-5" /> Cash IN
                                             </label>
-                                            <label className={`cursor-pointer flex items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all ${pettyType === 'OUT' ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400' : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600'}`}>
+                                            <label className={`cursor-pointer flex items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all ${pettyType === 'OUT' ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400' : 'border-border text-muted-foreground hover:border-gray-300 dark:hover:border-gray-600'}`}>
                                                 <input type="radio" name="type" className="sr-only" checked={pettyType === 'OUT'} onChange={() => setPettyType('OUT')} />
                                                 <TrendingDown className="w-5 h-5" /> Cash OUT
                                             </label>
@@ -294,7 +294,7 @@ export const ActiveRegisterModal: React.FC<ActiveRegisterModalProps> = ({ isOpen
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Amount</label>
                                             <div className="relative">
-                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 font-medium">{currencySymbol}</span>
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">{currencySymbol}</span>
                                                 <input
                                                     type="number"
                                                     required
@@ -302,7 +302,7 @@ export const ActiveRegisterModal: React.FC<ActiveRegisterModalProps> = ({ isOpen
                                                     step="0.01"
                                                     value={pettyAmount}
                                                     onChange={(e) => setPettyAmount(e.target.value)}
-                                                    className="w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
+                                                    className="w-full pl-10 pr-4 py-3 bg-background text-foreground border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-ring focus:border-blue-500 outline-none text-foreground"
                                                     placeholder="0.00"
                                                 />
                                             </div>
@@ -315,7 +315,7 @@ export const ActiveRegisterModal: React.FC<ActiveRegisterModalProps> = ({ isOpen
                                                 required
                                                 value={pettyDesc}
                                                 onChange={(e) => setPettyDesc(e.target.value)}
-                                                className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 dark:text-white"
+                                                className="w-full px-4 py-3 bg-background text-foreground border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-ring focus:border-blue-500 outline-none text-foreground"
                                                 placeholder="Lunch, supplies, drawer fill..."
                                             />
                                         </div>
@@ -356,9 +356,9 @@ export const ActiveRegisterModal: React.FC<ActiveRegisterModalProps> = ({ isOpen
                                         </Button>
                                         <h3 className="text-lg font-bold text-gray-800 dark:text-white">Close Daily Register</h3>
                                     </div>
-                                    <p className="text-gray-500 dark:text-gray-400 text-sm">Please count the physical cash in your drawer and enter the total below. This will be compared against the system's expected total.</p>
+                                    <p className="text-muted-foreground text-sm">Please count the physical cash in your drawer and enter the total below. This will be compared against the system's expected total.</p>
 
-                                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 rounded-xl p-6 text-center">
+                                    <div className="bg-primary/20 border border-blue-100 dark:border-blue-800/50 rounded-xl p-6 text-center">
                                         <span className="text-blue-700 dark:text-blue-400 font-medium text-sm">System Expected Cash</span>
                                         <div className="text-3xl font-bold text-blue-900 dark:text-blue-300 mt-1">{formatCurrency(shiftData.liveExpectedCash)}</div>
                                     </div>
@@ -367,7 +367,7 @@ export const ActiveRegisterModal: React.FC<ActiveRegisterModalProps> = ({ isOpen
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Actual Counted Cash</label>
                                             <div className="relative">
-                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 font-medium">{currencySymbol}</span>
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">{currencySymbol}</span>
                                                 <input
                                                     type="number"
                                                     required
@@ -375,11 +375,11 @@ export const ActiveRegisterModal: React.FC<ActiveRegisterModalProps> = ({ isOpen
                                                     step="0.01"
                                                     value={countedCash}
                                                     onChange={(e) => setCountedCash(e.target.value)}
-                                                    className="w-full pl-10 pr-4 py-4 bg-white dark:bg-gray-900 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-xl font-bold text-gray-900 dark:text-white"
+                                                    className="w-full pl-10 pr-4 py-4 bg-background text-foreground border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-ring focus:border-blue-500 outline-none text-xl font-bold text-foreground"
                                                 />
                                             </div>
                                             {Number(countedCash) !== Number(shiftData.liveExpectedCash) && countedCash !== '' && (
-                                                <div className={`mt-2 text-sm font-medium ${Number(countedCash) > Number(shiftData.liveExpectedCash) ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
+                                                <div className={`mt-2 text-sm font-medium ${Number(countedCash) > Number(shiftData.liveExpectedCash) ? 'text-success' : 'text-red-500 dark:text-red-400'}`}>
                                                     Variance: {formatCurrency(Math.abs(Number(countedCash) - Number(shiftData.liveExpectedCash)))}
                                                     {Number(countedCash) > Number(shiftData.liveExpectedCash) ? ' Over (Surplus)' : ' Under (Shortage)'}
                                                 </div>
@@ -391,7 +391,7 @@ export const ActiveRegisterModal: React.FC<ActiveRegisterModalProps> = ({ isOpen
                                             <textarea
                                                 value={closeNote}
                                                 onChange={(e) => setCloseNote(e.target.value)}
-                                                className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-gray-900 dark:text-white"
+                                                className="w-full px-4 py-3 bg-background text-foreground border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-ring focus:border-blue-500 outline-none resize-none text-foreground"
                                                 rows={2}
                                                 placeholder={Number(countedCash) !== Number(shiftData.liveExpectedCash) ? "Please explain the variance..." : "Any closing remarks..."}
                                             />

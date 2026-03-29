@@ -41,15 +41,15 @@ export const TransactionHistory = () => {
     );
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow h-full flex flex-col">
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Transaction History</h2>
+        <div className="bg-card text-card-foreground rounded-lg shadow h-full flex flex-col">
+            <div className="p-4 border-b border-border flex justify-between items-center">
+                <h2 className="text-xl font-bold text-foreground">Transaction History</h2>
                 <div className="relative">
                     <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
                     <input
                         type="text"
                         placeholder="Search ID..."
-                        className="pl-9 pr-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
+                        className="pl-9 pr-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring text-foreground"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -60,11 +60,11 @@ export const TransactionHistory = () => {
                 <table className="w-full text-left border-collapse min-w-[600px]">
                     <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
                         <tr>
-                            <th className="p-4 font-medium text-gray-500 dark:text-gray-400">ID</th>
-                            <th className="p-4 font-medium text-gray-500 dark:text-gray-400">Date</th>
-                            <th className="p-4 font-medium text-gray-500 dark:text-gray-400">Type</th>
-                            <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-right">Amount</th>
-                            <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-center">Actions</th>
+                            <th className="p-4 font-medium text-muted-foreground">ID</th>
+                            <th className="p-4 font-medium text-muted-foreground">Date</th>
+                            <th className="p-4 font-medium text-muted-foreground">Type</th>
+                            <th className="p-4 font-medium text-muted-foreground text-right">Amount</th>
+                            <th className="p-4 font-medium text-muted-foreground text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -72,10 +72,10 @@ export const TransactionHistory = () => {
                             <tr
                                 key={txn.id}
                                 onClick={() => navigate(`/admin/transactions/${txn.id}`)}
-                                className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+                                className="hover:bg-accent hover:text-accent-foreground/50 cursor-pointer"
                             >
-                                <td className="p-4 text-gray-900 dark:text-white">#{txn.id}</td>
-                                <td className="p-4 text-gray-500 dark:text-gray-400">
+                                <td className="p-4 text-foreground">#{txn.id}</td>
+                                <td className="p-4 text-muted-foreground">
                                     {formatDateTime(new Date(txn.createdAt))}
                                 </td>
                                 <td className="p-4">
@@ -87,7 +87,7 @@ export const TransactionHistory = () => {
                                         {txn.parentSaleId ? 'Return' : 'Sale'}
                                     </span>
                                 </td>
-                                <td className={`p-4 text-right font-medium ${txn.parentSaleId ? 'text-orange-600 dark:text-orange-400' : 'text-gray-900 dark:text-white'
+                                <td className={`p-4 text-right font-medium ${txn.parentSaleId ? 'text-orange-600 dark:text-orange-400' : 'text-foreground'
                                     }`}>
                                     {formatCurrency(Math.abs(Number(txn.total || 0)))}
                                 </td>
@@ -110,7 +110,7 @@ export const TransactionHistory = () => {
                                                     type: 'sale'
                                                 });
                                             }}
-                                            className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+                                            className="text-gray-400 hover:text-primary dark:hover:text-blue-400 transition-colors"
                                             title="Return Items"
                                         >
                                             <RotateCcw size={18} />

@@ -64,15 +64,15 @@ export const ResetPasswordModal = ({ user, onClose, onSuccess }: ResetPasswordMo
     return (
         <Dialog open={true} onOpenChange={onClose}>
             <DialogContent className="w-full max-w-md p-6" showCloseButton={false}>
-                <DialogHeader className="mb-6 border-b border-gray-100 dark:border-gray-700 pb-4">
+                <DialogHeader className="mb-6 border-b border-border pb-4">
                     <div className="flex justify-between items-center">
                         <div>
                             <DialogTitle className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                                <Lock size={20} className="text-blue-500" />
+                                <Lock size={20} className="text-primary" />
                                 Reset Password
                             </DialogTitle>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                For user: <span className="font-semibold text-blue-600 dark:text-blue-400">{user.username}</span>
+                            <p className="text-sm text-muted-foreground mt-1">
+                                For user: <span className="font-semibold text-primary">{user.username}</span>
                             </p>
                         </div>
                         <Button onClick={onClose} variant="ghost" size="sm" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
@@ -88,7 +88,7 @@ export const ResetPasswordModal = ({ user, onClose, onSuccess }: ResetPasswordMo
                             <input
                                 required
                                 type={showPassword ? "text" : "password"}
-                                className="w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white p-3 rounded-lg border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none transition-all pr-10"
+                                className="w-full bg-gray-50 dark:bg-gray-700 text-foreground p-3 rounded-lg border border-border focus:ring-2 focus:ring-ring outline-none transition-all pr-10"
                                 placeholder="Enter new password"
                                 value={password}
                                 onChange={e => setPassword(e.target.value)}
@@ -110,7 +110,7 @@ export const ResetPasswordModal = ({ user, onClose, onSuccess }: ResetPasswordMo
                         <input
                             required
                             type="password"
-                            className="w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white p-3 rounded-lg border border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                            className="w-full bg-gray-50 dark:bg-gray-700 text-foreground p-3 rounded-lg border border-border focus:ring-2 focus:ring-ring outline-none transition-all"
                             placeholder="Confirm new password"
                             value={confirmPassword}
                             onChange={e => setConfirmPassword(e.target.value)}
@@ -123,7 +123,7 @@ export const ResetPasswordModal = ({ user, onClose, onSuccess }: ResetPasswordMo
                             onClick={onClose}
                             variant="ghost"
                             fullWidth
-                            className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium"
+                            className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-accent hover:text-accent-foreground font-medium"
                         >
                             Cancel
                         </Button>

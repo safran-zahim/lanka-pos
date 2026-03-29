@@ -788,21 +788,21 @@ export const POS = () => {
 
     if (isSubscriptionInactive) {
         return (
-            <div className="flex w-full h-full items-center justify-center bg-gray-100 dark:bg-gray-900 p-6">
-                <div className="max-w-xl w-full bg-white dark:bg-gray-800 border-2 border-red-200 dark:border-red-800 rounded-2xl shadow-lg p-8 text-center">
+            <div className="flex w-full h-full items-center justify-center bg-background p-6">
+                <div className="max-w-xl w-full bg-card text-card-foreground border-2 border-red-200 dark:border-red-800 rounded-2xl shadow-lg p-8 text-center">
                     <div className="mx-auto w-14 h-14 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center mb-4">
-                        <AlertCircle size={30} className="text-red-600 dark:text-red-400" />
+                        <AlertCircle size={30} className="text-destructive" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Subscription Expired</h2>
+                    <h2 className="text-2xl font-bold text-foreground mb-2">Subscription Expired</h2>
                     <p className="text-red-600 dark:text-red-300 font-semibold mb-2">
                         POS is locked because the subscription is not active.
                     </p>
-                    <p className="text-gray-600 dark:text-gray-300 mb-6">
+                    <p className="text-muted-foreground mb-6">
                         Contact developer and activate the system to continue using POS.
                     </p>
                     <button
                         onClick={() => window.location.reload()}
-                        className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl transition-colors"
+                        className="bg-destructive hover:bg-destructive/90 text-white font-bold py-3 px-6 rounded-xl transition-colors"
                     >
                         Retry After Activation
                     </button>
@@ -812,14 +812,14 @@ export const POS = () => {
     }
 
     return (
-        <div className="flex w-full h-full relative flex-row bg-gray-100 dark:bg-gray-900 overflow-hidden">
+        <div className="flex w-full h-full relative flex-row bg-background overflow-hidden">
             {/* ── Subscription Expiry Warning Banner ─── */}
             {!expiryBannerDismissed && expiryDaysRemaining !== null && expiryDaysRemaining <= 7 && expiryDaysRemaining > 0 && (
                 <div className={`absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-2 text-sm font-bold ${
                     expiryDaysRemaining <= 1
                         ? 'bg-red-600 text-white animate-pulse'
                         : expiryDaysRemaining <= 3
-                            ? 'bg-orange-500 text-white'
+                            ? 'bg-accent text-accent-foreground'
                             : 'bg-amber-400 text-amber-900'
                 }`}>
                     <span>⚠️ System subscription expires in {expiryDaysRemaining} day{expiryDaysRemaining === 1 ? '' : 's'}. Contact your developer to renew.</span>
@@ -828,17 +828,17 @@ export const POS = () => {
             )}
             {enableDailyRegister && !isRegisterOpen && (
                 <div className="absolute inset-0 bg-white/60 dark:bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
-                    <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl flex flex-col items-center max-w-md text-center border border-gray-200 dark:border-gray-700 animate-in fade-in zoom-in duration-300">
-                        <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mb-4">
+                    <div className="bg-card text-card-foreground p-8 rounded-2xl shadow-2xl flex flex-col items-center max-w-md text-center border border-border animate-in fade-in zoom-in duration-300">
+                        <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-destructive rounded-full flex items-center justify-center mb-4">
                             <Wallet size={32} />
                         </div>
-                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Register Closed</h2>
-                        <p className="text-gray-500 dark:text-gray-400 mb-6">
+                        <h2 className="text-2xl font-bold text-foreground mb-2">Register Closed</h2>
+                        <p className="text-muted-foreground mb-6">
                             You must open a register shift before you can process sales or accept payments.
                         </p>
                         <button
                             onClick={() => window.location.reload()}
-                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl transition-colors w-full shadow-lg shadow-blue-600/30"
+                            className="bg-primary hover:bg-primary/90 text-white font-bold py-3 px-6 rounded-xl transition-colors w-full shadow-lg shadow-blue-600/30"
                         >
                             Open Register Now
                         </button>
@@ -846,9 +846,9 @@ export const POS = () => {
                 </div>
             )}
             {/* LEFT PANEL: PRODUCTS (60%) */}
-            <div className="w-[60%] flex flex-col h-full border-r border-gray-200 dark:border-gray-700 order-1">
+            <div className="w-[60%] flex flex-col h-full border-r border-border order-1">
                 {/* Search & Categories - Fixed Height Header */}
-                <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                <div className="bg-card text-card-foreground border-b border-border">
                     {/* Search Bar - Fixed Height */}
                     <div className="h-16 px-4 flex items-center gap-2">
                         <div className="relative flex-1">
@@ -856,7 +856,7 @@ export const POS = () => {
                             <input
                                 type="text"
                                 placeholder="Search products (Name/SKU)..."
-                                className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200 dark:border-gray-700 font-medium"
+                                className="w-full bg-muted text-foreground rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring border border-border font-medium"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
@@ -865,7 +865,7 @@ export const POS = () => {
                         <select
                             value={selectedBrand}
                             onChange={(e) => setSelectedBrand(e.target.value)}
-                            className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-lg px-3 py-2.5 border-2 border-gray-300 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 max-w-37.5 font-medium"
+                            className="bg-background text-foreground text-foreground rounded-lg px-3 py-2.5 border-2 border-gray-300 dark:border-gray-700 outline-none focus:ring-2 focus:ring-ring focus:border-blue-500 max-w-37.5 font-medium"
                         >
                             <option value="All">All Brands</option>
                             {brands?.map(b => (
@@ -882,7 +882,7 @@ export const POS = () => {
                                 onClick={() => setSelectedCategory(String(cat))}
                                 className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-semibold transition-all ${selectedCategory === cat
                                     ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                                    : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-600 border-2 border-gray-200 dark:border-gray-600'
+                                    : 'bg-white dark:bg-gray-700 text-foreground hover:bg-accent border-2 border-border'
                                     }`}
                             >
                                 {cat}
@@ -892,7 +892,7 @@ export const POS = () => {
                 </div>
 
                 {/* Products Grid */}
-                <div className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900">
+                <div className="flex-1 overflow-y-auto p-4 bg-muted">
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                         {filteredProducts?.map((product) => {
                             const cartQty = product.product_id ? (cartQtyByProduct.get(product.product_id) || 0) : 0;
@@ -903,31 +903,31 @@ export const POS = () => {
                                 ? (isOutOfStock ? 'Out of stock' : `Stock: ${remainingStock}`)
                                 : 'Stock: Unlimited';
                             const stockClass = isOutOfStock
-                                ? 'text-red-600 dark:text-red-400'
+                                ? 'text-destructive'
                                 : 'text-emerald-600 dark:text-emerald-400';
                             return (
                                 <button
                                     key={product.product_id}
                                     onClick={() => handleAddProduct(product)}
-                                    className={`bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 p-3 rounded-xl flex flex-col justify-between h-28 transition-all active:scale-95 shadow-sm border ${isLowStock ? 'border-red-300 dark:border-red-800 ring-1 ring-red-100 dark:ring-red-900/30' : 'border-gray-200 dark:border-gray-700'}`}
+                                    className={`bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground p-3 rounded-xl flex flex-col justify-between h-28 transition-all active:scale-95 shadow-sm border ${isLowStock ? 'border-red-300 dark:border-red-800 ring-1 ring-red-100 dark:ring-red-900/30' : 'border-border'}`}
                                 >
                                     <div className="w-full text-left">
-                                        <div className="font-medium text-sm leading-tight line-clamp-2 text-gray-900 dark:text-white mb-1">
+                                        <div className="font-medium text-sm leading-tight line-clamp-2 text-foreground mb-1">
                                             {product.name} <span className="text-xs text-gray-500">({product.sku_code})</span>
                                         </div>
                                         <div className={`text-[10px] font-semibold ${stockClass}`}>
                                             {stockLabel}
                                         </div>
                                         {isLowStock && (
-                                            <div className="flex items-center gap-1 text-[10px] text-red-600 dark:text-red-400 font-medium">
+                                            <div className="flex items-center gap-1 text-[10px] text-destructive font-medium">
                                                 <AlertCircle size={10} />
                                                 <span>Low Stock: {remainingStock}</span>
                                             </div>
                                         )}
                                     </div>
                                     <div className="w-full flex justify-between items-end mt-1">
-                                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[50%]">{product.brand_id}</div>
-                                        <div className="text-blue-600 dark:text-blue-400 font-bold text-sm">{formatCurrency(product.retail_price)}</div>
+                                        <div className="text-xs text-muted-foreground truncate max-w-[50%]">{product.brand_id}</div>
+                                        <div className="text-primary font-bold text-sm">{formatCurrency(product.retail_price)}</div>
                                     </div>
                                 </button>
                             );
@@ -944,15 +944,15 @@ export const POS = () => {
             </div>
 
             {/* RIGHT PANEL: CART (40%) */}
-            <div className="w-[40%] flex flex-col h-full bg-white dark:bg-gray-800 order-2 shadow-xl z-10 border-l border-gray-200 dark:border-gray-700">
+            <div className="w-[40%] flex flex-col h-full bg-card text-card-foreground order-2 shadow-xl z-10 border-l border-border">
                 {/* Customer Header - Fixed Height */}
-                <div className="h-16 px-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Current Sale</h2>
+                <div className="h-16 px-4 bg-card text-card-foreground border-b border-border flex items-center justify-between">
+                    <h2 className="text-xl font-bold text-foreground">Current Sale</h2>
                     <div className="flex items-center gap-2">
-                        {items.length > 0 && <span className="text-sm text-gray-500 dark:text-gray-400">{items.reduce((acc, i) => acc + i.quantity, 0)} Items</span>}
+                        {items.length > 0 && <span className="text-sm text-muted-foreground">{items.reduce((acc, i) => acc + i.quantity, 0)} Items</span>}
                         <button
                             onClick={() => navigate('/dashboard')}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-gray-50 dark:bg-gray-900/30 text-gray-600 dark:text-gray-300 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-muted/30 text-muted-foreground rounded-lg border border-border hover:bg-accent hover:text-accent-foreground transition-colors"
                             title="Dashboard"
                         >
                             <LayoutDashboard size={13} />
@@ -973,7 +973,7 @@ export const POS = () => {
                         )}
                         <button
                             onClick={() => setShowCashPanel(true)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded-lg border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary/20 text-primary rounded-lg border border-primary/20 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
                             title="Petty Cash & Expenses"
                         >
                             <DollarSign size={13} />
@@ -991,7 +991,7 @@ export const POS = () => {
                 </div>
 
                 {/* Customer Search Section */}
-                <div className="px-4 py-3 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                <div className="px-4 py-3 bg-card text-card-foreground border-b border-border">
 
                     {!customer ? (
                         <div className="relative">
@@ -1001,13 +1001,13 @@ export const POS = () => {
                                     <input
                                         type="text"
                                         placeholder="Search Customer (Name/Phone)..."
-                                        className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white rounded-lg pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                                        className="w-full bg-muted text-foreground rounded-lg pl-10 pr-4 py-2 border border-border focus:outline-none focus:ring-2 focus:ring-ring transition-all font-medium"
                                         value={customerSearch}
                                         onChange={e => setCustomerSearch(e.target.value)}
                                     />
                                     {/* Dropdown Results */}
                                     {customerSearch && (
-                                        <div className="absolute top-full left-0 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 mt-1 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto">
+                                        <div className="absolute top-full left-0 w-full bg-card text-card-foreground border border-border mt-1 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto">
                                             {filteredCustomers?.map(c => (
                                                 <button
                                                     key={c.customer_id}
@@ -1015,13 +1015,13 @@ export const POS = () => {
                                                         setCustomer(c);
                                                         setCustomerSearch('');
                                                     }}
-                                                    className="w-full text-left p-3 hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 last:border-0 flex justify-between items-center"
+                                                    className="w-full text-left p-3 hover:bg-accent hover:text-accent-foreground border-b border-border last:border-0 flex justify-between items-center"
                                                 >
                                                     <div>
-                                                        <div className="font-medium text-gray-900 dark:text-white">{c.name}</div>
+                                                        <div className="font-medium text-foreground">{c.name}</div>
                                                         <div className="text-xs text-gray-500">{c.phone}</div>
                                                     </div>
-                                                    <div className="text-xs font-medium text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded">
+                                                    <div className="text-xs font-medium text-primary bg-primary/20 px-2 py-1 rounded">
                                                         {c.loyalty_points_balance} pts
                                                     </div>
                                                 </button>
@@ -1034,7 +1034,7 @@ export const POS = () => {
                                 </div>
                                 <button
                                     onClick={() => setShowCustomerModal(true)}
-                                    className="p-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white shrink-0 shadow-sm transition-colors"
+                                    className="p-2 bg-primary hover:bg-primary/90 rounded-lg text-white shrink-0 shadow-sm transition-colors"
                                     title="Add New Customer"
                                 >
                                     <UserPlus size={20} />
@@ -1042,14 +1042,14 @@ export const POS = () => {
                             </div>
                         </div>
                     ) : (
-                        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 flex justify-between items-center animate-fade-in">
+                        <div className="bg-primary/20 border border-primary/20 rounded-lg p-3 flex justify-between items-center animate-fade-in">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-300">
+                                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">
                                     <User size={20} />
                                 </div>
                                 <div>
-                                    <div className="font-bold text-gray-900 dark:text-white">{customer.name}</div>
-                                    <div className="text-xs text-blue-600 dark:text-blue-400 font-medium">Points: {customer.loyalty_points_balance}</div>
+                                    <div className="font-bold text-foreground">{customer.name}</div>
+                                    <div className="text-xs text-primary font-medium">Points: {customer.loyalty_points_balance}</div>
                                 </div>
                             </div>
                             <button
@@ -1064,7 +1064,7 @@ export const POS = () => {
                 </div>
 
                 {/* Cart Items List */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 dark:bg-gray-900/50">
+                <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-muted/50">
                     {items.map((item) => {
                         const product = item.product_id ? productMap.get(item.product_id) : undefined;
                         const manageStock = product?.manage_stock ?? item.manage_stock;
@@ -1080,16 +1080,16 @@ export const POS = () => {
                                 : (remainingStock !== null && remainingStock <= 0 ? 'Remaining: 0' : `Remaining: ${remainingStock}`))
                             : 'Remaining: Unlimited';
                         const remainingClass = effectiveRemaining !== null && effectiveRemaining !== undefined && effectiveRemaining <= 0
-                            ? 'text-red-600 dark:text-red-400'
+                            ? 'text-destructive'
                             : 'text-emerald-600 dark:text-emerald-400';
                         return (
                             <div
                                 key={item.product_id}
-                                className="bg-white dark:bg-gray-800 p-3 rounded-xl flex flex-col gap-2 shadow-sm border border-gray-200 dark:border-gray-700 cursor-pointer hover:ring-2 hover:ring-blue-200 dark:hover:ring-blue-900/40"
+                                className="bg-card text-card-foreground p-3 rounded-xl flex flex-col gap-2 shadow-sm border border-border cursor-pointer hover:ring-2 hover:ring-blue-200 dark:hover:ring-blue-900/40"
                                 onClick={() => setEditingItem(item)}
                             >
                                 <div className="flex justify-between items-start">
-                                    <div className="font-medium text-gray-900 dark:text-white leading-tight">
+                                    <div className="font-medium text-foreground leading-tight">
                                         {item.name} <span className="text-xs text-gray-500">({item.sku_code})</span>
                                         <div className={`text-[10px] font-semibold ${remainingClass}`}>
                                             {remainingLabel}
@@ -1100,16 +1100,16 @@ export const POS = () => {
                                 {item.note ? (
                                     <button
                                         onClick={(e) => { e.stopPropagation(); setEditingItem(item); }}
-                                        className="text-[10px] text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1 bg-gray-50 dark:bg-gray-700/50 p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors w-full text-left line-clamp-1 group"
+                                        className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1 bg-gray-50 dark:bg-gray-700/50 p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors w-full text-left line-clamp-1 group"
                                     >
-                                        <StickyNote size={10} className="text-blue-500 shrink-0" />
+                                        <StickyNote size={10} className="text-primary shrink-0" />
                                         <span className="flex-1 truncate">Note: {item.note}</span>
-                                        <Edit2 size={10} className="text-gray-400 group-hover:text-blue-500 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        <Edit2 size={10} className="text-gray-400 group-hover:text-primary shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
                                     </button>
                                 ) : (
                                     <button
                                         onClick={(e) => { e.stopPropagation(); setEditingItem(item); }}
-                                        className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1 hover:text-blue-500 transition-colors"
+                                        className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1 hover:text-primary transition-colors"
                                     >
                                         <StickyNote size={10} />
                                         <span>Add Item Note</span>
@@ -1128,7 +1128,7 @@ export const POS = () => {
                                         >
                                             <Minus size={14} />
                                         </button>
-                                        <span className="w-8 text-center font-bold text-sm text-gray-800 dark:text-gray-200">{item.quantity}</span>
+                                        <span className="w-8 text-center font-bold text-sm text-foreground">{item.quantity}</span>
                                         <button
                                             onClick={async (e) => {
                                                 e.stopPropagation();
@@ -1154,7 +1154,7 @@ export const POS = () => {
                                                 e.stopPropagation();
                                                 setEditingItem(item);
                                             }}
-                                            className="text-xs flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                                            className="text-xs flex items-center gap-1 text-primary hover:underline font-medium"
                                         >
                                             <Edit2 size={12} />
                                             <span>{formatCurrency(item.retail_price)}</span>
@@ -1174,7 +1174,7 @@ export const POS = () => {
                         );
                     })}
                     {items.length === 0 && (
-                        <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-gray-500 opacity-50">
+                        <div className="flex flex-col items-center justify-center h-full text-muted-foreground opacity-50">
                             <CreditCard size={48} className="mb-2" />
                             <p>Cart is empty</p>
                         </div>
@@ -1182,14 +1182,14 @@ export const POS = () => {
                 </div>
 
                 {/* Cart Footer / Totals */}
-                <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+                <div className="p-4 bg-card text-card-foreground border-t border-border shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
                     <div className="space-y-2 mb-4">
-                        <div className="flex justify-between text-gray-600 dark:text-gray-400 text-sm">
+                        <div className="flex justify-between text-muted-foreground text-sm">
                             <span>Subtotal</span>
                             <span>{formatCurrency(subtotal)}</span>
                         </div>
                         {discount > 0 && (
-                            <div className="flex justify-between text-green-600 dark:text-green-400 text-sm font-medium">
+                            <div className="flex justify-between text-success text-sm font-medium">
                                 <span>
                                     {manualDiscountMode === 'percent' && manualDiscountValue > 0
                                         ? `Discount (${manualDiscountValue}%)`
@@ -1199,18 +1199,18 @@ export const POS = () => {
                             </div>
                         )}
                         {roundOffDiscount > 0 && (
-                            <div className="flex justify-between text-green-600 dark:text-green-400 text-sm font-medium">
+                            <div className="flex justify-between text-success text-sm font-medium">
                                 <span>Round off discount</span>
                                 <span>-{currencySymbol}{roundOffDiscount.toFixed(2)}</span>
                             </div>
                         )}
                         {taxEnabled && (
-                            <div className="flex justify-between text-gray-600 dark:text-gray-400 text-sm">
+                            <div className="flex justify-between text-muted-foreground text-sm">
                                 <div className="flex items-center gap-2">
                                     <span>Tax ({(taxRate * 100).toFixed(2)}%)</span>
                                     <button
                                         onClick={() => setShowTaxModal(true)}
-                                        className="text-blue-600 dark:text-blue-400 hover:underline text-xs flex items-center gap-1"
+                                        className="text-primary hover:underline text-xs flex items-center gap-1"
                                     >
                                         <Percent size={12} />
                                         Edit
@@ -1219,9 +1219,9 @@ export const POS = () => {
                                 <span>{formatCurrency(tax)}</span>
                             </div>
                         )}
-                        <div className="flex justify-between items-end border-t border-gray-100 dark:border-gray-700 pt-2 mt-2">
+                        <div className="flex justify-between items-end border-t border-border pt-2 mt-2">
                             <span className="text-lg font-bold text-gray-800 dark:text-white">Total</span>
-                            <span className="text-3xl font-bold text-blue-600 dark:text-blue-400">{formatCurrency(total + tax - roundOffDiscount)}</span>
+                            <span className="text-3xl font-bold text-primary">{formatCurrency(total + tax - roundOffDiscount)}</span>
                         </div>
                     </div>
 
@@ -1229,42 +1229,42 @@ export const POS = () => {
                     <div className="mb-4 space-y-2">
                         <button
                             onClick={() => setShowDiscountModal(true)}
-                            className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-600 group"
+                            className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border border-border group"
                         >
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-lg group-hover:scale-110 transition-transform">
+                                <div className="p-2 bg-primary/20 text-primary rounded-lg group-hover:scale-110 transition-transform">
                                     <Tag size={18} />
                                 </div>
                                 <div className="text-left">
-                                    <p className="text-sm font-bold text-gray-900 dark:text-white">Apply Bill Discount</p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">Coupon or manual discount</p>
+                                    <p className="text-sm font-bold text-foreground">Apply Bill Discount</p>
+                                    <p className="text-xs text-muted-foreground">Coupon or manual discount</p>
                                 </div>
                             </div>
-                            <Plus size={18} className="text-gray-400 group-hover:text-blue-500" />
+                            <Plus size={18} className="text-gray-400 group-hover:text-primary" />
                         </button>
 
                         <button
                             onClick={() => setShowNoteModal(true)}
                             className={`w-full flex items-center justify-between p-3 rounded-xl transition-colors border group ${checkoutNote
-                                ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
-                                : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                ? 'bg-primary/20 border-primary/20'
+                                : 'bg-gray-50 dark:bg-gray-700/50 border-border hover:bg-gray-100 dark:hover:bg-gray-700'
                                 }`}
                         >
                             <div className="flex items-center gap-3">
                                 <div className={`p-2 rounded-lg transition-transform group-hover:scale-110 ${checkoutNote
-                                    ? 'bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-300'
-                                    : 'bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400'
+                                    ? 'bg-primary/20 text-primary'
+                                    : 'bg-gray-100 dark:bg-gray-600 text-muted-foreground'
                                     }`}>
                                     <StickyNote size={18} />
                                 </div>
                                 <div className="text-left">
-                                    <p className="text-sm font-bold text-gray-900 dark:text-white">Add Bill Note</p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    <p className="text-sm font-bold text-foreground">Add Bill Note</p>
+                                    <p className="text-xs text-muted-foreground">
                                         {checkoutNote ? `Note: ${checkoutNote.slice(0, 30)}${checkoutNote.length > 30 ? '...' : ''}` : 'Special instructions for this bill'}
                                     </p>
                                 </div>
                             </div>
-                            <Plus size={18} className={`transition-transform text-gray-400 group-hover:text-blue-500`} />
+                            <Plus size={18} className={`transition-transform text-gray-400 group-hover:text-primary`} />
                         </button>
 
                     </div>
@@ -1273,7 +1273,7 @@ export const POS = () => {
                     <div className="grid grid-cols-4 gap-2">
                         <button
                             onClick={clearCart}
-                            className="flex flex-col items-center justify-center py-2 bg-red-500 dark:bg-red-600 text-white rounded-lg hover:bg-red-600 dark:hover:bg-red-700 transition-all shadow-md active:scale-95"
+                            className="flex flex-col items-center justify-center py-2 bg-destructive hover:bg-destructive/90 text-white rounded-lg hover:bg-red-600 dark:hover:bg-red-700 transition-all shadow-md active:scale-95"
                         >
                             <Trash2 size={20} />
                             <span className="text-[10px] uppercase font-bold mt-1">Void</span>
@@ -1481,11 +1481,11 @@ export const POS = () => {
             {showReturnLookup && (
                 <Dialog open={showReturnLookup} onOpenChange={setShowReturnLookup}>
                     <DialogContent className="w-full max-w-140 p-0 max-h-[80vh] overflow-hidden" showCloseButton={false}>
-                        <DialogHeader className="p-4 border-b border-gray-200 dark:border-gray-700">
+                        <DialogHeader className="p-4 border-b border-border">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <DialogTitle className="text-lg font-bold text-gray-900 dark:text-white">Sales History</DialogTitle>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">Search history by transaction or customer ID</p>
+                                    <DialogTitle className="text-lg font-bold text-foreground">Sales History</DialogTitle>
+                                    <p className="text-xs text-muted-foreground">Search history by transaction or customer ID</p>
                                 </div>
                                 <Button
                                     type="button"
@@ -1504,7 +1504,7 @@ export const POS = () => {
                                 <input
                                     type="text"
                                     placeholder="Search history by sale ID or customer ID..."
-                                    className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white rounded-lg pl-9 pr-3 py-2 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full bg-muted text-foreground rounded-lg pl-9 pr-3 py-2 border border-border focus:outline-none focus:ring-2 focus:ring-ring"
                                     value={returnSearch}
                                     onChange={(e) => setReturnSearch(e.target.value)}
                                 />
@@ -1527,20 +1527,20 @@ export const POS = () => {
                                                 setShowReturnLookup(false);
                                                 setReturnSearch('');
                                             }}
-                                            className="w-full text-left p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center justify-between cursor-pointer"
+                                            className="w-full text-left p-3 rounded-lg border border-border hover:bg-accent hover:text-accent-foreground/50 flex items-center justify-between cursor-pointer"
                                         >
                                             <div>
-                                                <div className="font-semibold text-gray-900 dark:text-white">#{saleId} • {customerName || 'Walk-in'}</div>
-                                                <div className="text-xs text-gray-500 dark:text-gray-400">{new Date(txn.createdAt || txn.timestamp).toLocaleString()}</div>
+                                                <div className="font-semibold text-foreground">#{saleId} • {customerName || 'Walk-in'}</div>
+                                                <div className="text-xs text-muted-foreground">{new Date(txn.createdAt || txn.timestamp).toLocaleString()}</div>
                                             </div>
                                             <div className="flex items-center gap-4">
-                                                <div className="font-bold text-gray-900 dark:text-white">{formatCurrency(Number(txn.total || txn.total_amount || 0))}</div>
+                                                <div className="font-bold text-foreground">{formatCurrency(Number(txn.total || txn.total_amount || 0))}</div>
                                                 <Button
                                                     type="button"
                                                     onClick={(e) => handlePrintFromHistory(e, txn)}
                                                     variant="ghost"
                                                     size="sm"
-                                                    className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
+                                                    className="p-2 text-primary hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
                                                     title="Print Receipt"
                                                 >
                                                     <Printer size={18} />
@@ -1598,22 +1598,22 @@ export const POS = () => {
                     <DialogContent className="w-full max-w-110 p-6" showCloseButton={false}>
                         <DialogHeader className="mb-5">
                             <div className="flex justify-between items-center">
-                                <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                    <StickyNote className="text-blue-500" />
+                                <DialogTitle className="text-xl font-bold text-foreground flex items-center gap-2">
+                                    <StickyNote className="text-primary" />
                                     Add Bill Note
                                 </DialogTitle>
-                                <Button type="button" onClick={() => setShowNoteModal(false)} variant="ghost" size="sm" className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white">
+                                <Button type="button" onClick={() => setShowNoteModal(false)} variant="ghost" size="sm" className="text-muted-foreground hover:text-gray-700 dark:hover:text-white">
                                     <X size={24} />
                                 </Button>
                             </div>
                         </DialogHeader>
                         <div className="space-y-4">
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Add special instructions, customer requests or delivery notes for this bill.</p>
+                            <p className="text-sm text-muted-foreground">Add special instructions, customer requests or delivery notes for this bill.</p>
                             <textarea
                                 value={checkoutNote}
                                 onChange={(e) => setCheckoutNote(e.target.value)}
                                 placeholder="e.g. Leave at front door, extra sauce, call on arrival..."
-                                className="w-full h-32 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                                className="w-full h-32 bg-muted text-foreground border border-border rounded-xl p-4 text-sm focus:ring-2 focus:ring-ring outline-none resize-none"
                                 autoFocus
                             />
                             <div className="flex gap-3">
@@ -1625,7 +1625,7 @@ export const POS = () => {
                                     }}
                                     variant="ghost"
                                     size="sm"
-                                    className="border border-red-100 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                    className="border border-red-100 dark:border-red-900/50 text-destructive hover:bg-red-50 dark:hover:bg-red-900/20"
                                 >
                                     Clear Note
                                 </Button>

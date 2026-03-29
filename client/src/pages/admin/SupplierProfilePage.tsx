@@ -44,13 +44,13 @@ export const SupplierProfilePage = () => {
                 <div className="flex items-center gap-4 mb-6">
                     <button
                         onClick={() => navigate('/admin/suppliers')}
-                        className="p-2 bg-white dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors"
+                        className="p-2 bg-card text-card-foreground rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm border border-border transition-colors"
                     >
                         <ArrowLeft size={20} />
                     </button>
                     <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Supplier Profile</h1>
                 </div>
-                <div className="text-gray-500 dark:text-gray-400">Supplier not found.</div>
+                <div className="text-muted-foreground">Supplier not found.</div>
             </div>
         );
     }
@@ -63,13 +63,13 @@ export const SupplierProfilePage = () => {
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => navigate('/admin/suppliers')}
-                        className="p-2 bg-white dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors"
+                        className="p-2 bg-card text-card-foreground rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm border border-border transition-colors"
                     >
                         <ArrowLeft size={20} />
                     </button>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Supplier Profile</h1>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">SUP-{String(supplier.id).slice(0, 8)}</p>
+                        <h1 className="text-2xl font-bold text-foreground">Supplier Profile</h1>
+                        <p className="text-sm text-muted-foreground">SUP-{String(supplier.id).slice(0, 8)}</p>
                     </div>
                 </div>
             </div>
@@ -111,25 +111,25 @@ export const SupplierProfilePage = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                <div className="bg-card text-card-foreground rounded-lg border border-border p-4">
                     <div className="text-xs text-gray-400 uppercase tracking-wider">Total Purchases</div>
-                    <div className="mt-2 text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <Receipt size={20} className="text-blue-500" /> {stats?.totalPurchases || 0}
+                    <div className="mt-2 text-2xl font-bold text-foreground flex items-center gap-2">
+                        <Receipt size={20} className="text-primary" /> {stats?.totalPurchases || 0}
                     </div>
                 </div>
-                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 font-bold text-blue-600 dark:text-blue-400">
+                <div className="bg-card text-card-foreground rounded-lg border border-border p-4 font-bold text-primary">
                     <div className="text-xs text-gray-400 uppercase tracking-wider">Total Spend</div>
                     <div className="mt-2 text-2xl flex items-center gap-2">
                         <span className="text-sm font-semibold">{currencySymbol}</span> {formatCurrency(stats?.totalPurchased || 0)}
                     </div>
                 </div>
-                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 font-bold text-green-600 dark:text-green-400">
+                <div className="bg-card text-card-foreground rounded-lg border border-border p-4 font-bold text-success">
                     <div className="text-xs text-gray-400 uppercase tracking-wider">Total Paid</div>
                     <div className="mt-2 text-2xl flex items-center gap-2">
                         <span className="text-sm font-semibold">{currencySymbol}</span> {formatCurrency(stats?.totalPaid || 0)}
                     </div>
                 </div>
-                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 font-bold text-orange-600 dark:text-orange-400">
+                <div className="bg-card text-card-foreground rounded-lg border border-border p-4 font-bold text-orange-600 dark:text-orange-400">
                     <div className="text-xs text-gray-400 uppercase tracking-wider">Balance Due</div>
                     <div className="mt-2 text-2xl flex items-center gap-2">
                         <span className="text-sm font-semibold">{currencySymbol}</span> {formatCurrency(stats?.totalDue || 0)}
@@ -137,13 +137,13 @@ export const SupplierProfilePage = () => {
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 overflow-hidden">
-                <h2 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <div className="bg-card text-card-foreground rounded-lg border border-border p-4 overflow-hidden">
+                <h2 className="font-bold text-foreground mb-4 flex items-center gap-2">
                     <Receipt size={16} /> Recent Purchases
                 </h2>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
-                        <thead className="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                        <thead className="text-xs text-muted-foreground border-b border-border">
                             <tr>
                                 <th className="px-4 py-3">Date</th>
                                 <th className="px-4 py-3">Status</th>
@@ -161,7 +161,7 @@ export const SupplierProfilePage = () => {
                                     return (
                                         <tr
                                             key={purchase.id}
-                                            className="text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer group"
+                                            className="text-gray-700 dark:text-gray-300 hover:bg-accent hover:text-accent-foreground/50 cursor-pointer group"
                                         // navigate to Purchase Details (if exists)
                                         >
                                             <td className="px-4 py-3">{formatDateTime(new Date(purchase.date))}</td>
@@ -170,7 +170,7 @@ export const SupplierProfilePage = () => {
                                                     {purchase.status}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-3 text-right font-medium text-gray-900 dark:text-white">{formatCurrency(total)}</td>
+                                            <td className="px-4 py-3 text-right font-medium text-foreground">{formatCurrency(total)}</td>
                                             <td className="px-4 py-3 text-right text-green-600">{formatCurrency(paid)}</td>
                                             <td className="px-4 py-3 text-right text-orange-600 font-bold">{due > 0 ? formatCurrency(due) : '-'}</td>
                                         </tr>
@@ -186,13 +186,13 @@ export const SupplierProfilePage = () => {
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 overflow-hidden">
-                <h2 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <div className="bg-card text-card-foreground rounded-lg border border-border p-4 overflow-hidden">
+                <h2 className="font-bold text-foreground mb-4 flex items-center gap-2">
                     <span className="text-xs font-semibold">{currencySymbol}</span> Payment History
                 </h2>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
-                        <thead className="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                        <thead className="text-xs text-muted-foreground border-b border-border">
                             <tr>
                                 <th className="px-4 py-3">Date</th>
                                 <th className="px-4 py-3">Method</th>

@@ -59,16 +59,16 @@ export const POSLayout: React.FC<{ children: React.ReactNode }> = ({ children })
     };
 
     return (
-        <div className="h-screen w-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white flex flex-col overflow-hidden">
+        <div className="h-screen w-screen bg-muted text-foreground flex flex-col overflow-hidden">
             {/* Header / Status Bar */}
-            <header className="fixed top-0 left-0 right-0 h-12 bg-white dark:bg-gray-800 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-700 z-50">
+            <header className="fixed top-0 left-0 right-0 h-12 bg-card text-card-foreground flex items-center justify-between px-4 border-b border-border z-50">
                 <div className="flex items-center space-x-3">
                     {showLogo && logoUrl && (
                         <img src={logoUrl} alt="Logo" className="h-7 w-7 object-contain" />
                     )}
-                    <span className="font-bold text-lg text-blue-600 dark:text-blue-400">{brandName}</span>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                        Staff: <span className="text-gray-900 dark:text-white font-medium">{user?.username || 'Guest'}</span> ({user?.role})
+                    <span className="font-bold text-lg text-primary">{brandName}</span>
+                    <span className="text-sm text-muted-foreground">
+                        Staff: <span className="text-foreground font-medium">{user?.username || 'Guest'}</span> ({user?.role})
                     </span>
                 </div>
                 <div className="flex items-center space-x-6 text-sm">
@@ -98,7 +98,7 @@ export const POSLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                         variant="ghost"
                         size="sm"
                         onClick={handleLogout}
-                        className="h-8 px-2 text-red-600 dark:text-red-400 border-0"
+                        className="h-8 px-2 text-destructive border-0"
                         title="Logout"
                     >
                         <LogOut size={18} />

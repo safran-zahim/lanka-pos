@@ -97,7 +97,7 @@ export const LowStockReport = () => {
             <div className="flex justify-between items-center mb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                        <AlertTriangle className="text-orange-500" />
+                        <AlertTriangle className="text-accent" />
                         Low Stock Report
                     </h1>
                     <p className="text-gray-500 text-sm mt-1">Items that have fallen below their alert quantity level.</p>
@@ -127,7 +127,7 @@ export const LowStockReport = () => {
             <Card className="mb-6">
                 <CardContent className="flex gap-4 p-4">
                 <select
-                    className="p-2 rounded border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white"
+                    className="p-2 rounded border border-gray-300 dark:border-gray-600 bg-muted text-foreground"
                     value={filterBrand}
                     onChange={e => setFilterBrand(e.target.value)}
                 >
@@ -135,7 +135,7 @@ export const LowStockReport = () => {
                     {brands?.map(b => <option key={b.id || b.brand_id} value={b.name}>{b.name}</option>)}
                 </select>
                 <select
-                    className="p-2 rounded border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white"
+                    className="p-2 rounded border border-gray-300 dark:border-gray-600 bg-muted text-foreground"
                     value={filterCategory}
                     onChange={e => setFilterCategory(e.target.value)}
                 >
@@ -149,7 +149,7 @@ export const LowStockReport = () => {
             <Card className="overflow-hidden">
                 <CardContent className="p-0">
                 <table className="w-full text-left text-sm">
-                    <thead className="bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-400 font-semibold border-b border-gray-200 dark:border-gray-700">
+                    <thead className="bg-muted text-muted-foreground font-semibold border-b border-border">
                         <tr>
                             <th className="p-4">Product Name</th>
                             <th className="p-4">SKU</th>
@@ -169,8 +169,8 @@ export const LowStockReport = () => {
                             const pId = item.id || item.product_id;
                             const editValue = alertEdits[pId] ?? String(alertLevel);
                             return (
-                                <tr key={pId} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                    <td className="p-4 font-medium text-gray-900 dark:text-white">
+                                <tr key={pId} className="hover:bg-accent hover:text-accent-foreground/50 transition-colors">
+                                    <td className="p-4 font-medium text-foreground">
                                         <div className="flex items-center gap-2">
                                             <span>{item.name}</span>
                                             {!item.isActive && !item.is_active && (
@@ -180,19 +180,19 @@ export const LowStockReport = () => {
                                             )}
                                         </div>
                                     </td>
-                                    <td className="p-4 text-gray-500 dark:text-gray-400">{item.skuCode || item.sku_code}</td>
+                                    <td className="p-4 text-muted-foreground">{item.skuCode || item.sku_code}</td>
                                     <td className="p-4">
                                         {item.barcode ? (
                                             <div className="flex flex-col">
-                                                <span className="font-mono text-sm text-gray-900 dark:text-white">{item.barcode}</span>
-                                                <span className="text-xs text-gray-500 dark:text-gray-400">{item.barcodeType}</span>
+                                                <span className="font-mono text-sm text-foreground">{item.barcode}</span>
+                                                <span className="text-xs text-muted-foreground">{item.barcodeType}</span>
                                             </div>
                                         ) : (
                                             <span className="text-gray-400 text-xs">—</span>
                                         )}
                                     </td>
-                                    <td className="p-4 text-gray-500 dark:text-gray-400">{item.category?.name || item.category_name || '-'}</td>
-                                    <td className="p-4 text-gray-500 dark:text-gray-400">{item.brand?.name || item.brand_name || '-'}</td>
+                                    <td className="p-4 text-muted-foreground">{item.category?.name || item.category_name || '-'}</td>
+                                    <td className="p-4 text-muted-foreground">{item.brand?.name || item.brand_name || '-'}</td>
                                     <td className="p-4 text-center">
                                         <Badge variant="destructive">
                                             {stock}
@@ -202,7 +202,7 @@ export const LowStockReport = () => {
                                         <input
                                             type="number"
                                             min="0"
-                                            className="w-20 text-center bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded border border-gray-300 dark:border-gray-600 px-2 py-1"
+                                            className="w-20 text-center bg-gray-100 dark:bg-gray-700 text-foreground rounded border border-gray-300 dark:border-gray-600 px-2 py-1"
                                             value={editValue}
                                             onChange={(e) => handleAlertChange(pId, e.target.value)}
                                             onBlur={() => persistAlertQuantity(pId, alertLevel)}
@@ -213,13 +213,13 @@ export const LowStockReport = () => {
                                             }}
                                         />
                                     </td>
-                                    <td className="p-4 text-center font-bold text-red-600 dark:text-red-400">-{deficit > 0 ? deficit : 0}</td>
+                                    <td className="p-4 text-center font-bold text-destructive">-{deficit > 0 ? deficit : 0}</td>
                                 </tr>
                             );
                         })}
                         {lowStockItems.length === 0 && (
                             <tr>
-                                <td colSpan={8} className="p-8 text-center text-gray-500 dark:text-gray-400">
+                                <td colSpan={8} className="p-8 text-center text-muted-foreground">
                                     <div className="flex flex-col items-center gap-2">
                                         <Package size={32} className="text-green-500" />
                                         <span className="font-medium">All stock levels are healthy!</span>

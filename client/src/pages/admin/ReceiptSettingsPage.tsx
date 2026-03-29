@@ -147,7 +147,7 @@ export const ReceiptSettingsPage = () => {
         return (
             <div className="p-6 flex justify-center items-center h-full min-h-[400px]">
                 <div className="flex flex-col items-center gap-4">
-                    <Loader className="animate-spin text-blue-600" size={40} />
+                    <Loader className="animate-spin text-primary" size={40} />
                     <p className="text-gray-500 font-medium animate-pulse">Initializing Receipt Settings...</p>
                 </div>
             </div>
@@ -189,10 +189,10 @@ export const ReceiptSettingsPage = () => {
     return (
         <div className="flex flex-col h-full overflow-hidden bg-gray-50 dark:bg-gray-950">
             {/* STICKY HEADER */}
-            <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex flex-shrink-0 justify-between items-center z-20">
+            <div className="sticky top-0 bg-background text-foreground border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex flex-shrink-0 justify-between items-center z-20">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                        <Printer className="text-blue-600" size={28} />
+                    <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
+                        <Printer className="text-primary" size={28} />
                         Receipt Configuration
                     </h1>
                 </div>
@@ -200,7 +200,7 @@ export const ReceiptSettingsPage = () => {
                     <button
                         onClick={handleSave}
                         disabled={isSaving}
-                        className="flex items-center justify-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold disabled:opacity-50 transition-all shadow-lg shadow-blue-600/20 active:scale-95 text-sm"
+                        className="flex items-center justify-center gap-2 px-6 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg font-bold disabled:opacity-50 transition-all shadow-lg shadow-blue-600/20 active:scale-95 text-sm"
                     >
                         {isSaving ? <Loader size={18} className="animate-spin" /> : <Save size={18} />}
                         {isSaving ? 'Saving...' : 'Save Configuration'}
@@ -210,7 +210,7 @@ export const ReceiptSettingsPage = () => {
 
             <div className="flex flex-1 overflow-hidden">
                 {/* SIDEBAR NAVIGATION */}
-                <div className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex-shrink-0 flex flex-col p-4 space-y-2 overflow-y-auto">
+                <div className="w-64 bg-background text-foreground border-r border-gray-200 dark:border-gray-800 flex-shrink-0 flex flex-col p-4 space-y-2 overflow-y-auto">
                     <div className="px-3 mb-4">
                         <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Configuration</p>
                     </div>
@@ -220,7 +220,7 @@ export const ReceiptSettingsPage = () => {
                             onClick={() => setActiveTab(tab.id as any)}
                             className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === tab.id
                                 ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                                 }`}
                         >
                             <span className={activeTab === tab.id ? 'text-white' : 'text-gray-400'}>{tab.icon}</span>
@@ -238,11 +238,11 @@ export const ReceiptSettingsPage = () => {
                             {activeTab === 'layout' && (
                                 <section className="space-y-6 animate-fadeIn">
                                     <div className="space-y-1">
-                                        <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white">Layout & Size</h2>
-                                        <p className="text-gray-500 dark:text-gray-400">Choose your printer type and paper dimensions</p>
+                                        <h2 className="text-2xl font-extrabold text-foreground">Layout & Size</h2>
+                                        <p className="text-muted-foreground">Choose your printer type and paper dimensions</p>
                                     </div>
 
-                                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-6">
+                                    <div className="bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-6 space-y-6">
                                         <div>
                                             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-4">Printer Type</label>
                                             <div className="grid grid-cols-2 gap-4">
@@ -250,13 +250,13 @@ export const ReceiptSettingsPage = () => {
                                                     type="button"
                                                     onClick={() => setReceiptType('thermal')}
                                                     className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center gap-3 ${receiptType === 'thermal'
-                                                        ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 text-blue-600'
-                                                        : 'border-gray-100 dark:border-gray-700 hover:border-blue-400 text-gray-400'
+                                                        ? 'border-blue-600 bg-primary/20 text-primary'
+                                                        : 'border-border hover:border-blue-400 text-gray-400'
                                                         }`}
                                                 >
                                                     <Printer size={32} />
                                                     <div className="text-center">
-                                                        <div className="font-bold text-gray-900 dark:text-white">Thermal</div>
+                                                        <div className="font-bold text-foreground">Thermal</div>
                                                         <div className="text-xs">POS Printer</div>
                                                     </div>
                                                 </button>
@@ -264,13 +264,13 @@ export const ReceiptSettingsPage = () => {
                                                     type="button"
                                                     onClick={() => setReceiptType('a4')}
                                                     className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center gap-3 ${receiptType === 'a4'
-                                                        ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 text-blue-600'
-                                                        : 'border-gray-100 dark:border-gray-700 hover:border-blue-400 text-gray-400'
+                                                        ? 'border-blue-600 bg-primary/20 text-primary'
+                                                        : 'border-border hover:border-blue-400 text-gray-400'
                                                         }`}
                                                 >
                                                     <FileText size={32} />
                                                     <div className="text-center">
-                                                        <div className="font-bold text-gray-900 dark:text-white">A4 Paper</div>
+                                                        <div className="font-bold text-foreground">A4 Paper</div>
                                                         <div className="text-xs">Standard Printer</div>
                                                     </div>
                                                 </button>
@@ -281,7 +281,7 @@ export const ReceiptSettingsPage = () => {
                                             <div className="space-y-2 animate-fadeIn">
                                                 <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Paper Width</label>
                                                 <select
-                                                    className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
+                                                    className="w-full bg-muted text-foreground p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
                                                     value={thermalWidth}
                                                     onChange={(e) => setThermalWidth(e.target.value as '58mm' | '76mm' | '80mm')}
                                                 >
@@ -296,7 +296,7 @@ export const ReceiptSettingsPage = () => {
                                             <div className="space-y-2 animate-fadeIn">
                                                 <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Orientation</label>
                                                 <select
-                                                    className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
+                                                    className="w-full bg-muted text-foreground p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
                                                     value={a4Orientation}
                                                     onChange={(e) => setA4Orientation(e.target.value as 'portrait' | 'landscape')}
                                                 >
@@ -309,7 +309,7 @@ export const ReceiptSettingsPage = () => {
                                         <div className="space-y-2 animate-fadeIn">
                                             <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Template Style</label>
                                             <select
-                                                className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
+                                                className="w-full bg-muted text-foreground p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
                                                 value={receiptTemplate}
                                                 onChange={(e) => setReceiptTemplate(e.target.value)}
                                             >
@@ -325,16 +325,16 @@ export const ReceiptSettingsPage = () => {
                             {activeTab === 'business' && (
                                 <section className="space-y-6 animate-fadeIn">
                                     <div className="space-y-1">
-                                        <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white">Business Information</h2>
-                                        <p className="text-gray-500 dark:text-gray-400">Details that will appear at the top of every receipt</p>
+                                        <h2 className="text-2xl font-extrabold text-foreground">Business Information</h2>
+                                        <p className="text-muted-foreground">Details that will appear at the top of every receipt</p>
                                     </div>
 
-                                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-5">
+                                    <div className="bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-6 space-y-5">
                                         <div className="space-y-2">
                                             <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Business Name / Header</label>
                                             <input
                                                 type="text"
-                                                className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
+                                                className="w-full bg-muted text-foreground p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
                                                 value={header}
                                                 onChange={(e) => setHeader(e.target.value)}
                                                 placeholder="TapLanka POS"
@@ -344,7 +344,7 @@ export const ReceiptSettingsPage = () => {
                                             <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Business Description</label>
                                             <input
                                                 type="text"
-                                                className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
+                                                className="w-full bg-muted text-foreground p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
                                                 value={description}
                                                 onChange={(e) => setDescription(e.target.value)}
                                                 placeholder="Retail & Wholesale"
@@ -355,7 +355,7 @@ export const ReceiptSettingsPage = () => {
                                                 <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Address Line 1</label>
                                                 <input
                                                     type="text"
-                                                    className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
+                                                    className="w-full bg-muted text-foreground p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
                                                     value={address}
                                                     onChange={(e) => setAddress(e.target.value)}
                                                     placeholder="123 Main Street"
@@ -365,7 +365,7 @@ export const ReceiptSettingsPage = () => {
                                                 <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Address Line 2 (City / State)</label>
                                                 <input
                                                     type="text"
-                                                    className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
+                                                    className="w-full bg-muted text-foreground p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
                                                     value={addressLine2}
                                                     onChange={(e) => setAddressLine2(e.target.value)}
                                                     placeholder="Colombo 05"
@@ -373,7 +373,7 @@ export const ReceiptSettingsPage = () => {
                                             </div>
                                         </div>
 
-                                        <div className="p-4 bg-gray-50 dark:bg-gray-900/40 rounded-xl border border-gray-100 dark:border-gray-800">
+                                        <div className="p-4 bg-muted/40 rounded-xl border border-border">
                                             <div className="flex items-center justify-between mb-4">
                                                 <div>
                                                     <p className="font-bold text-sm text-gray-700 dark:text-gray-300">Show Tax/VAT ID</p>
@@ -389,7 +389,7 @@ export const ReceiptSettingsPage = () => {
                                                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Tax ID / VAT Number</label>
                                                     <input
                                                         type="text"
-                                                        className="w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-white p-3 rounded-lg border-2 border-gray-100 dark:border-gray-800 focus:border-blue-500 outline-none transition-all"
+                                                        className="w-full bg-background text-foreground text-foreground p-3 rounded-lg border-2 border-border focus:border-blue-500 outline-none transition-all"
                                                         value={taxID}
                                                         onChange={(e) => setTaxID(e.target.value)}
                                                         placeholder="VAT123..."
@@ -402,7 +402,7 @@ export const ReceiptSettingsPage = () => {
                                                 <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Phone</label>
                                                 <input
                                                     type="text"
-                                                    className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
+                                                    className="w-full bg-muted text-foreground p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
                                                     value={phone}
                                                     onChange={(e) => setPhone(e.target.value)}
                                                     placeholder="+94..."
@@ -412,7 +412,7 @@ export const ReceiptSettingsPage = () => {
                                                 <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Email</label>
                                                 <input
                                                     type="email"
-                                                    className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
+                                                    className="w-full bg-muted text-foreground p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
                                                     value={email}
                                                     onChange={(e) => setEmail(e.target.value)}
                                                     placeholder="info@business.com"
@@ -426,20 +426,20 @@ export const ReceiptSettingsPage = () => {
                             {activeTab === 'appearance' && (
                                 <section className="space-y-6 animate-fadeIn">
                                     <div className="space-y-1">
-                                        <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white">Receipt Options</h2>
-                                        <p className="text-gray-500 dark:text-gray-400">Customize visual elements and additional info</p>
+                                        <h2 className="text-2xl font-extrabold text-foreground">Receipt Options</h2>
+                                        <p className="text-muted-foreground">Customize visual elements and additional info</p>
                                     </div>
 
-                                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-6">
+                                    <div className="bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-6 space-y-6">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/40 rounded-xl border border-gray-100 dark:border-gray-800">
+                                            <div className="flex items-center justify-between p-4 bg-muted/40 rounded-xl border border-border">
                                                 <span className="font-bold text-sm text-gray-700 dark:text-gray-300">Show Logo</span>
                                                 <label className="relative inline-flex items-center cursor-pointer">
                                                     <input type="checkbox" checked={showLogo} onChange={(e) => setShowLogo(e.target.checked)} className="sr-only peer" />
                                                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                                                 </label>
                                             </div>
-                                            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/40 rounded-xl border border-gray-100 dark:border-gray-800">
+                                            <div className="flex items-center justify-between p-4 bg-muted/40 rounded-xl border border-border">
                                                 <span className="font-bold text-sm text-gray-700 dark:text-gray-300">Show Barcode</span>
                                                 <label className="relative inline-flex items-center cursor-pointer">
                                                     <input type="checkbox" checked={showBarcode} onChange={(e) => setShowBarcode(e.target.checked)} className="sr-only peer" />
@@ -453,7 +453,7 @@ export const ReceiptSettingsPage = () => {
                                                 <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Logo Image (URL or Base64)</label>
                                                 <input
                                                     type="text"
-                                                    className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
+                                                    className="w-full bg-muted text-foreground p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
                                                     value={logoUrl}
                                                     onChange={(e) => setLogoUrl(e.target.value)}
                                                     placeholder="https://..."
@@ -464,7 +464,7 @@ export const ReceiptSettingsPage = () => {
                                             <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Footer Message</label>
                                             <textarea
                                                 rows={3}
-                                                className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all resize-none"
+                                                className="w-full bg-muted text-foreground p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all resize-none"
                                                 value={footer}
                                                 onChange={(e) => setFooter(e.target.value)}
                                                 placeholder="Thank you for your business!"
@@ -477,15 +477,15 @@ export const ReceiptSettingsPage = () => {
                             {activeTab === 'digital' && (
                                 <section className="space-y-6 animate-fadeIn">
                                     <div className="space-y-1">
-                                        <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white">Digital & WhatsApp</h2>
-                                        <p className="text-gray-500 dark:text-gray-400">Setup how receipts are shared electronically</p>
+                                        <h2 className="text-2xl font-extrabold text-foreground">Digital & WhatsApp</h2>
+                                        <p className="text-muted-foreground">Setup how receipts are shared electronically</p>
                                     </div>
 
-                                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-6">
+                                    <div className="bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-6 space-y-6">
                                         <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-2xl border border-green-100 dark:border-green-900/30">
                                             <div className="flex items-center justify-between">
                                                 <div>
-                                                    <p className="font-bold text-gray-900 dark:text-white">Enable WhatsApp Share Button</p>
+                                                    <p className="font-bold text-foreground">Enable WhatsApp Share Button</p>
                                                     <p className="text-xs text-gray-500">Show "Send via WhatsApp" in receipt modal</p>
                                                 </div>
                                                 <label className="relative inline-flex items-center cursor-pointer">
@@ -515,7 +515,7 @@ export const ReceiptSettingsPage = () => {
                                                         <label className="text-sm font-bold text-gray-400">API Endpoint</label>
                                                         <input
                                                             type="text"
-                                                            className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 rounded-xl border-2 border-transparent focus:border-green-500 outline-none transition-all"
+                                                            className="w-full bg-muted text-foreground p-4 rounded-xl border-2 border-transparent focus:border-green-500 outline-none transition-all"
                                                             value={whatsappApiUrl}
                                                             onChange={(e) => setWhatsappApiUrl(e.target.value)}
                                                             placeholder="https://api..."
@@ -525,7 +525,7 @@ export const ReceiptSettingsPage = () => {
                                                         <label className="text-sm font-bold text-gray-400">API Key</label>
                                                         <input
                                                             type="password"
-                                                            className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 rounded-xl border-2 border-transparent focus:border-green-500 outline-none transition-all"
+                                                            className="w-full bg-muted text-foreground p-4 rounded-xl border-2 border-transparent focus:border-green-500 outline-none transition-all"
                                                             value={whatsappApiKey}
                                                             onChange={(e) => setWhatsappApiKey(e.target.value)}
                                                             placeholder="••••••••••••"
@@ -541,14 +541,14 @@ export const ReceiptSettingsPage = () => {
                             {activeTab === 'developer' && (
                                 <section className="space-y-6 animate-fadeIn">
                                     <div className="space-y-1">
-                                        <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white">Developer Settings</h2>
-                                        <p className="text-gray-500 dark:text-gray-400">Configure developer branding and features</p>
+                                        <h2 className="text-2xl font-extrabold text-foreground">Developer Settings</h2>
+                                        <p className="text-muted-foreground">Configure developer branding and features</p>
                                     </div>
 
-                                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-6">
-                                        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/40 rounded-xl border border-gray-100 dark:border-gray-800">
+                                    <div className="bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-6 space-y-6">
+                                        <div className="flex items-center justify-between p-4 bg-muted/40 rounded-xl border border-border">
                                             <div>
-                                                <p className="font-bold text-gray-900 dark:text-white">Enable Developer Footer</p>
+                                                <p className="font-bold text-foreground">Enable Developer Footer</p>
                                                 <p className="text-sm text-gray-500">Show developer credits at the bottom of receipts</p>
                                             </div>
                                             <label className="relative inline-flex items-center cursor-pointer">
@@ -567,7 +567,7 @@ export const ReceiptSettingsPage = () => {
                                                 <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Developer Footer Text</label>
                                                 <input
                                                     type="text"
-                                                    className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
+                                                    className="w-full bg-muted text-foreground p-4 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all"
                                                     placeholder="Developed by..."
                                                     value={developerFooter}
                                                     onChange={(e) => setDeveloperFooter(e.target.value)}

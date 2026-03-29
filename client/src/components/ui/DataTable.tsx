@@ -113,17 +113,17 @@ export function DataTable<T>({
     };
 
     return (
-        <div className="w-full bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 font-sans">
+        <div className="w-full bg-card text-card-foreground rounded-lg shadow-sm border border-border font-sans">
             {/* Toolbar */}
             {(searchable || actions || pagination) && (
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row justify-between gap-4 items-center">
+                <div className="p-4 border-b border-border flex flex-col sm:flex-row justify-between gap-4 items-center">
                     {searchable && (
                         <div className="relative w-full sm:w-64">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                             <input
                                 type="text"
                                 placeholder="Search..."
-                                className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-700 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                                 value={searchTerm}
                                 onChange={handleSearchChange}
                             />
@@ -131,12 +131,12 @@ export function DataTable<T>({
                     )}
                     <div className="flex items-center gap-3 ml-auto flex-wrap">
                         {pagination && (
-                            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <span>Show</span>
                                 <select
                                     value={pageSize}
                                     onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
-                                    className="border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="border border-border bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                                 >
                                     {[10, 50, 100].map(n => (
                                         <option key={n} value={n}>{n}</option>
@@ -153,8 +153,8 @@ export function DataTable<T>({
 
             {/* Table */}
             <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm text-gray-600 dark:text-gray-300">
-                    <thead className="bg-gray-50 dark:bg-gray-900/50 text-xs uppercase font-semibold text-gray-500 dark:text-gray-400">
+                <table className="w-full text-left text-sm text-muted-foreground">
+                    <thead className="bg-muted/50 text-xs uppercase font-semibold text-muted-foreground">
                         <tr>
                             {enableSelection && (
                                 <th className="px-6 py-3 w-10">
@@ -166,7 +166,7 @@ export function DataTable<T>({
                             {columns.map((col, idx) => (
                                 <th
                                     key={idx}
-                                    className={`px-6 py-3 ${col.sortable ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800' : ''}`}
+                                    className={`px-6 py-3 ${col.sortable ? 'cursor-pointer hover:bg-accent hover:text-accent-foreground' : ''}`}
                                     onClick={() => col.sortable && col.accessorKey && handleSort(col.accessorKey)}
                                 >
                                     <div className="flex items-center gap-1">
@@ -198,7 +198,7 @@ export function DataTable<T>({
                                         <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                                             <button
                                                 onClick={() => toggleSelection(item[keyField], item)}
-                                                className={`text-gray-400 hover:text-blue-500 ${selectedIds.has(item[keyField]) ? 'text-blue-600' : ''}`}
+                                                className={`text-gray-400 hover:text-primary ${selectedIds.has(item[keyField]) ? 'text-primary' : ''}`}
                                             >
                                                 {selectedIds.has(item[keyField]) ? <CheckSquare size={18} /> : <Square size={18} />}
                                             </button>
@@ -224,7 +224,7 @@ export function DataTable<T>({
 
             {/* Pagination */}
             {pagination && pageSize !== 0 && (
-                <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex flex-wrap justify-between items-center gap-3">
+                <div className="p-4 border-t border-border flex flex-wrap justify-between items-center gap-3">
                     <span className="text-sm text-gray-500">
                         Showing {Math.min((currentPage - 1) * effectivePageSize + 1, sortedData.length)} to {Math.min(currentPage * effectivePageSize, sortedData.length)} of {sortedData.length}
                     </span>
@@ -232,7 +232,7 @@ export function DataTable<T>({
                         <button
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                             disabled={currentPage === 1}
-                            className="p-2 border border-gray-200 dark:border-gray-700 rounded-lg disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700"
+                            className="p-2 border border-border rounded-lg disabled:opacity-50 hover:bg-accent hover:text-accent-foreground"
                         >
                             <ChevronLeft size={18} />
                         </button>
@@ -242,7 +242,7 @@ export function DataTable<T>({
                         <button
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                             disabled={currentPage === totalPages || totalPages === 0}
-                            className="p-2 border border-gray-200 dark:border-gray-700 rounded-lg disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700"
+                            className="p-2 border border-border rounded-lg disabled:opacity-50 hover:bg-accent hover:text-accent-foreground"
                         >
                             <ChevronRight size={18} />
                         </button>

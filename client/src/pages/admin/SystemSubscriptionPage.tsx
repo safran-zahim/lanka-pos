@@ -202,17 +202,17 @@ export const SystemSubscriptionPage = () => {
             {/* ── Page Header ────────────────────────── */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white flex items-center gap-3">
-                        <Shield className="text-blue-600" size={28} />
+                    <h1 className="text-2xl font-extrabold text-foreground flex items-center gap-3">
+                        <Shield className="text-primary" size={28} />
                         System Subscription
                     </h1>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-sm text-muted-foreground mt-1">
                         Developer control panel — manage client system access and subscription lifecycle.
                     </p>
                 </div>
                 <button
                     onClick={fetchStatus}
-                    className="flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600 transition-colors"
+                    className="flex items-center gap-2 text-sm text-gray-500 hover:text-primary transition-colors"
                 >
                     <RefreshCw size={16} /> Refresh
                 </button>
@@ -232,7 +232,7 @@ export const SystemSubscriptionPage = () => {
                         {formIsDisabled ? <ShieldOff size={14} /> : <CheckCircle size={14} />}
                         {formIsDisabled ? 'System Disabled' : statusInfo.label}
                     </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-300 font-medium capitalize">
+                    <div className="text-sm text-muted-foreground font-medium capitalize">
                         {formPaymentCycle} billing
                         {' · '}
                         <span className={isExpired ? 'text-red-600 font-bold' : ''}>
@@ -251,8 +251,8 @@ export const SystemSubscriptionPage = () => {
                     onClick={toggleDisabled}
                     className={`flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm transition-all shadow-md active:scale-95 ${
                         formIsDisabled
-                            ? 'bg-green-600 hover:bg-green-700 text-white'
-                            : 'bg-red-600 hover:bg-red-700 text-white'
+                            ? 'bg-success hover:bg-success/90 text-white'
+                            : 'bg-destructive hover:bg-destructive/90 text-white'
                     }`}
                 >
                     <Power size={18} />
@@ -261,9 +261,9 @@ export const SystemSubscriptionPage = () => {
             </div>
 
             {/* ── Config Form ─────────────────────────── */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
-                <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-                    <h2 className="font-bold text-gray-900 dark:text-white text-lg">Subscription Configuration</h2>
+            <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm">
+                <div className="px-6 py-4 border-b border-border">
+                    <h2 className="font-bold text-foreground text-lg">Subscription Configuration</h2>
                 </div>
                 <div className="p-6 space-y-6">
 
@@ -276,7 +276,7 @@ export const SystemSubscriptionPage = () => {
                             <select
                                 value={formStatus}
                                 onChange={(e) => setFormStatus(e.target.value)}
-                                className="w-full p-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:border-blue-500 outline-none transition-all font-medium"
+                                className="w-full p-3 rounded-xl border-2 border-border bg-muted text-foreground focus:border-blue-500 outline-none transition-all font-medium"
                             >
                                 <option value="active">✅ Active</option>
                                 <option value="past_due">⚠️ Past Due</option>
@@ -296,8 +296,8 @@ export const SystemSubscriptionPage = () => {
                                         onClick={() => setFormPaymentCycle(cycle)}
                                         className={`flex-1 py-3 rounded-xl border-2 font-bold text-sm capitalize transition-all ${
                                             formPaymentCycle === cycle
-                                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
-                                                : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-blue-300'
+                                                ? 'border-blue-500 bg-primary/20 text-blue-700 dark:text-blue-300'
+                                                : 'border-border text-muted-foreground hover:border-blue-300'
                                         }`}
                                     >
                                         {cycle === 'monthly' ? '📅 Monthly' : '📆 Yearly'}
@@ -318,7 +318,7 @@ export const SystemSubscriptionPage = () => {
                                 value={formExpiresAt}
                                 disabled={formIsNeverEnd}
                                 onChange={(e) => setFormExpiresAt(e.target.value)}
-                                className="w-full p-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:border-blue-500 outline-none transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                className="w-full p-3 rounded-xl border-2 border-border bg-muted text-foreground focus:border-blue-500 outline-none transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                             />
                         </div>
 
@@ -328,11 +328,11 @@ export const SystemSubscriptionPage = () => {
                             className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all ${
                                 formIsNeverEnd
                                     ? 'border-purple-400 bg-purple-50 dark:bg-purple-900/20'
-                                    : 'border-gray-200 dark:border-gray-600 hover:border-purple-300'
+                                    : 'border-border hover:border-purple-300'
                             }`}
                         >
                             <div>
-                                <p className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                <p className="font-bold text-foreground flex items-center gap-2">
                                     <Infinity size={16} className={formIsNeverEnd ? 'text-purple-600' : 'text-gray-400'} />
                                     Never End (Lifetime)
                                 </p>
@@ -356,7 +356,7 @@ export const SystemSubscriptionPage = () => {
                             value={formClientNote}
                             onChange={(e) => setFormClientNote(e.target.value)}
                             placeholder="e.g. Client: ABC Supermarket, Contact: 0777 000 000, Renewed: March 2026"
-                            className="w-full p-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:border-blue-500 outline-none transition-all resize-none text-sm"
+                            className="w-full p-3 rounded-xl border-2 border-border bg-muted text-foreground focus:border-blue-500 outline-none transition-all resize-none text-sm"
                         />
                     </div>
 
@@ -370,14 +370,14 @@ export const SystemSubscriptionPage = () => {
                             value={formHistoryNote}
                             onChange={(e) => setFormHistoryNote(e.target.value)}
                             placeholder="e.g. Renewed for 30 days after payment received"
-                            className="w-full p-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:border-blue-500 outline-none transition-all text-sm"
+                            className="w-full p-3 rounded-xl border-2 border-border bg-muted text-foreground focus:border-blue-500 outline-none transition-all text-sm"
                         />
                     </div>
 
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="w-full flex items-center justify-center gap-3 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-600/25 active:scale-[0.98] disabled:opacity-50"
+                        className="w-full flex items-center justify-center gap-3 py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-600/25 active:scale-[0.98] disabled:opacity-50"
                     >
                         {saving ? <Loader className="animate-spin" size={18} /> : <Save size={18} />}
                         {saving ? 'Saving…' : 'Save Subscription Settings'}
@@ -386,20 +386,20 @@ export const SystemSubscriptionPage = () => {
             </div>
 
             {/* ── Subscription History ─────────────────── */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+            <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm overflow-hidden">
                 <button
                     onClick={() => setShowHistory((v) => !v)}
-                    className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                    className="w-full px-6 py-4 flex items-center justify-between hover:bg-accent hover:text-accent-foreground/50 transition-colors"
                 >
-                    <h2 className="font-bold text-gray-900 dark:text-white text-lg flex items-center gap-2">
-                        <History size={20} className="text-blue-500" />
+                    <h2 className="font-bold text-foreground text-lg flex items-center gap-2">
+                        <History size={20} className="text-primary" />
                         Subscription History
                     </h2>
                     {showHistory ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                 </button>
 
                 {showHistory && (
-                    <div className="border-t border-gray-100 dark:border-gray-700">
+                    <div className="border-t border-border">
                         {history.length === 0 ? (
                             <div className="p-8 text-center text-gray-400">
                                 <History size={32} className="mx-auto mb-2 opacity-40" />
@@ -411,7 +411,7 @@ export const SystemSubscriptionPage = () => {
                                     <div key={h.id} className="px-6 py-3 flex flex-col sm:flex-row sm:items-start gap-2">
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="font-bold text-sm text-gray-900 dark:text-white">
+                                                <span className="font-bold text-sm text-foreground">
                                                     {h.action.split(',').map(a => ACTION_LABELS[a] ?? a).join(' + ')}
                                                 </span>
                                                 {h.paymentCycle && (
@@ -437,7 +437,7 @@ export const SystemSubscriptionPage = () => {
                                                 )}
                                             </div>
                                             {h.note && (
-                                                <div className="text-xs text-blue-600 dark:text-blue-400 italic mt-0.5">
+                                                <div className="text-xs text-primary italic mt-0.5">
                                                     "{h.note}"
                                                 </div>
                                             )}

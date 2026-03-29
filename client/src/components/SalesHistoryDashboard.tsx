@@ -9,6 +9,8 @@ import { useLocale } from '../hooks/useLocale';
 import * as XLSX from 'xlsx';
 import { useAuthStore } from '../store/useAuthStore';
 import { getApiUrl } from '../config/api';
+import { Input } from './ui/Input';
+import { Button } from './ui/Button';
 
 type PaymentFilter = 'all' | Transaction['payment_method'];
 
@@ -332,51 +334,52 @@ export const SalesHistoryDashboard = () => {
         <div className="flex flex-col gap-6 h-full">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Sales Dashboard</h2>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <h2 className="text-2xl font-bold text-foreground">Sales Dashboard</h2>
+                    <p className="text-sm text-muted-foreground">
                         Daily sales overview with filters and export options.
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    <button
+                    <Button
+                        variant="secondary"
                         onClick={handleReset}
-                        className="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
                         Reset Filters
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                        variant="primary"
                         onClick={handleExport}
-                        className="px-3 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2"
+                        className="flex items-center gap-2"
                     >
                         <Download size={16} /> Export Excel
-                    </button>
+                    </Button>
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+            <div className="bg-card text-card-foreground rounded-lg shadow p-4">
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
                     <div>
-                        <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Start date</label>
-                        <input
+                        <label className="text-xs font-medium text-muted-foreground">Start date</label>
+                        <Input
                             type="date"
-                            className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 text-sm"
+                            className="mt-1"
                             value={startDate}
                             onChange={(event) => setStartDate(event.target.value)}
                         />
                     </div>
                     <div>
-                        <label className="text-xs font-medium text-gray-500 dark:text-gray-400">End date</label>
-                        <input
+                        <label className="text-xs font-medium text-muted-foreground">End date</label>
+                        <Input
                             type="date"
-                            className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 text-sm"
+                            className="mt-1"
                             value={endDate}
                             onChange={(event) => setEndDate(event.target.value)}
                         />
                     </div>
                     <div>
-                        <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Payment method</label>
+                        <label className="text-xs font-medium text-muted-foreground">Payment method</label>
                         <select
-                            className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 text-sm"
+                            className="mt-1 w-full rounded-md h-10 border border-input bg-background text-foreground px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                             value={paymentMethod}
                             onChange={(event) => setPaymentMethod(event.target.value as PaymentFilter)}
                         >
@@ -388,13 +391,12 @@ export const SalesHistoryDashboard = () => {
                         </select>
                     </div>
                     <div>
-                        <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Search ID</label>
-                        <div className="relative mt-1">
-                            <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
-                            <input
+                        <label className="text-xs font-medium text-muted-foreground">Search ID</label>
+                        <div className="mt-1">
+                            <Input
                                 type="text"
                                 placeholder="Search transaction ID"
-                                className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                                icon={<Search size={16} />}
                                 value={searchQuery}
                                 onChange={(event) => setSearchQuery(event.target.value)}
                             />
@@ -404,35 +406,35 @@ export const SalesHistoryDashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Net sales</p>
-                    <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+                <div className="bg-card text-card-foreground rounded-lg shadow p-4">
+                    <p className="text-xs font-medium text-muted-foreground">Net sales</p>
+                    <p className="text-2xl font-semibold text-foreground">
                         {formatCurrency(totals.netSales)}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{totals.totalCount} transactions</p>
+                    <p className="text-xs text-muted-foreground">{totals.totalCount} transactions</p>
                 </div>
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Gross sales</p>
-                    <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+                <div className="bg-card text-card-foreground rounded-lg shadow p-4">
+                    <p className="text-xs font-medium text-muted-foreground">Gross sales</p>
+                    <p className="text-2xl font-semibold text-foreground">
                         {formatCurrency(totals.grossSales)}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Sales only</p>
+                    <p className="text-xs text-muted-foreground">Sales only</p>
                 </div>
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Returns</p>
+                <div className="bg-card text-card-foreground rounded-lg shadow p-4">
+                    <p className="text-xs font-medium text-muted-foreground">Returns</p>
                     <p className="text-2xl font-semibold text-orange-600 dark:text-orange-400">
                         {formatCurrency(totals.returns)}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Returns only</p>
+                    <p className="text-xs text-muted-foreground">Returns only</p>
                 </div>
             </div>
 
             <div className="flex flex-col gap-4">
-                <div className="flex border-b border-gray-200 dark:border-gray-700">
+                <div className="flex border-b border-border">
                     <button
                         onClick={() => setActiveTab('daily')}
                         className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${activeTab === 'daily'
-                            ? 'border-blue-600 text-blue-600'
+                            ? 'border-blue-600 text-primary'
                             : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                             }`}
                     >
@@ -441,7 +443,7 @@ export const SalesHistoryDashboard = () => {
                     <button
                         onClick={() => setActiveTab('transactions')}
                         className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${activeTab === 'transactions'
-                            ? 'border-blue-600 text-blue-600'
+                            ? 'border-blue-600 text-primary'
                             : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                             }`}
                     >
@@ -450,7 +452,7 @@ export const SalesHistoryDashboard = () => {
                     <button
                         onClick={() => setActiveTab('products')}
                         className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${activeTab === 'products'
-                            ? 'border-blue-600 text-blue-600'
+                            ? 'border-blue-600 text-primary'
                             : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                             }`}
                     >
@@ -459,35 +461,35 @@ export const SalesHistoryDashboard = () => {
                 </div>
 
                 {activeTab === 'daily' && (
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-                        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Daily Sales</h3>
+                    <div className="bg-card text-card-foreground rounded-lg shadow overflow-hidden">
+                        <div className="p-4 border-b border-border">
+                            <h3 className="text-lg font-semibold text-foreground">Daily Sales</h3>
                         </div>
                         <div className="overflow-x-auto overflow-y-auto w-full">
                             <table className="w-full text-left border-collapse min-w-[600px]">
                                 <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
                                     <tr>
-                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400">Date</th>
-                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-right">Sales</th>
-                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-right">Returns</th>
-                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-right">Net</th>
-                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-right">Count</th>
+                                        <th className="p-4 font-medium text-muted-foreground">Date</th>
+                                        <th className="p-4 font-medium text-muted-foreground text-right">Sales</th>
+                                        <th className="p-4 font-medium text-muted-foreground text-right">Returns</th>
+                                        <th className="p-4 font-medium text-muted-foreground text-right">Net</th>
+                                        <th className="p-4 font-medium text-muted-foreground text-right">Count</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                                     {dailySummaries.map((summary) => (
                                         <tr key={summary.dateKey}>
-                                            <td className="p-4 text-gray-900 dark:text-white">{summary.dateLabel}</td>
-                                            <td className="p-4 text-right text-gray-900 dark:text-white">
+                                            <td className="p-4 text-foreground">{summary.dateLabel}</td>
+                                            <td className="p-4 text-right text-foreground">
                                                 {formatCurrency(summary.grossSales)}
                                             </td>
                                             <td className="p-4 text-right text-orange-600 dark:text-orange-400">
                                                 {formatCurrency(summary.returnsAmount)}
                                             </td>
-                                            <td className="p-4 text-right font-medium text-gray-900 dark:text-white">
+                                            <td className="p-4 text-right font-medium text-foreground">
                                                 {formatCurrency(summary.netSales)}
                                             </td>
-                                            <td className="p-4 text-right text-gray-500 dark:text-gray-400">
+                                            <td className="p-4 text-right text-muted-foreground">
                                                 {summary.salesCount + summary.returnsCount}
                                             </td>
                                         </tr>
@@ -496,7 +498,7 @@ export const SalesHistoryDashboard = () => {
                                         <tr>
                                             <td
                                                 colSpan={5}
-                                                className="p-6 text-center text-sm text-gray-500 dark:text-gray-400"
+                                                className="p-6 text-center text-sm text-muted-foreground"
                                             >
                                                 No daily sales found for the selected filters.
                                             </td>
@@ -509,29 +511,29 @@ export const SalesHistoryDashboard = () => {
                 )}
 
                 {activeTab === 'products' && (
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-                        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Products Sold</h3>
+                    <div className="bg-card text-card-foreground rounded-lg shadow overflow-hidden">
+                        <div className="p-4 border-b border-border">
+                            <h3 className="text-lg font-semibold text-foreground">Products Sold</h3>
                         </div>
                         <div className="overflow-x-auto overflow-y-auto w-full">
                             <table className="w-full text-left border-collapse min-w-[600px]">
                                 <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
                                     <tr>
-                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400">Product</th>
-                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400">SKU</th>
-                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-right">Qty</th>
-                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-right">Total Amount</th>
+                                        <th className="p-4 font-medium text-muted-foreground">Product</th>
+                                        <th className="p-4 font-medium text-muted-foreground">SKU</th>
+                                        <th className="p-4 font-medium text-muted-foreground text-right">Qty</th>
+                                        <th className="p-4 font-medium text-muted-foreground text-right">Total Amount</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                                     {aggregatedProducts?.map((p) => (
                                         <tr key={p.productId}>
-                                            <td className="p-4 text-gray-900 dark:text-white font-medium">{p.name}</td>
-                                            <td className="p-4 text-gray-500 dark:text-gray-400 text-sm">{p.sku}</td>
-                                            <td className="p-4 text-right text-gray-900 dark:text-white">
+                                            <td className="p-4 text-foreground font-medium">{p.name}</td>
+                                            <td className="p-4 text-muted-foreground text-sm">{p.sku}</td>
+                                            <td className="p-4 text-right text-foreground">
                                                 {p.quantity % 1 === 0 ? p.quantity : p.quantity.toFixed(2)}
                                             </td>
-                                            <td className="p-4 text-right font-medium text-gray-900 dark:text-white">
+                                            <td className="p-4 text-right font-medium text-foreground">
                                                 {formatCurrency(p.totalSales)}
                                             </td>
                                         </tr>
@@ -540,7 +542,7 @@ export const SalesHistoryDashboard = () => {
                                         <tr>
                                             <td
                                                 colSpan={4}
-                                                className="p-6 text-center text-sm text-gray-500 dark:text-gray-400"
+                                                className="p-6 text-center text-sm text-muted-foreground"
                                             >
                                                 {!aggregatedProducts ? (
                                                     <div className="flex justify-center p-4">
@@ -557,35 +559,35 @@ export const SalesHistoryDashboard = () => {
                 )}
 
                 {activeTab === 'transactions' && (
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden flex-1 min-h-0">
-                        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Transactions</h3>
+                    <div className="bg-card text-card-foreground rounded-lg shadow overflow-hidden flex-1 min-h-0">
+                        <div className="p-4 border-b border-border flex items-center justify-between">
+                            <h3 className="text-lg font-semibold text-foreground">Transactions</h3>
                             <div className="flex items-center gap-2">
-                                <label className="text-sm text-gray-500 dark:text-gray-400">Show:</label>
+                                <label className="text-sm text-muted-foreground">Show:</label>
                                 <select
                                     value={pageSize}
                                     onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                                    className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white px-2 py-1 text-sm"
+                                    className="rounded-lg border border-border bg-gray-50 dark:bg-gray-700 text-foreground px-2 py-1 text-sm"
                                 >
                                     <option value={10}>10</option>
                                     <option value={25}>25</option>
                                     <option value={50}>50</option>
                                     <option value={100}>100</option>
                                 </select>
-                                <span className="text-sm text-gray-500 dark:text-gray-400">per page</span>
+                                <span className="text-sm text-muted-foreground">per page</span>
                             </div>
                         </div>
                         <div className="overflow-x-auto overflow-y-auto w-full">
                             <table className="w-full text-left border-collapse min-w-[980px]">
                                 <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
                                     <tr>
-                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400">ID</th>
-                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400">Date</th>
-                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400">Type</th>
-                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400">Payment</th>
-                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400">Batches</th>
-                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-right">Amount</th>
-                                        <th className="p-4 font-medium text-gray-500 dark:text-gray-400 text-center">Actions</th>
+                                        <th className="p-4 font-medium text-muted-foreground">ID</th>
+                                        <th className="p-4 font-medium text-muted-foreground">Date</th>
+                                        <th className="p-4 font-medium text-muted-foreground">Type</th>
+                                        <th className="p-4 font-medium text-muted-foreground">Payment</th>
+                                        <th className="p-4 font-medium text-muted-foreground">Batches</th>
+                                        <th className="p-4 font-medium text-muted-foreground text-right">Amount</th>
+                                        <th className="p-4 font-medium text-muted-foreground text-center">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -597,7 +599,7 @@ export const SalesHistoryDashboard = () => {
                                             <tr
                                                 key={txn.transaction_id}
                                                 onClick={() => navigate(`/admin/transactions/${txn.transaction_id}`)}
-                                                className={`cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 last:border-0 ${isReturn ? 'bg-red-50/20 dark:bg-red-900/10' : ''}`}
+                                                className={`cursor-pointer transition-colors hover:bg-accent hover:text-accent-foreground/50 border-b border-border last:border-0 ${isReturn ? 'bg-red-50/20 dark:bg-red-900/10' : ''}`}
                                             >
                                                 <td className="p-4">
                                                     <div className="flex flex-col gap-1 items-start">
@@ -605,10 +607,10 @@ export const SalesHistoryDashboard = () => {
                                                             #{txn.transaction_id}
                                                         </span>
                                                         {isReturn && (
-                                                            <span className="text-[10px] text-red-600 dark:text-red-400 font-bold uppercase tracking-wider flex flex-col gap-0.5 mt-0.5">
+                                                            <span className="text-[10px] text-destructive font-bold uppercase tracking-wider flex flex-col gap-0.5 mt-0.5">
                                                                 <span>Return</span>
                                                                 {txn.parent_sale_id && (
-                                                                    <span className="text-gray-500 dark:text-gray-400 font-medium normal-case">
+                                                                    <span className="text-muted-foreground font-medium normal-case">
                                                                         Ref: #{txn.parent_sale_id}
                                                                     </span>
                                                                 )}
@@ -616,7 +618,7 @@ export const SalesHistoryDashboard = () => {
                                                         )}
                                                     </div>
                                                 </td>
-                                                <td className="p-4 text-gray-500 dark:text-gray-400">
+                                                <td className="p-4 text-muted-foreground">
                                                     {formatDateTime(new Date(txn.timestamp))}
                                                 </td>
                                                 <td className="p-4">
@@ -634,7 +636,7 @@ export const SalesHistoryDashboard = () => {
                                                         {isReturn ? 'Return' : 'Sale'}
                                                     </span>
                                                 </td>
-                                                <td className="p-4 text-gray-500 dark:text-gray-400">
+                                                <td className="p-4 text-muted-foreground">
                                                     {txn.payment_method}
                                                 </td>
                                                 <td className="p-4">
@@ -650,7 +652,7 @@ export const SalesHistoryDashboard = () => {
                                                                 </span>
                                                             ))}
                                                             {batchSummary.length > 4 && (
-                                                                <span className="text-[11px] text-gray-500 dark:text-gray-400">+{batchSummary.length - 4} more</span>
+                                                                <span className="text-[11px] text-muted-foreground">+{batchSummary.length - 4} more</span>
                                                             )}
                                                         </div>
                                                     ) : (
@@ -659,8 +661,8 @@ export const SalesHistoryDashboard = () => {
                                                 </td>
                                                 <td
                                                     className={`p-4 text-right font-medium ${isReturn
-                                                        ? 'text-red-600 dark:text-red-400 font-bold'
-                                                        : 'text-gray-900 dark:text-white'
+                                                        ? 'text-destructive font-bold'
+                                                        : 'text-foreground'
                                                         }`}
                                                 >
                                                     {formatCurrency(signedAmount)}
@@ -672,7 +674,7 @@ export const SalesHistoryDashboard = () => {
                                                                 event.stopPropagation();
                                                                 setSelectedTransaction(txn);
                                                             }}
-                                                            className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+                                                            className="text-gray-400 hover:text-primary dark:hover:text-blue-400 transition-colors"
                                                             title="Return Items"
                                                         >
                                                             <RotateCcw size={18} />
@@ -683,7 +685,7 @@ export const SalesHistoryDashboard = () => {
                                                             event.stopPropagation();
                                                             setSelectedPrintTxn(txn);
                                                         }}
-                                                        className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors ml-2"
+                                                        className="text-gray-400 hover:text-primary dark:hover:text-blue-400 transition-colors ml-2"
                                                         title="Print Receipt"
                                                     >
                                                         <Printer size={18} />
@@ -696,7 +698,7 @@ export const SalesHistoryDashboard = () => {
                                         <tr>
                                             <td
                                                 colSpan={7}
-                                                className="p-6 text-center text-sm text-gray-500 dark:text-gray-400"
+                                                className="p-6 text-center text-sm text-muted-foreground"
                                             >
                                                 {(!paginatedTransactions && transactions) ? (
                                                     <div className="flex justify-center p-4">
@@ -710,15 +712,15 @@ export const SalesHistoryDashboard = () => {
                             </table>
                         </div>
                         {filteredTransactions.length > 0 && (
-                            <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                                <div className="text-sm text-gray-500 dark:text-gray-400">
+                            <div className="p-4 border-t border-border flex items-center justify-between">
+                                <div className="text-sm text-muted-foreground">
                                     Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredTransactions.length)} of {filteredTransactions.length} transactions
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                                         disabled={currentPage === 1}
-                                        className="px-3 py-1 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                                        className="px-3 py-1 rounded-lg border border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                                     >
                                         Previous
                                     </button>
@@ -740,7 +742,7 @@ export const SalesHistoryDashboard = () => {
                                                     onClick={() => setCurrentPage(pageNum)}
                                                     className={`px-3 py-1 rounded-lg text-sm ${currentPage === pageNum
                                                         ? 'bg-blue-600 text-white'
-                                                        : 'border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                                        : 'border border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                                                         }`}
                                                 >
                                                     {pageNum}
@@ -751,7 +753,7 @@ export const SalesHistoryDashboard = () => {
                                     <button
                                         onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                                         disabled={currentPage === totalPages}
-                                        className="px-3 py-1 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                                        className="px-3 py-1 rounded-lg border border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                                     >
                                         Next
                                     </button>

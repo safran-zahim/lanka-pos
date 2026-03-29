@@ -29,7 +29,7 @@ export const EditPriceModal = ({ item, onConfirm, onClose }: EditPriceModalProps
         <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
             <DialogContent className="w-100 max-w-[92vw] p-6" showCloseButton>
                 <DialogHeader className="mb-6">
-                    <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <DialogTitle className="text-xl font-bold text-foreground flex items-center gap-2">
                         <DollarSign className="text-green-500" />
                         Edit Price: {item.name}
                     </DialogTitle>
@@ -37,11 +37,11 @@ export const EditPriceModal = ({ item, onConfirm, onClose }: EditPriceModalProps
 
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">
-                        <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">New Price ({currencySymbol})</label>
+                        <label className="block text-sm text-muted-foreground mb-1">New Price ({currencySymbol})</label>
                         <input
                             type="number"
                             step="0.01"
-                            className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white p-2 rounded focus:ring-2 focus:ring-green-500 outline-none border border-gray-300 dark:border-transparent"
+                            className="w-full bg-gray-100 dark:bg-gray-700 text-foreground p-2 rounded focus:ring-2 focus:ring-green-500 outline-none border border-gray-300 dark:border-transparent"
                             value={price}
                             onChange={(e) => setPrice(e.target.value)}
                             autoFocus

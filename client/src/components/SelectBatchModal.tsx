@@ -5,6 +5,8 @@ import { useState } from 'react';
 import { Button } from './ui/Button';
 import { Badge } from './ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Input } from './ui/Input';
+import { Label } from './ui/label';
 
 interface SelectBatchModalProps {
     product: Product;
@@ -60,17 +62,17 @@ export const SelectBatchModal = ({ product, batches, onSelect, onClose }: Select
         <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
             <DialogContent className="w-full max-w-130 max-h-[85vh] rounded-2xl p-0 overflow-hidden" showCloseButton>
                 {/* Header */}
-                <DialogHeader className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-linear-to-r from-gray-50 dark:from-gray-900 to-gray-50 dark:to-gray-800">
+                <DialogHeader className="px-6 py-4 border-b border-border bg-linear-to-r from-gray-50 dark:from-gray-900 to-gray-50 dark:to-gray-800">
                     <div className="flex-1">
-                        <DialogTitle className="text-lg font-extrabold text-gray-900 dark:text-white">Select Batch</DialogTitle>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 font-medium">{product.name}</p>
+                        <DialogTitle className="text-lg font-extrabold text-foreground">Select Batch</DialogTitle>
+                        <p className="text-sm text-muted-foreground mt-0.5 font-medium">{product.name}</p>
                     </div>
                 </DialogHeader>
 
                 {/* Batches List */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-gray-50 dark:bg-gray-900/50">
+                <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-muted/50">
                     {availableBatches.length === 0 && (
-                        <div className="text-center text-sm text-gray-500 dark:text-gray-400 py-12 flex flex-col items-center">
+                        <div className="text-center text-sm text-muted-foreground py-12 flex flex-col items-center">
                             <span>No batches with stock available.</span>
                         </div>
                     )}
@@ -90,7 +92,7 @@ export const SelectBatchModal = ({ product, batches, onSelect, onClose }: Select
                                 variant={isSelected ? 'primary' : 'ghost'}
                                 className={`w-full text-left p-4 rounded-lg border-2 flex items-center justify-between transition-all active:scale-95 ${
                                     isSelected
-                                        ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/30 shadow-md'
+                                        ? 'border-blue-500 dark:border-blue-400 bg-primary/20 shadow-md'
                                         : !canSelect
                                         ? 'border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 opacity-40 cursor-not-allowed'
                                         : 'border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-white dark:hover:bg-gray-800 cursor-pointer'
@@ -98,7 +100,7 @@ export const SelectBatchModal = ({ product, batches, onSelect, onClose }: Select
                             >
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2 flex-wrap">
-                                        <span className="font-bold text-base text-gray-900 dark:text-white">
+                                        <span className="font-bold text-base text-foreground">
                                             {formatCurrency(batch.retail_price)}
                                         </span>
                                         <Badge variant="secondary" className="text-[11px] font-semibold">
@@ -114,7 +116,7 @@ export const SelectBatchModal = ({ product, batches, onSelect, onClose }: Select
                                             {remainingStock} available
                                         </Badge>
                                         {(batch as any).purchased_quantity && (
-                                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                                            <span className="text-xs text-muted-foreground">
                                                 ({(batch as any).purchased_quantity} purchased)
                                             </span>
                                         )}
@@ -123,7 +125,7 @@ export const SelectBatchModal = ({ product, batches, onSelect, onClose }: Select
                                         )}
                                     </div>
                                 </div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400 ml-4 text-right">
+                                <div className="text-xs text-muted-foreground ml-4 text-right">
                                     <div className="font-medium">Purchase Date</div>
                                     <div>
                                         {new Date(batch.created_at).toLocaleDateString('en-US', {
@@ -140,11 +142,11 @@ export const SelectBatchModal = ({ product, batches, onSelect, onClose }: Select
 
                 {/* Quantity Selector */}
                 {selectedBatch && (
-                    <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 space-y-4">
+                    <div className="px-6 py-4 border-t border-border bg-card text-card-foreground space-y-4">
                         <div>
-                            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-3">
+                            <Label className="text-sm font-semibold mb-3 block">
                                 Select Quantity
-                            </label>
+                            </Label>
                             <div className="flex items-center gap-3">
                                 <Button
                                     type="button"
@@ -152,18 +154,18 @@ export const SelectBatchModal = ({ product, batches, onSelect, onClose }: Select
                                     disabled={quantity <= 1}
                                     variant="ghost"
                                     size="sm"
-                                    className="h-10 w-10 px-0"
+                                    className="h-10 w-10 px-0 flex items-center justify-center border border-border"
                                     title="Decrease"
                                 >
-                                    <Minus size={18} className="text-gray-700 dark:text-gray-300" />
+                                    <Minus size={18} />
                                 </Button>
-                                <input
+                                <Input
                                     type="number"
                                     min={1}
                                     max={(selectedBatch as any).remaining_in_stock ?? selectedBatch.quantity}
                                     value={quantity}
                                     onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
-                                    className="flex-1 h-10 text-center border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-bold text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                    className="flex-1 h-10 text-center font-bold text-lg"
                                 />
                                 <Button
                                     type="button"
@@ -171,25 +173,25 @@ export const SelectBatchModal = ({ product, batches, onSelect, onClose }: Select
                                     disabled={quantity >= ((selectedBatch as any).remaining_in_stock ?? selectedBatch.quantity)}
                                     variant="ghost"
                                     size="sm"
-                                    className="h-10 w-10 px-0"
+                                    className="h-10 w-10 px-0 flex items-center justify-center border border-border"
                                     title="Increase"
                                 >
-                                    <Plus size={18} className="text-gray-700 dark:text-gray-300" />
+                                    <Plus size={18} />
                                 </Button>
                             </div>
                         </div>
 
                         {/* Summary */}
-                        <div className="grid grid-cols-2 gap-4 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <div className="grid grid-cols-2 gap-4 p-3 bg-muted/50 rounded-lg border border-border">
                             <div>
-                                <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Available</p>
-                                <p className="text-sm font-bold text-gray-900 dark:text-white mt-0.5">
+                                <p className="text-xs text-muted-foreground font-medium">Available</p>
+                                <p className="text-sm font-bold text-foreground mt-0.5">
                                     {(selectedBatch as any).remaining_in_stock ?? selectedBatch.quantity}
                                 </p>
                             </div>
                             <div className="text-right">
-                                <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Total Price</p>
-                                <p className="text-sm font-bold text-blue-600 dark:text-blue-400 mt-0.5">
+                                <p className="text-xs text-muted-foreground font-medium">Total Price</p>
+                                <p className="text-sm font-bold text-primary mt-0.5">
                                     {formatCurrency(selectedBatch.retail_price * quantity)}
                                 </p>
                             </div>

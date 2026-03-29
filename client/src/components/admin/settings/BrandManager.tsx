@@ -102,59 +102,58 @@ export const BrandManager = ({ onBrandCreated }: BrandManagerProps = {}) => {
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
+        <div className="space-y-10 p-2">
+            <div className="flex justify-between items-end border-b border-border/50 pb-8">
                 <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Brand Library</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage brands & manufacturers</p>
+                    <h3 className="text-2xl font-black text-foreground tracking-tight italic uppercase">Brand Collection</h3>
+                    <p className="text-xs font-bold text-muted-foreground/60 mt-2 uppercase tracking-widest">Global Manufacturers & Label Management</p>
                 </div>
                 {!isAdding && (
                     <button
                         onClick={() => setIsAdding(true)}
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-semibold transition-all shadow-lg shadow-blue-500/30 hover:shadow-xl"
+                        className="flex items-center gap-3 bg-primary hover:bg-primary/90 text-white px-8 py-4 rounded-xl font-black transition-all shadow-xl shadow-primary/20 hover:shadow-2xl active:scale-95 text-sm uppercase tracking-wider"
                     >
-                        <Plus size={18} />
-                        Add New Brand
+                        <Plus size={20} />
+                        New Brand Entry
                     </button>
                 )}
             </div>
 
             {isAdding && (
-                <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 p-6 rounded-xl border-2 border-blue-200 dark:border-blue-800 animate-fadeIn shadow-lg">
-                    <h4 className="text-md font-bold text-gray-800 dark:text-white mb-4">{editingId ? 'Edit Brand' : 'Create New Brand'}</h4>
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Brand Name *</label>
+                <div className="bg-muted/30 p-10 rounded-2xl border border-border/50 animate-in fade-in slide-in-from-top-4 duration-500 shadow-inner">
+                    <div className="flex items-center gap-3 mb-8">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                            <Plus size={20} />
+                        </div>
+                        <h4 className="text-lg font-black text-foreground uppercase tracking-tight">{editingId ? 'Modify Brand Specification' : 'Register New Brand'}</h4>
+                    </div>
+                    
+                    <form onSubmit={handleSubmit} className="space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 ml-1">Official Name <span className="text-destructive">*</span></label>
                                 <input
                                     autoFocus
                                     required
                                     type="text"
                                     placeholder="e.g., Nike, Apple, Samsung"
-                                    className="w-full p-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                    className="w-full h-14 p-4 rounded-xl border border-border bg-background text-foreground text-lg font-bold focus:ring-4 focus:ring-primary/5 outline-none transition-all shadow-xs"
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Description</label>
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 ml-1">Background / Notes</label>
                                 <input
                                     type="text"
-                                    placeholder="Optional description"
-                                    className="w-full p-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                    placeholder="Brief brand history or category..."
+                                    className="w-full h-14 p-4 rounded-xl border border-border bg-background text-foreground text-lg font-bold focus:ring-4 focus:ring-primary/5 outline-none transition-all shadow-xs"
                                     value={formData.description}
                                     onChange={e => setFormData({ ...formData, description: e.target.value })}
                                 />
                             </div>
                         </div>
-                        <div className="flex justify-end gap-3">
-                            <button
-                                type="submit"
-                                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl"
-                            >
-                                <Save size={18} />
-                                {editingId ? 'Update' : 'Save'}
-                            </button>
+                        <div className="flex justify-end gap-5 pt-4">
                             <button
                                 type="button"
                                 onClick={() => {
@@ -162,65 +161,81 @@ export const BrandManager = ({ onBrandCreated }: BrandManagerProps = {}) => {
                                     setEditingId(null);
                                     setFormData({ name: '', description: '' });
                                 }}
-                                className="flex items-center gap-2 bg-gray-500 hover:bg-gray-600 text-white px-6 py-2.5 rounded-lg font-semibold transition-all"
+                                className="flex items-center gap-2 bg-muted hover:bg-muted/80 text-foreground px-10 py-4 rounded-xl font-black transition-all text-sm uppercase"
                             >
                                 <X size={18} />
-                                Cancel
+                                Discard
+                            </button>
+                            <button
+                                type="submit"
+                                className="flex items-center gap-3 bg-primary hover:bg-primary/90 text-white px-12 py-4 rounded-xl font-black transition-all shadow-2xl shadow-primary/30 active:scale-95 text-sm uppercase"
+                            >
+                                <Save size={18} />
+                                {editingId ? 'Update Brand' : 'Save Brand'}
                             </button>
                         </div>
                     </form>
                 </div>
             )}
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 overflow-hidden shadow-md">
-                <table className="w-full text-left">
-                    <thead className="bg-gradient-to-r from-gray-100 to-gray-50 dark:from-gray-700 dark:to-gray-800">
-                        <tr>
-                            <th className="p-4 font-bold text-gray-700 dark:text-gray-200 text-sm uppercase tracking-wider">Brand Name</th>
-                            <th className="p-4 font-bold text-gray-700 dark:text-gray-200 text-sm uppercase tracking-wider">Description</th>
-                            <th className="p-4 font-bold text-gray-700 dark:text-gray-200 text-sm uppercase tracking-wider text-right">Actions</th>
+            <div className="bg-background rounded-2xl border border-border overflow-hidden shadow-2xl">
+                <table className="w-full text-left border-collapse">
+                    <thead>
+                        <tr className="bg-muted/20 border-b border-border">
+                            <th className="p-8 font-black text-muted-foreground text-[10px] uppercase tracking-[0.3em]">Brand Identity</th>
+                            <th className="p-8 font-black text-muted-foreground text-[10px] uppercase tracking-[0.3em]">Meta Description</th>
+                            <th className="p-8 font-black text-muted-foreground text-[10px] uppercase tracking-[0.3em] text-right">Control Hub</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    <tbody className="divide-y divide-border/30">
                         {brands?.map(brand => (
-                            <tr key={brand.id} className="hover:bg-blue-50 dark:hover:bg-gray-700/50 transition-colors">
-                                <td className="p-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
-                                            <Award size={20} className="text-purple-600 dark:text-purple-400" />
+                            <tr key={brand.id} className="group hover:bg-primary/[0.02] transition-colors">
+                                <td className="p-8">
+                                    <div className="flex items-center gap-5">
+                                        <div className="w-14 h-14 bg-primary/5 rounded-xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform shadow-inner">
+                                            <Award size={24} />
                                         </div>
-                                        <span className="font-semibold text-gray-900 dark:text-white text-base">{brand.name}</span>
+                                        <div>
+                                            <span className="font-black text-foreground text-xl tracking-tight leading-none block mb-1">{brand.name}</span>
+                                            <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest leading-none">Registered ID: #{String(brand.id).slice(-4)}</span>
+                                        </div>
                                     </div>
                                 </td>
-                                <td className="p-4 text-gray-600 dark:text-gray-400">{brand.description || '-'}</td>
-                                <td className="p-4 text-right space-x-3">
-                                    <button
-                                        onClick={() => handleEdit(brand)}
-                                        className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium transition-colors"
-                                        title="Edit Brand"
-                                    >
-                                        <Edit2 size={18} />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(brand.id)}
-                                        className="inline-flex items-center gap-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium transition-colors"
-                                        title="Delete Brand"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
+                                <td className="p-8">
+                                    <p className="text-muted-foreground/70 font-medium text-base italic max-w-md line-clamp-2">
+                                        {brand.description || 'No descriptive metadata provided.'}
+                                    </p>
+                                </td>
+                                <td className="p-8 text-right">
+                                    <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                            onClick={() => handleEdit(brand)}
+                                            className="w-12 h-12 flex items-center justify-center rounded-xl bg-muted hover:bg-primary hover:text-white text-muted-foreground transition-all duration-300"
+                                            title="Edit Brand"
+                                        >
+                                            <Edit2 size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(brand.id)}
+                                            className="w-12 h-12 flex items-center justify-center rounded-xl bg-muted hover:bg-destructive hover:text-white text-muted-foreground transition-all duration-300"
+                                            title="Delete Brand"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
-                        {brands?.length === 0 && (
+                        {(!brands || brands.length === 0) && (
                             <tr>
-                                <td colSpan={3} className="p-12 text-center">
-                                    <div className="flex flex-col items-center justify-center space-y-3">
-                                        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                                            <Award size={32} className="text-gray-400 dark:text-gray-500" />
+                                <td colSpan={3} className="p-32 text-center">
+                                    <div className="flex flex-col items-center justify-center space-y-6">
+                                        <div className="w-24 h-24 bg-muted rounded-3xl flex items-center justify-center text-muted-foreground/20">
+                                            <Award size={48} />
                                         </div>
-                                        <div>
-                                            <p className="text-gray-900 dark:text-white font-semibold text-lg">No brands found</p>
-                                            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Click "Add New Brand" to create your first brand</p>
+                                        <div className="space-y-2">
+                                            <p className="text-foreground font-black text-2xl uppercase tracking-tighter italic">Vault is Empty</p>
+                                            <p className="text-muted-foreground/50 text-xs font-bold uppercase tracking-widest">No brand partners have been registered yet.</p>
                                         </div>
                                     </div>
                                 </td>

@@ -57,15 +57,15 @@ export const DiscountModal = ({
 
                 {/* Header */}
                 <DialogHeader className="mb-5">
-                    <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <Tag className="text-blue-500" />
+                    <DialogTitle className="text-xl font-bold text-foreground flex items-center gap-2">
+                        <Tag className="text-primary" />
                         Apply Bill Discount
                     </DialogTitle>
                 </DialogHeader>
 
                 {/* Quick Presets */}
                 <div className="mb-4">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                         Quick Presets
                     </p>
                     <div className="grid grid-cols-5 gap-2">
@@ -77,7 +77,7 @@ export const DiscountModal = ({
                                 size="sm"
                                 className={`py-2 rounded-lg text-sm font-bold border-2 transition-all ${mode === 'percent' && numValue === preset
                                     ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200 dark:shadow-blue-900/30'
-                                    : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-600 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                                    : 'bg-gray-50 dark:bg-gray-700 text-foreground border-border hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
                                     }`}
                             >
                                 {preset}%
@@ -94,8 +94,8 @@ export const DiscountModal = ({
                         size="sm"
                         onClick={() => setMode('percent')}
                         className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-1 ${mode === 'percent'
-                            ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-white shadow'
-                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                            ? 'bg-white dark:bg-gray-600 text-primary dark:text-white shadow'
+                            : 'text-muted-foreground hover:text-gray-700 dark:hover:text-gray-300'
                             }`}
                     >
                         <Percent size={14} />
@@ -107,8 +107,8 @@ export const DiscountModal = ({
                         size="sm"
                         onClick={() => setMode('amount')}
                         className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-1 ${mode === 'amount'
-                            ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-white shadow'
-                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                            ? 'bg-white dark:bg-gray-600 text-primary dark:text-white shadow'
+                            : 'text-muted-foreground hover:text-gray-700 dark:hover:text-gray-300'
                             }`}
                     >
                         <DollarSign size={14} />
@@ -119,7 +119,7 @@ export const DiscountModal = ({
                 {/* Discount Input */}
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">
-                        <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
+                        <label className="block text-sm text-muted-foreground mb-1">
                             {mode === 'percent' ? 'Discount Percentage (%)' : `Discount Amount (${currencySymbol})`}
                         </label>
                         <input
@@ -127,7 +127,7 @@ export const DiscountModal = ({
                             step="0.01"
                             min="0"
                             max={mode === 'percent' ? '100' : undefined}
-                            className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none border border-gray-300 dark:border-transparent text-lg font-semibold"
+                            className="w-full bg-gray-100 dark:bg-gray-700 text-foreground p-2.5 rounded-lg focus:ring-2 focus:ring-ring outline-none border border-gray-300 dark:border-transparent text-lg font-semibold"
                             value={value}
                             onChange={(e) => setValue(e.target.value)}
                             autoFocus
@@ -135,8 +135,8 @@ export const DiscountModal = ({
                         />
                         {numValue > 0 && (
                             <div className="mt-2 flex items-center justify-between text-sm">
-                                <span className="text-gray-500 dark:text-gray-400">Discount amount:</span>
-                                <span className="font-bold text-green-600 dark:text-green-400">
+                                <span className="text-muted-foreground">Discount amount:</span>
+                                <span className="font-bold text-success">
                                     -{formatCurrency(Math.min(discountPreview, subtotal))}
                                 </span>
                             </div>

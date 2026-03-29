@@ -25,7 +25,7 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
         head_cell: "text-gray-500 rounded-md w-9 font-normal text-[0.8rem]",
         row: "flex w-full mt-1",
         cell: "h-9 w-9 text-center text-sm p-0 relative",
-        day: "h-9 w-9 p-0 font-normal rounded-md hover:bg-gray-100 dark:hover:bg-gray-800",
+        day: "h-9 w-9 p-0 font-normal rounded-md hover:bg-accent hover:text-accent-foreground",
         day_selected: "bg-primary-600 text-white hover:bg-primary-600",
         day_today: "bg-gray-100 dark:bg-gray-800",
         day_outside: "text-gray-400",

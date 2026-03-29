@@ -4,6 +4,8 @@ import { useCurrency } from '../../hooks/useCurrency';
 import { getApiUrl } from '../../config/api';
 import { useToast } from '../../store/useToast';
 import { ArrowDownToLine, ArrowUpFromLine, RefreshCw, Filter, Search } from 'lucide-react';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
 
 interface Transaction {
     id: string;
@@ -65,36 +67,38 @@ export const TransactionsPage = () => {
         <div className="p-4 sm:p-6 max-w-7xl mx-auto h-full flex flex-col pointer-events-auto">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 shrink-0">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Money Dashboard</h1>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Unified view of all cash flow operations.</p>
+                    <h1 className="text-2xl font-bold text-foreground">Money Dashboard</h1>
+                    <p className="text-muted-foreground text-sm mt-1">Unified view of all cash flow operations.</p>
                 </div>
-                <button
+                <Button
+                    variant="secondary"
                     onClick={fetchTransactions}
-                    className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 font-medium transition-colors shadow-sm text-sm sm:text-base w-full sm:w-auto justify-center"
+                    disabled={isLoading}
+                    className="flex items-center gap-2 font-medium"
                 >
                     <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
-                </button>
+                </Button>
             </div>
 
             {/* Metrics Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 shrink-0">
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-4">
+                <div className="bg-card text-card-foreground rounded-xl p-5 border border-border shadow-sm flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center flex-shrink-0">
-                        <ArrowDownToLine className="w-6 h-6 text-green-600 dark:text-green-400" />
+                        <ArrowDownToLine className="w-6 h-6 text-success" />
                     </div>
                     <div>
-                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Money IN</p>
-                        <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalIn)}</p>
+                        <p className="text-sm font-medium text-muted-foreground">Total Money IN</p>
+                        <p className="text-2xl font-bold text-foreground">{formatCurrency(totalIn)}</p>
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-4">
+                <div className="bg-card text-card-foreground rounded-xl p-5 border border-border shadow-sm flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center flex-shrink-0">
-                        <ArrowUpFromLine className="w-6 h-6 text-red-600 dark:text-red-400" />
+                        <ArrowUpFromLine className="w-6 h-6 text-destructive" />
                     </div>
                     <div>
-                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Money OUT</p>
-                        <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalOut)}</p>
+                        <p className="text-sm font-medium text-muted-foreground">Total Money OUT</p>
+                        <p className="text-2xl font-bold text-foreground">{formatCurrency(totalOut)}</p>
                     </div>
                 </div>
 
@@ -110,30 +114,29 @@ export const TransactionsPage = () => {
             </div>
 
             {/* Filters */}
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-t-xl border border-b-0 border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row gap-4 items-center justify-between shrink-0">
+            <div className="bg-card text-card-foreground p-4 rounded-t-xl border border-b-0 border-border flex flex-col sm:flex-row gap-4 items-center justify-between shrink-0">
                 <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0 scrollbar-hide shrink-0">
-                    <button onClick={() => setFilterType('ALL')} className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${filterType === 'ALL' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'}`}>All</button>
-                    <button onClick={() => setFilterType('IN')} className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${filterType === 'IN' ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'}`}>Money IN</button>
-                    <button onClick={() => setFilterType('OUT')} className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${filterType === 'OUT' ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'}`}>Money OUT</button>
+                    <Button variant={filterType === 'ALL' ? 'primary' : 'secondary'} size="sm" onClick={() => setFilterType('ALL')} className="rounded-full">All</Button>
+                    <Button variant={filterType === 'IN' ? 'success' : 'secondary'} size="sm" onClick={() => setFilterType('IN')} className="rounded-full">Money IN</Button>
+                    <Button variant={filterType === 'OUT' ? 'danger' : 'secondary'} size="sm" onClick={() => setFilterType('OUT')} className="rounded-full">Money OUT</Button>
                 </div>
-                <div className="relative w-full sm:w-64 shrink-0">
-                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
+                <div className="w-full sm:w-64 shrink-0">
+                    <Input
                         type="text"
                         placeholder="Search transactions..."
+                        icon={<Search size={16} />}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none dark:text-white transition-colors"
                     />
                 </div>
             </div>
 
             {/* Unified Ledger Table */}
-            <div className="bg-white dark:bg-gray-800 rounded-b-xl shadow-sm border border-gray-200 dark:border-gray-700 flex-1 overflow-hidden flex flex-col">
+            <div className="bg-card text-card-foreground rounded-b-xl shadow-sm border border-border flex-1 overflow-hidden flex flex-col">
                 <div className="overflow-x-auto flex-1 h-full">
                     <table className="w-full text-left border-collapse min-w-[800px]">
-                        <thead className="sticky top-0 bg-gray-50 dark:bg-gray-900 shadow-sm z-10">
-                            <tr className="border-b border-gray-200 dark:border-gray-700 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        <thead className="sticky top-0 bg-muted shadow-sm z-10">
+                            <tr className="border-b border-border text-xs uppercase tracking-wider text-muted-foreground">
                                 <th className="p-4 font-semibold">Date & ID</th>
                                 <th className="p-4 font-semibold">Category</th>
                                 <th className="p-4 font-semibold">Description</th>
@@ -144,13 +147,13 @@ export const TransactionsPage = () => {
                             {isLoading ? (
                                 <tr><td colSpan={4} className="text-center py-10 dark:text-gray-400 text-sm">Loading ledger...</td></tr>
                             ) : filteredTransactions.length === 0 ? (
-                                <tr><td colSpan={4} className="text-center py-10 text-gray-500 dark:text-gray-400 text-sm">No transactions found.</td></tr>
+                                <tr><td colSpan={4} className="text-center py-10 text-muted-foreground text-sm">No transactions found.</td></tr>
                             ) : (
                                 filteredTransactions.map(tx => (
-                                    <tr key={tx.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                    <tr key={tx.id} className="hover:bg-accent hover:text-accent-foreground/50 transition-colors">
                                         <td className="p-4">
-                                            <div className="text-sm font-medium text-gray-900 dark:text-white">{new Date(tx.date).toLocaleDateString()} {new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-mono">{tx.id}</div>
+                                            <div className="text-sm font-medium text-foreground">{new Date(tx.date).toLocaleDateString()} {new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                                            <div className="text-xs text-muted-foreground mt-0.5 font-mono">{tx.id}</div>
                                         </td>
                                         <td className="p-4 text-sm">
                                             <span className={`px-2.5 py-1 rounded-md text-xs font-medium border ${tx.type === 'IN'
@@ -162,10 +165,10 @@ export const TransactionsPage = () => {
                                         </td>
                                         <td className="p-4">
                                             <div className="text-sm text-gray-900 dark:text-gray-300">{tx.description}</div>
-                                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 uppercase tracking-wider">{tx.method}</div>
+                                            <div className="text-xs text-muted-foreground mt-0.5 uppercase tracking-wider">{tx.method}</div>
                                         </td>
                                         <td className="p-4 text-right">
-                                            <div className={`text-base font-bold ${tx.type === 'IN' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                            <div className={`text-base font-bold ${tx.type === 'IN' ? 'text-success' : 'text-destructive'}`}>
                                                 {tx.type === 'IN' ? '+' : '-'}{formatCurrency(Number(tx.amount))}
                                             </div>
                                         </td>

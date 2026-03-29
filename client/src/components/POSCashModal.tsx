@@ -140,7 +140,7 @@ export const POSCashModal: React.FC<POSCashModalProps> = ({ onClose }) => {
             <DialogContent className="w-full max-w-lg rounded-2xl p-0 overflow-hidden max-h-[90vh]" showCloseButton={false}>
 
                 {/* Header */}
-                <DialogHeader className="px-6 py-5 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+                <DialogHeader className="px-6 py-5 border-b border-border bg-gray-50/50 dark:bg-gray-800/50">
                     <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         {tab !== 'overview' && (
@@ -158,7 +158,7 @@ export const POSCashModal: React.FC<POSCashModalProps> = ({ onClose }) => {
                             <Wallet size={20} />
                         </div>
                         <div>
-                            <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white">
+                            <DialogTitle className="text-xl font-bold text-foreground">
                                 {tab === 'overview' ? 'Cash & Expenses' : tab === 'petty' ? 'Petty Cash Transaction' : 'Record Business Expense'}
                             </DialogTitle>
                             {shiftData && tab === 'overview' && (
@@ -175,7 +175,7 @@ export const POSCashModal: React.FC<POSCashModalProps> = ({ onClose }) => {
                             size="sm"
                             onClick={loadShift}
                             disabled={isLoading}
-                            className="h-9 w-9 px-0 text-gray-400 hover:text-blue-500"
+                            className="h-9 w-9 px-0 text-gray-400 hover:text-primary"
                         >
                             <RefreshCw size={18} className={isLoading ? 'animate-spin' : ''} />
                         </Button>
@@ -204,8 +204,8 @@ export const POSCashModal: React.FC<POSCashModalProps> = ({ onClose }) => {
                             <div className="p-4 bg-orange-100 dark:bg-orange-900/40 rounded-full">
                                 <AlertCircle size={48} className="text-orange-600 dark:text-orange-400" />
                             </div>
-                            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Register is Closed</h3>
-                            <p className="text-gray-500 dark:text-gray-400 max-w-xs">
+                            <h3 className="text-xl font-bold text-foreground">Register is Closed</h3>
+                            <p className="text-muted-foreground max-w-xs">
                                 Global settings require an active register shift. Please open a register before logging transactions.
                             </p>
                             <Button
@@ -237,20 +237,20 @@ export const POSCashModal: React.FC<POSCashModalProps> = ({ onClose }) => {
 
                                     {/* Detailed Breakdown */}
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-700">
+                                        <div className="bg-muted/50 p-4 rounded-2xl border border-border">
                                             <p className="text-[10px] font-bold text-gray-400 uppercase">Starting Float</p>
-                                            <p className="text-lg font-bold text-gray-900 dark:text-white mt-1">
+                                            <p className="text-lg font-bold text-foreground mt-1">
                                                 {formatCurrency(shiftData?.startingCash ?? 0)}
                                             </p>
                                         </div>
                                         <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-2xl border border-green-100 dark:border-green-900/30">
-                                            <p className="text-[10px] font-bold text-green-600 dark:text-green-400 uppercase">Cash Sales</p>
+                                            <p className="text-[10px] font-bold text-success uppercase">Cash Sales</p>
                                             <p className="text-lg font-bold text-green-700 dark:text-green-300 mt-1">
                                                 +{formatCurrency(shiftData?.totalCashSales ?? 0)}
                                             </p>
                                         </div>
                                         <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-2xl border border-red-100 dark:border-red-900/30">
-                                            <p className="text-[10px] font-bold text-red-600 dark:text-red-400 uppercase">Cash Refunds</p>
+                                            <p className="text-[10px] font-bold text-destructive uppercase">Cash Refunds</p>
                                             <p className="text-lg font-bold text-red-700 dark:text-red-300 mt-1">
                                                 -{formatCurrency(shiftData?.totalCashRefunds ?? 0)}
                                             </p>
@@ -264,19 +264,19 @@ export const POSCashModal: React.FC<POSCashModalProps> = ({ onClose }) => {
                                     </div>
 
                                     {/* Action Grid */}
-                                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
                                         <Button
                                             type="button"
                                             onClick={() => setTab('petty')}
                                             variant="ghost"
                                             size="sm"
-                                            className="flex flex-col items-center gap-3 p-5 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-3xl hover:border-blue-500 dark:hover:border-blue-500 hover:shadow-xl transition-all group"
+                                            className="flex flex-col items-center gap-3 p-5 bg-card text-card-foreground border-2 border-border rounded-3xl hover:border-blue-500 dark:hover:border-blue-500 hover:shadow-xl transition-all group"
                                         >
-                                            <div className="p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-2xl group-hover:scale-110 transition-transform">
+                                            <div className="p-3 bg-primary/20 text-primary rounded-2xl group-hover:scale-110 transition-transform">
                                                 <DollarSign size={24} />
                                             </div>
                                             <div className="text-center">
-                                                <p className="font-bold text-gray-900 dark:text-white">Petty Cash</p>
+                                                <p className="font-bold text-foreground">Petty Cash</p>
                                                 <p className="text-[10px] text-gray-500">Add or Remove Cash</p>
                                             </div>
                                         </Button>
@@ -286,13 +286,13 @@ export const POSCashModal: React.FC<POSCashModalProps> = ({ onClose }) => {
                                             onClick={() => setTab('expense')}
                                             variant="ghost"
                                             size="sm"
-                                            className="flex flex-col items-center gap-3 p-5 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-3xl hover:border-orange-500 dark:hover:border-orange-500 hover:shadow-xl transition-all group"
+                                            className="flex flex-col items-center gap-3 p-5 bg-card text-card-foreground border-2 border-border rounded-3xl hover:border-orange-500 dark:hover:border-orange-500 hover:shadow-xl transition-all group"
                                         >
                                             <div className="p-3 bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-2xl group-hover:scale-110 transition-transform">
                                                 <Receipt size={24} />
                                             </div>
                                             <div className="text-center">
-                                                <p className="font-bold text-gray-900 dark:text-white">Log Expense</p>
+                                                <p className="font-bold text-foreground">Log Expense</p>
                                                 <p className="text-[10px] text-gray-500">Record Outgoing Cost</p>
                                             </div>
                                         </Button>
@@ -311,7 +311,7 @@ export const POSCashModal: React.FC<POSCashModalProps> = ({ onClose }) => {
                                             size="sm"
                                             className={`flex flex-col items-center py-5 rounded-3xl border-2 font-bold transition-all gap-2 ${pettyType === 'IN'
                                                 ? 'bg-green-50 dark:bg-green-900/20 border-green-500 text-green-700 dark:text-green-300 shadow-lg scale-[1.02]'
-                                                : 'border-gray-100 dark:border-gray-700 text-gray-400 hover:border-green-200'
+                                                : 'border-border text-gray-400 hover:border-green-200'
                                                 }`}
                                         >
                                             <div className={`p-2 rounded-full ${pettyType === 'IN' ? 'bg-green-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-400'}`}>
@@ -326,10 +326,10 @@ export const POSCashModal: React.FC<POSCashModalProps> = ({ onClose }) => {
                                             size="sm"
                                             className={`flex flex-col items-center py-5 rounded-3xl border-2 font-bold transition-all gap-2 ${pettyType === 'OUT'
                                                 ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-500 text-orange-700 dark:text-orange-300 shadow-lg scale-[1.02]'
-                                                : 'border-gray-100 dark:border-gray-700 text-gray-400 hover:border-orange-200'
+                                                : 'border-border text-gray-400 hover:border-orange-200'
                                                 }`}
                                         >
-                                            <div className={`p-2 rounded-full ${pettyType === 'OUT' ? 'bg-orange-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-400'}`}>
+                                            <div className={`p-2 rounded-full ${pettyType === 'OUT' ? 'bg-accent text-accent-foreground' : 'bg-gray-100 dark:bg-gray-700 text-gray-400'}`}>
                                                 <TrendingDown size={20} />
                                             </div>
                                             <span>Cash OUT</span>
@@ -348,7 +348,7 @@ export const POSCashModal: React.FC<POSCashModalProps> = ({ onClose }) => {
                                                     autoFocus
                                                     value={pettyAmount}
                                                     onChange={e => setPettyAmount(e.target.value)}
-                                                    className="w-full bg-gray-50 dark:bg-gray-900 border border-transparent focus:border-blue-500 text-gray-900 dark:text-white rounded-2xl px-6 py-4 outline-none text-3xl font-black transition-all"
+                                                    className="w-full bg-muted border border-transparent focus:border-blue-500 text-foreground rounded-2xl px-6 py-4 outline-none text-3xl font-black transition-all"
                                                     placeholder="0.00"
                                                 />
                                             </div>
@@ -361,7 +361,7 @@ export const POSCashModal: React.FC<POSCashModalProps> = ({ onClose }) => {
                                                 required
                                                 value={pettyDesc}
                                                 onChange={e => setPettyDesc(e.target.value)}
-                                                className="w-full bg-gray-50 dark:bg-gray-900 border border-transparent focus:border-blue-500 text-gray-900 dark:text-white rounded-2xl px-6 py-4 outline-none font-medium transition-all"
+                                                className="w-full bg-muted border border-transparent focus:border-blue-500 text-foreground rounded-2xl px-6 py-4 outline-none font-medium transition-all"
                                                 placeholder="e.g. Purchase lunch for staff..."
                                             />
                                         </div>
@@ -372,7 +372,7 @@ export const POSCashModal: React.FC<POSCashModalProps> = ({ onClose }) => {
                                         size="sm"
                                         disabled={isSubmittingPetty}
                                         className={`w-full py-5 rounded-3xl font-black text-lg text-white shadow-xl transform active:scale-[0.98] transition-all flex items-center justify-center gap-3 ${pettyType === 'IN'
-                                            ? 'bg-green-600 hover:bg-green-700 shadow-green-600/20'
+                                            ? 'bg-success hover:bg-success/90 shadow-green-600/20'
                                             : 'bg-orange-600 hover:bg-orange-700 shadow-orange-600/20'
                                             } disabled:opacity-60`}
                                     >
@@ -399,7 +399,7 @@ export const POSCashModal: React.FC<POSCashModalProps> = ({ onClose }) => {
                                                 autoFocus
                                                 value={expAmount}
                                                 onChange={e => setExpAmount(e.target.value)}
-                                                className="w-full bg-gray-50 dark:bg-gray-900 border border-transparent focus:border-blue-500 text-gray-900 dark:text-white rounded-2xl px-6 py-4 outline-none text-3xl font-black transition-all"
+                                                className="w-full bg-muted border border-transparent focus:border-blue-500 text-foreground rounded-2xl px-6 py-4 outline-none text-3xl font-black transition-all"
                                                 placeholder="0.00"
                                             />
                                         </div>
@@ -410,7 +410,7 @@ export const POSCashModal: React.FC<POSCashModalProps> = ({ onClose }) => {
                                                 <select
                                                     value={expCategory}
                                                     onChange={e => setExpCategory(e.target.value)}
-                                                    className="w-full bg-gray-50 dark:bg-gray-900 border border-transparent focus:border-blue-500 text-gray-900 dark:text-white rounded-2xl px-4 py-4 outline-none font-bold text-sm appearance-none transition-all cursor-pointer"
+                                                    className="w-full bg-muted border border-transparent focus:border-blue-500 text-foreground rounded-2xl px-4 py-4 outline-none font-bold text-sm appearance-none transition-all cursor-pointer"
                                                 >
                                                     <option value="">General Cost</option>
                                                     {categories.map(c => (
@@ -420,7 +420,7 @@ export const POSCashModal: React.FC<POSCashModalProps> = ({ onClose }) => {
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-wider">Pay Method</label>
-                                                <div className="grid grid-cols-2 h-14 bg-gray-100 dark:bg-gray-900 rounded-2xl p-1 gap-1">
+                                                <div className="grid grid-cols-2 h-14 bg-background rounded-2xl p-1 gap-1">
                                                     {['cash', 'card'].map(method => (
                                                         <Button
                                                             key={method}
@@ -429,7 +429,7 @@ export const POSCashModal: React.FC<POSCashModalProps> = ({ onClose }) => {
                                                             size="sm"
                                                             onClick={() => setExpPayMethod(method)}
                                                             className={`rounded-xl text-xs font-black uppercase transition-all ${expPayMethod === method
-                                                                ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
+                                                                ? 'bg-card text-card-foreground text-primary shadow-sm'
                                                                 : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
                                                                 }`}
                                                         >
@@ -447,11 +447,11 @@ export const POSCashModal: React.FC<POSCashModalProps> = ({ onClose }) => {
                                                 required
                                                 value={expDesc}
                                                 onChange={e => setExpDesc(e.target.value)}
-                                                className="w-full bg-gray-50 dark:bg-gray-900 border border-transparent focus:border-blue-500 text-gray-900 dark:text-white rounded-2xl px-6 py-4 outline-none font-medium transition-all"
+                                                className="w-full bg-muted border border-transparent focus:border-blue-500 text-foreground rounded-2xl px-6 py-4 outline-none font-medium transition-all"
                                                 placeholder="What was this for?"
                                             />
                                             {expPayMethod === 'cash' && (
-                                                <p className="text-[10px] text-orange-500 font-bold mt-2 flex items-center gap-1">
+                                                <p className="text-[10px] text-accent font-bold mt-2 flex items-center gap-1">
                                                     <AlertCircle size={10} /> Drawer balance will be adjusted
                                                 </p>
                                             )}

@@ -9,7 +9,7 @@ import { getApiUrl } from '../../config/api';
 
 export const SupplierManager = () => {
     const navigate = useNavigate();
-    const { addToast } = useToast();
+    const addToast = useToast((state) => state.addToast);
     const [suppliers, setSuppliers] = useState<any[]>([]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
@@ -69,7 +69,7 @@ export const SupplierManager = () => {
             header: 'Name',
             accessorKey: 'name' as keyof any,
             cell: (row: any) => (
-                <div className="font-medium text-gray-900 dark:text-white flex items-center gap-2">
+                <div className="font-medium text-foreground flex items-center gap-2">
                     <Truck size={16} className="text-gray-400" />
                     {row.name}
                 </div>
@@ -104,7 +104,7 @@ export const SupplierManager = () => {
                 <div className="flex gap-2">
                     <button
                         onClick={(e) => handleEdit(row, e)}
-                        className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                        className="p-1.5 text-primary hover:bg-blue-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
                         title="Edit"
                     >
                         <Edit2 size={16} />
@@ -122,43 +122,48 @@ export const SupplierManager = () => {
     ];
 
     return (
-        <div className="p-6 max-w-[1600px] mx-auto">
-            <div className="flex justify-between items-center mb-6">
+        <div className="p-10 max-w-[1700px] mx-auto space-y-10">
+            <div className="flex justify-between items-end border-b border-border/50 pb-10">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Supplier Management</h1>
-                    <p className="text-gray-500 dark:text-gray-400">Manage your suppliers and purchase relationships</p>
+                    <h1 className="text-4xl font-black text-foreground tracking-tighter italic uppercase mb-2">Supplier Network</h1>
+                    <p className="text-xs font-bold text-muted-foreground/50 uppercase tracking-[0.3em]">Supply Chain Management & Procurement Relations</p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex gap-5">
                     <button
                         onClick={() => setIsBulkModalOpen(true)}
-                        className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-sm"
+                        className="bg-muted hover:bg-muted/80 text-foreground px-8 py-4 rounded-xl flex items-center gap-3 transition-all font-black text-xs uppercase tracking-widest border border-border shadow-inner"
                     >
-                        <Upload size={20} />
-                        Bulk Import
+                        <Upload size={18} />
+                        Bulk Injection
                     </button>
                     <button
                         onClick={() => {
                             setEditingSupplier(null);
                             setIsAddModalOpen(true);
                         }}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-md hover:shadow-lg"
+                        className="bg-primary hover:bg-primary/90 text-white px-10 py-4 rounded-xl flex items-center gap-3 transition-all font-black text-xs uppercase tracking-widest shadow-2xl shadow-primary/30 active:scale-95"
                     >
                         <Plus size={20} />
-                        Add Supplier
+                        Register Creator
                     </button>
                 </div>
             </div>
 
             {loading ? (
-                <div className="text-center py-20 text-gray-500">Loading suppliers...</div>
+                <div className="flex flex-col items-center justify-center py-40 space-y-4">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                    <p className="text-xs font-black text-muted-foreground/30 uppercase tracking-[0.4em]">Synchronizing Supply Chain...</p>
+                </div>
             ) : (
-                <DataTable
-                    data={suppliers}
-                    columns={columns}
-                    keyField="id"
-                    enableSelection
-                    onRowClick={(row) => navigate(`/admin/suppliers/${row.id}`)}
-                />
+                <div className="bg-background rounded-2xl border border-border overflow-hidden shadow-2xl animate-in fade-in duration-700">
+                    <DataTable
+                        data={suppliers}
+                        columns={columns}
+                        keyField="id"
+                        enableSelection
+                        onRowClick={(row) => navigate(`/admin/suppliers/${row.id}`)}
+                    />
+                </div>
             )}
 
             <AddSupplierModal

@@ -1,28 +1,36 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
 import { useAuthStore } from '../store/useAuthStore';
-import { Store, Lock, AlertCircle } from 'lucide-react';
+import { Store, Lock, AlertCircle, ArrowRight, ShieldCheck, Zap, BarChart3, User } from 'lucide-react';
 import { getApiUrl } from '../config/api';
 import { APP_CONFIG } from '../config/appConfig';
 
-// shadcn components
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Card, CardContent } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
+
+type LoginFormData = {
+    username: string;
+    password: string;
+};
 
 export const Login = () => {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isSubscriptionBlocked, setIsSubscriptionBlocked] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
     const login = useAuthStore((state) => state.login);
 
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const form = useForm<LoginFormData>({
+        defaultValues: {
+            username: '',
+            password: '',
+        }
+    });
+
+    const onSubmit = async (data: LoginFormData) => {
         setError('');
         setIsSubscriptionBlocked(false);
         setIsLoading(true);
@@ -31,15 +39,15 @@ export const Login = () => {
             const res = await fetch(getApiUrl('/auth/login'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
+                body: JSON.stringify({ username: data.username, password: data.password })
             });
 
-            const data = await res.json();
+            const responseData = await res.json();
 
             if (!res.ok) {
-                if (res.status === 403 && data.code === 'SUBSCRIPTION_BLOCKED') {
+                if (res.status === 403 && responseData.code === 'SUBSCRIPTION_BLOCKED') {
                     setIsSubscriptionBlocked(true);
-                    setError(data.error || 'System subscription is inactive. Please contact your developer.');
+                    setError(responseData.error || 'System subscription is inactive. Please contact your developer.');
                 } else {
                     setError('Invalid credentials');
                 }
@@ -48,16 +56,17 @@ export const Login = () => {
             }
 
             const apiUser: any = {
-                user_id: data.staff.id,
-                username: data.staff.name,
-                role: data.staff.role,
-                subscription_status: data.subscriptionStatus || 'active'
+                user_id: responseData.staff.id,
+                username: responseData.staff.name,
+                role: responseData.staff.role,
+                subscription_status: responseData.subscriptionStatus || 'active'
             };
-            login(apiUser, data.token);
 
-            if (data.staff.role === 'super_admin') {
+            login(apiUser, responseData.token);
+
+            if (apiUser.role === 'super_admin') {
                 navigate('/admin/system-subscription');
-            } else if (data.staff.role === 'admin' || data.staff.role === 'manager') {
+            } else if (apiUser.role === 'admin' || apiUser.role === 'manager') {
                 navigate('/dashboard');
             } else {
                 navigate('/pos');
@@ -70,125 +79,194 @@ export const Login = () => {
     };
 
     return (
-        <div className="min-h-screen flex bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-            {/* Left Side - Branding & Visuals */}
-            <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-primary-600 to-primary-800 relative overflow-hidden items-center justify-center p-12">
-                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80')] bg-cover bg-center mix-blend-overlay opacity-20"></div>
+        <div className="min-h-screen flex bg-background font-sans selection:bg-primary/30">
+            {/* Left Side - Deep Dark Modern Branding & Visuals */}
+            <div className="hidden lg:flex flex-col w-[55%] relative overflow-hidden items-center justify-center p-16 bg-slate-950">
+                {/* Dynamic Floating Orbs / Glassmorphism Background layer */}
+                <div className="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] rounded-full bg-blue-600/20 blur-[120px] mix-blend-screen pointer-events-none animate-pulse duration-[8000ms]" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-violet-600/20 blur-[150px] mix-blend-screen pointer-events-none" />
+                
+                {/* Subtle Grid overlay */}
+                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_10%,transparent_100%)] pointer-events-none" />
 
-                <div className="relative z-10 text-white max-w-lg">
-                    <div className="bg-white/10 p-4 rounded-2xl w-16 h-16 flex items-center justify-center mb-8 backdrop-blur-sm border border-white/20 shadow-xl">
-                        <Store size={32} className="text-white" />
+                <div className="relative z-10 w-full max-w-lg">
+                    {/* Animated Brand Logo */}
+                    <div className="w-20 h-20 mb-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-violet-600 p-[2px] shadow-2xl shadow-blue-500/20 transform hover:-translate-y-2 transition-all duration-500 cursor-default">
+                        <div className="w-full h-full rounded-2xl bg-slate-950/90 backdrop-blur-xl flex items-center justify-center">
+                            <Store size={36} className="text-blue-400" />
+                        </div>
                     </div>
-                    <h1 className="text-5xl font-extrabold mb-6 tracking-tight">{APP_CONFIG.appName}</h1>
-                    <p className="text-xl text-primary-100 font-light leading-relaxed">
-                        The advanced point of sale solution for modern businesses. Manage inventory, sales, and customers with ease.
-                    </p>
 
-                    <div className="mt-12 space-y-4">
-                        <div className="flex items-center gap-4 bg-white/5 p-4 rounded-xl backdrop-blur-sm border border-white/10">
-                            <div className="w-10 h-10 rounded-full bg-accent-400/20 flex items-center justify-center text-accent-300">
-                                <Store size={20} />
+                    <h1 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-white/60 mb-6 tracking-tight animate-in fade-in slide-in-from-bottom-8 duration-1000">
+                        {APP_CONFIG.appName}
+                    </h1>
+                    <p className="text-xl text-slate-300/80 font-medium leading-relaxed mb-12 max-w-md animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-150">
+                        The ultimate retail operating system. Built for speed, massive scale, and breathtaking modern experiences.
+                    </p>
+                    
+                    {/* Features list */}
+                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-300">
+                        <div className="flex items-center gap-4 group">
+                            <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+                                <Zap size={22} />
                             </div>
                             <div>
-                                <h3 className="font-bold">Smart Inventory</h3>
-                                <p className="text-sm text-primary-200">Real-time tracking & alerts</p>
+                                <h3 className="font-bold text-white text-lg">Lightning Fast POS</h3>
+                                <p className="text-sm text-slate-400">Process complex carts with near-zero latency</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 group">
+                            <div className="w-12 h-12 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-400 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(139,92,246,0.1)]">
+                                <BarChart3 size={22} />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-white text-lg">Deep Analytics</h3>
+                                <p className="text-sm text-slate-400">Actionable intelligence for retail dominance</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 group">
+                            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
+                                <ShieldCheck size={22} />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-white text-lg">Enterprise Security</h3>
+                                <p className="text-sm text-slate-400">Role-based rigorous access & audit logging</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Right Side - Login Form */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 lg:p-12">
-                <div className="w-full max-w-md">
-                    <div className="mb-8">
-                        <div className="inline-flex lg:hidden bg-primary-600 p-3 rounded-xl mb-4 text-white">
-                            <Store size={24} />
+            {/* Right Side - Premium Login Form */}
+            <div className="w-full lg:w-[45%] flex items-center justify-center p-6 sm:p-12 relative overflow-hidden">
+                {/* Subtle right-side lighting orb */}
+                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-background to-background opacity-60 pointer-events-none" />
+
+                <div className="w-full max-w-[420px] relative z-10 animate-in fade-in slide-in-from-right-8 duration-700">
+                    <div className="mb-10 text-center lg:text-left">
+                        <div className="mx-auto lg:mx-0 inline-flex lg:hidden w-16 h-16 mb-6 rounded-2xl bg-gradient-to-tr from-blue-600 to-violet-600 p-[2px] shadow-xl">
+                            <div className="w-full h-full rounded-2xl bg-card flex items-center justify-center">
+                                <Store size={28} className="text-primary" />
+                            </div>
                         </div>
-                        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Welcome back</h2>
-                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Please enter your details to sign in.</p>
+                        <h2 className="text-4xl font-extrabold tracking-tight text-foreground mb-3">Welcome Back</h2>
+                        <p className="text-muted-foreground text-base">Sign in to your workspace to continue.</p>
                     </div>
 
-                    <Card className="border-gray-200 dark:border-gray-700">
-                        <CardContent className="pt-6">
-                            <form onSubmit={handleLogin} className="space-y-6">
-                                {/* Error Alert */}
-                                {error && (
-                                    <Alert variant={isSubscriptionBlocked ? "destructive" : "destructive"}>
-                                        <AlertCircle className="h-4 w-4" />
-                                        <AlertTitle>Authentication Error</AlertTitle>
-                                        <AlertDescription>{error}</AlertDescription>
-                                    </Alert>
-                                )}
+                    <div className="bg-card/40 backdrop-blur-3xl border border-white/20 dark:border-white/10 shadow-2xl shadow-black/5 dark:shadow-black/20 rounded-3xl p-8 transition-all hover:bg-card/50">
+                        {error && (
+                            <Alert variant={isSubscriptionBlocked ? "destructive" : "destructive"} className="mb-6 bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400 rounded-xl">
+                                <AlertCircle className="h-5 w-5" />
+                                <AlertTitle className="font-bold">Authentication Error</AlertTitle>
+                                <AlertDescription>{error}</AlertDescription>
+                            </Alert>
+                        )}
 
-                                {/* Form Fields */}
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
-                                        <Input
-                                            type="text"
-                                            value={username}
-                                            onChange={(e) => setUsername(e.target.value)}
-                                            placeholder="Enter your username"
-                                            disabled={isLoading}
-                                            className="rounded-lg"
-                                        />
-                                    </div>
+                        <Form {...form}>
+                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                                <div className="space-y-5">
+                                    <FormField 
+                                        control={form.control}
+                                        name="username"
+                                        rules={{ required: "Username is required" }}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-foreground font-semibold">Username</FormLabel>
+                                                <FormControl>
+                                                    <div className="relative group">
+                                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">
+                                                            <User size={18} />
+                                                        </div>
+                                                        <Input 
+                                                            {...field} 
+                                                            placeholder="admin" 
+                                                            disabled={isLoading}
+                                                            className="pl-10 h-12 bg-background/50 border-input hover:border-border focus:border-primary focus:ring-primary/20 rounded-xl transition-all shadow-sm"
+                                                        />
+                                                    </div>
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
 
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-                                        <Input
-                                            type="password"
-                                            value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
-                                            placeholder="••••••••"
-                                            disabled={isLoading}
-                                            className="rounded-lg"
-                                            icon={<Lock size={18} />}
-                                        />
-                                    </div>
+                                    <FormField 
+                                        control={form.control}
+                                        name="password"
+                                        rules={{ required: "Password is required" }}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <FormLabel className="text-foreground font-semibold m-0">Password</FormLabel>
+                                                    <a href="#" className="text-sm font-bold text-primary hover:text-primary/80 transition-colors">
+                                                        Forgot password?
+                                                    </a>
+                                                </div>
+                                                <FormControl>
+                                                    <div className="relative group">
+                                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">
+                                                            <Lock size={18} />
+                                                        </div>
+                                                        <Input 
+                                                            {...field} 
+                                                            type="password"
+                                                            placeholder="••••••••" 
+                                                            disabled={isLoading}
+                                                            className="pl-10 h-12 bg-background/50 border-input hover:border-border focus:border-primary focus:ring-primary/20 rounded-xl transition-all shadow-sm"
+                                                        />
+                                                    </div>
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
                                 </div>
 
-                                {/* Remember & Forgot */}
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <Checkbox id="remember" />
-                                        <label htmlFor="remember" className="text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
-                                            Remember me
-                                        </label>
-                                    </div>
-                                    <a href="#" className="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400">
-                                        Forgot password?
-                                    </a>
-                                </div>
-
-                                {/* Submit Button */}
                                 <Button
                                     type="submit"
-                                    disabled={isLoading || !username || !password}
-                                    className="w-full h-11 rounded-lg font-semibold bg-primary-600 hover:bg-primary-700 dark:bg-primary-600"
+                                    disabled={isLoading || !form.formState.isValid}
+                                    className="w-full h-12 text-base font-extrabold bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white shadow-xl shadow-blue-500/20 border-0 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 relative overflow-hidden group"
                                 >
-                                    {isLoading ? 'Signing in...' : 'Sign In'}
+                                    {/* Shine reflection effect */}
+                                    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-[shimmer_1.5s_infinite]" />
+                                    
+                                    <span className="relative flex items-center justify-center">
+                                        {isLoading ? (
+                                            'Authenticating...'
+                                        ) : (
+                                            <>Sign In <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" /></>
+                                        )}
+                                    </span>
                                 </Button>
                             </form>
-                        </CardContent>
-                    </Card>
+                        </Form>
+                    </div>
 
-                    {/* Demo Credentials */}
-                    <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800">
-                        <p className="text-xs text-center text-gray-500 dark:text-gray-400 mb-4 font-semibold">Demo Credentials</p>
-                        <div className="space-y-2 text-xs">
-                            <div className="bg-gray-50 dark:bg-gray-800/50 px-3 py-2 rounded-md text-gray-600 dark:text-gray-300 font-mono border border-gray-200 dark:border-gray-700">
-                                <span className="text-primary-600 font-bold">superadmin</span> / admin123
-                            </div>
-                            <div className="bg-gray-50 dark:bg-gray-800/50 px-3 py-2 rounded-md text-gray-600 dark:text-gray-300 font-mono border border-gray-200 dark:border-gray-700">
-                                <span className="text-primary-600 font-bold">admin</span> / admin123
-                            </div>
-                            <div className="bg-gray-50 dark:bg-gray-800/50 px-3 py-2 rounded-md text-gray-600 dark:text-gray-300 font-mono border border-gray-200 dark:border-gray-700">
-                                <span className="text-accent-600 font-bold">cashier</span> / cashier123
-                            </div>
+                    {/* Minimalist Demo Credentials */}
+                    <div className="mt-8">
+                        <p className="text-xs text-center text-muted-foreground mb-4 font-bold uppercase tracking-wider">Demo Access</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                            <button
+                                type="button" 
+                                onClick={() => { form.setValue('username', 'superadmin'); form.setValue('password', 'admin123'); }}
+                                className="bg-card/40 hover:bg-card border border-border/50 p-3 rounded-xl flex flex-col items-center justify-center transition-all hover:-translate-y-0.5 shadow-sm group"
+                            >
+                                <span className="font-extrabold text-foreground group-hover:text-primary transition-colors">Super Admin</span>
+                                <span className="text-muted-foreground scale-90">admin123</span>
+                            </button>
+                            <button
+                                type="button" 
+                                onClick={() => { form.setValue('username', 'cashier'); form.setValue('password', 'cashier123'); }}
+                                className="bg-card/40 hover:bg-card border border-border/50 p-3 rounded-xl flex flex-col items-center justify-center transition-all hover:-translate-y-0.5 shadow-sm group"
+                            >
+                                <span className="font-extrabold text-foreground group-hover:text-violet-500 transition-colors">Cashier</span>
+                                <span className="text-muted-foreground scale-90">cashier123</span>
+                            </button>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>

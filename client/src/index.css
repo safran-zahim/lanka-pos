@@ -87,7 +87,40 @@
     @apply bg-background text-foreground;
   }
   html {
-    @apply font-sans;
+    @apply font-sans scroll-smooth;
+  }
+
+  /* Premium Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: oklch(var(--border));
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(var(--muted-foreground) / 40%);
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  /* Card Lift Animation */
+  .card-lift {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5 active:scale-[0.98];
+  }
+
+  /* Premium Focus Glow */
+  .focus-glow {
+    @apply focus-visible:ring-4 focus-visible:ring-ring/20 focus-visible:border-ring transition-all;
   }
 }
 

@@ -37,15 +37,16 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
                 <input
                     ref={ref}
                     className={`
-                        bg-gray-50 dark:bg-gray-900 
-                        text-gray-900 dark:text-white 
+                        bg-input/20 
+                        text-foreground 
                         p-3 rounded-lg 
-                        border ${error ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}
-                        focus:ring-2 ${error ? 'focus:ring-red-500' : 'focus:ring-blue-500'}
+                        border ${error ? 'border-destructive' : 'border-border'}
+                        focus:ring-2 ${error ? 'focus:ring-destructive' : 'focus:ring-ring'}
                         focus:border-transparent 
                         outline-none 
-                        transition-all
+                        transition-all duration-200
                         disabled:opacity-50 disabled:cursor-not-allowed
+                        placeholder:text-muted-foreground/50
                         ${icon ? 'pl-10' : ''}
                         ${widthStyle}
                         ${className}
@@ -57,7 +58,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
                 <p className="text-sm text-red-500 mt-1">{error}</p>
             )}
             {helperText && !error && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{helperText}</p>
+                <p className="text-xs text-muted-foreground mt-1">{helperText}</p>
             )}
         </div>
     );

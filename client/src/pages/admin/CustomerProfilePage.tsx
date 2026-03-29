@@ -118,13 +118,13 @@ export const CustomerProfilePage = () => {
                 <div className="flex items-center gap-4 mb-6">
                     <button
                         onClick={() => navigate('/admin/customers')}
-                        className="p-2 bg-white dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors"
+                        className="p-2 bg-card text-card-foreground rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm border border-border transition-colors"
                     >
                         <ArrowLeft size={20} />
                     </button>
                     <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Customer Profile</h1>
                 </div>
-                <div className="text-gray-500 dark:text-gray-400">Customer not found.</div>
+                <div className="text-muted-foreground">Customer not found.</div>
             </div>
         );
     }
@@ -135,13 +135,13 @@ export const CustomerProfilePage = () => {
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => navigate('/admin/customers')}
-                        className="p-2 bg-white dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors"
+                        className="p-2 bg-card text-card-foreground rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm border border-border transition-colors"
                     >
                         <ArrowLeft size={20} />
                     </button>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Customer Profile</h1>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">CUS-{String(customer.id || customer.customer_id).padStart(4, '0')}</p>
+                        <h1 className="text-2xl font-bold text-foreground">Customer Profile</h1>
+                        <p className="text-sm text-muted-foreground">CUS-{String(customer.id || customer.customer_id).padStart(4, '0')}</p>
                     </div>
                 </div>
             </div>
@@ -170,13 +170,13 @@ export const CustomerProfilePage = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                <div className="bg-card text-card-foreground rounded-lg border border-border p-4">
                     <div className="text-xs text-gray-400 uppercase tracking-wider">Points Balance</div>
                     <div className="mt-2 text-2xl font-bold text-purple-600 dark:text-purple-400 flex items-center gap-2">
                         <Award size={20} /> {customer.pointsBalance ?? customer.loyalty_points_balance}
                     </div>
                 </div>
-                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                <div className="bg-card text-card-foreground rounded-lg border border-border p-4">
                     <div className="text-xs text-gray-400 uppercase tracking-wider">Credit Balance</div>
                     <div className={`mt-2 text-2xl font-bold flex items-center gap-2 ${outstandingDue > 0 ? 'text-red-500' : 'text-green-500'}`}>
                         <Wallet size={20} /> {formatCurrency(outstandingDue)}
@@ -189,25 +189,25 @@ export const CustomerProfilePage = () => {
                                 setPaymentSaleId(null);
                                 setIsPaymentModalOpen(true);
                             }}
-                            className="mt-2 w-full py-1.5 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-lg text-xs font-bold uppercase hover:bg-red-100 transition-colors border border-red-100 dark:border-red-900/30"
+                            className="mt-2 w-full py-1.5 bg-red-50 dark:bg-red-900/10 text-destructive rounded-lg text-xs font-bold uppercase hover:bg-red-100 transition-colors border border-red-100 dark:border-red-900/30"
                         >
                             Pay Due Amount
                         </button>
                     )}
                 </div>
-                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                <div className="bg-card text-card-foreground rounded-lg border border-border p-4">
                     <div className="text-xs text-gray-400 uppercase tracking-wider">Total Spend</div>
-                    <div className="mt-2 text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <div className="mt-2 text-2xl font-bold text-foreground flex items-center gap-2">
                         <DollarSign size={20} /> {Number(customer.totalSpend ?? customer.total_spend_to_date ?? 0).toFixed(2)}
                     </div>
                 </div>
-                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                <div className="bg-card text-card-foreground rounded-lg border border-border p-4">
                     <div className="text-xs text-gray-400 uppercase tracking-wider">Transactions</div>
-                    <div className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
+                    <div className="mt-2 text-2xl font-bold text-foreground">
                         {transactions?.length || 0}
                     </div>
                 </div>
-                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                <div className="bg-card text-card-foreground rounded-lg border border-border p-4">
                     <div className="text-xs text-gray-400 uppercase tracking-wider">Last Purchase</div>
                     <div className="mt-2 text-sm text-gray-700 dark:text-gray-300">
                         {transactions?.[0] ? new Date(transactions[0].createdAt || transactions[0].timestamp).toLocaleString() : 'No purchases'}
@@ -216,13 +216,13 @@ export const CustomerProfilePage = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-                    <h2 className="font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                <div className="bg-card text-card-foreground rounded-lg border border-border p-4">
+                    <h2 className="font-bold text-foreground mb-3 flex items-center gap-2">
                         <Receipt size={16} /> Sales History
                     </h2>
                     <div className="max-h-105 overflow-y-auto">
                         <table className="w-full text-sm">
-                            <thead className="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                            <thead className="text-xs text-muted-foreground border-b border-border">
                                 <tr>
                                     <th className="py-2 text-left">Bill #</th>
                                     <th className="py-2 text-left">Date</th>
@@ -237,7 +237,7 @@ export const CustomerProfilePage = () => {
                                 {transactions?.map(t => (
                                     <tr
                                         key={t.id || t.transaction_id}
-                                        className="text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+                                        className="text-gray-700 dark:text-gray-300 hover:bg-accent hover:text-accent-foreground/50 cursor-pointer"
                                         onClick={() => navigate(`/admin/transactions/${t.id || t.transaction_id}`)}
                                     >
                                         <td className="py-2">#{t.id || t.transaction_id}</td>
@@ -281,8 +281,8 @@ export const CustomerProfilePage = () => {
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-                    <h2 className="font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                <div className="bg-card text-card-foreground rounded-lg border border-border p-4">
+                    <h2 className="font-bold text-foreground mb-3 flex items-center gap-2">
                         <Award size={16} /> Points History
                     </h2>
                     <div className="max-h-105 overflow-y-auto space-y-2 text-sm">
@@ -304,13 +304,13 @@ export const CustomerProfilePage = () => {
             </div>
 
             {/* Repayment History */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-                <h2 className="font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+            <div className="bg-card text-card-foreground rounded-lg border border-border p-4">
+                <h2 className="font-bold text-foreground mb-3 flex items-center gap-2">
                     <History size={16} /> Repayment History
                 </h2>
                 <div className="max-h-75 overflow-y-auto">
                     <table className="w-full text-sm">
-                        <thead className="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                        <thead className="text-xs text-muted-foreground border-b border-border">
                             <tr>
                                 <th className="py-2 text-left">Date</th>
                                 <th className="py-2 text-left">Bill #</th>
@@ -325,7 +325,7 @@ export const CustomerProfilePage = () => {
                                     <td className="py-2 text-xs">{new Date(p.createdAt).toLocaleString()}</td>
                                     <td className="py-2">
                                         {p.saleId ? (
-                                            <span className="text-blue-600 dark:text-blue-400 font-medium">#{p.saleId}</span>
+                                            <span className="text-primary font-medium">#{p.saleId}</span>
                                         ) : (
                                             <span className="text-gray-400">General</span>
                                         )}
@@ -349,8 +349,8 @@ export const CustomerProfilePage = () => {
                     <DialogContent className="w-full max-w-md p-6" showCloseButton={false}>
                         <DialogHeader className="mb-6">
                             <div className="flex items-center justify-between">
-                                <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                    <Wallet className="text-blue-500" /> Record Payment
+                                <DialogTitle className="text-xl font-bold text-foreground flex items-center gap-2">
+                                    <Wallet className="text-primary" /> Record Payment
                                 </DialogTitle>
                                 <Button type="button" onClick={() => setIsPaymentModalOpen(false)} variant="ghost" size="sm" className="text-gray-400 hover:text-gray-600">
                                     <X size={24} />
@@ -361,7 +361,7 @@ export const CustomerProfilePage = () => {
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Amount</label>
-                                <div className="text-lg font-bold text-red-600 dark:text-red-400">
+                                <div className="text-lg font-bold text-destructive">
                                     {formatCurrency(Math.max(0, outstandingDue))}
                                 </div>
                             </div>
@@ -372,7 +372,7 @@ export const CustomerProfilePage = () => {
                                     type="number"
                                     value={paymentAmount}
                                     onChange={(e) => setPaymentAmount(e.target.value)}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-foreground focus:ring-2 focus:ring-ring outline-none"
                                     placeholder="Enter amount"
                                 />
                             </div>
@@ -389,7 +389,7 @@ export const CustomerProfilePage = () => {
                                             size="sm"
                                             className={`py-2 text-sm font-bold capitalize border ${paymentMethod === m
                                                 ? 'border-blue-600 text-white shadow-md'
-                                                : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900'
+                                                : 'border-border text-muted-foreground bg-muted'
                                                 }`}
                                         >
                                             {m}
@@ -403,7 +403,7 @@ export const CustomerProfilePage = () => {
                                 <textarea
                                     value={paymentNote}
                                     onChange={(e) => setPaymentNote(e.target.value)}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-foreground focus:ring-2 focus:ring-ring outline-none"
                                     rows={2}
                                 />
                             </div>

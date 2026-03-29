@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, User, Phone, Mail, Save, AlertCircle, Award } from 'lucide-react';
-import { Dialog, DialogContent } from '../ui/dialog';
+import { X, User, Phone, Mail, Save, AlertCircle, Award, RefreshCw, Check } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { Label } from '../ui/label';
 
 interface CustomerModalProps {
     customer?: any | null;
@@ -91,122 +93,146 @@ export const CustomerModal = ({ customer, onClose, onSuccess }: CustomerModalPro
 
     return (
         <Dialog open={true} onOpenChange={onClose}>
-            <DialogContent className="w-full max-w-md p-0 rounded-2xl overflow-hidden" showCloseButton={false}>
-                {/* Header Graphic */}
-                <div className="relative h-32 bg-linear-to-br from-blue-600 to-indigo-700 flex items-center justify-center">
+            <DialogContent className="w-full max-w-2xl p-0 rounded-xl overflow-hidden border border-border shadow-2xl bg-background" showCloseButton={false}>
+                <DialogHeader className="p-8 border-b bg-muted/5 flex flex-row items-center justify-between sticky top-0 z-20">
+                    <div className="flex items-center gap-5">
+                        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                            <User size={24} />
+                        </div>
+                        <div>
+                            <DialogTitle className="text-2xl font-black tracking-tight leading-none mb-1.5">
+                                {customer ? 'Update Profile' : 'New Customer'}
+                            </DialogTitle>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50">
+                                {customer ? `Member ID: #${customer.id}` : 'Create a new loyalty profile'}
+                            </p>
+                        </div>
+                    </div>
                     <Button
                         type="button"
                         onClick={onClose}
                         variant="ghost"
                         size="sm"
-                        className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors bg-white/10 rounded-full backdrop-blur-md"
+                        className="rounded-lg h-10 w-10 hover:bg-muted"
                     >
                         <X size={20} />
                     </Button>
-                    <div className="bg-white dark:bg-gray-900 p-4 rounded-3xl shadow-xl flex items-center justify-center translate-y-8 border-4 border-gray-50 dark:border-gray-900">
-                        <User size={40} className="text-blue-600" />
-                    </div>
-                </div>
+                </DialogHeader>
 
-                <div className="px-8 pt-12 pb-8">
-                    <div className="text-center mb-8">
-                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                            {customer ? 'Edit Customer' : 'Add New Customer'}
-                        </h2>
-                        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-                            {customer ? 'Update customer contact information' : 'Create a new customer profile'}
-                        </p>
-                    </div>
-
+                <div className="p-10 max-h-[75vh] overflow-y-auto custom-scrollbar">
                     {error && (
-                        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/50 rounded-xl flex items-start gap-3 text-red-600 dark:text-red-400 text-sm animate-in slide-in-from-top-2">
-                            <AlertCircle size={18} className="shrink-0 mt-0.5" />
-                            <p>{error}</p>
+                        <div className="mb-6 p-3 bg-destructive/10 border border-destructive/20 rounded-md flex items-center gap-2 text-destructive text-xs animate-in fade-in duration-200">
+                            <AlertCircle size={16} className="shrink-0" />
+                            <p className="font-bold">{error}</p>
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Full Name</label>
-                            <div className="relative group">
-                                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={18} />
-                                <input
-                                    type="text"
-                                    required
-                                    placeholder="John Doe"
-                                    className="w-full bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl py-4 pl-12 pr-4 border-2 border-transparent focus:border-blue-500 focus:bg-white dark:focus:bg-gray-900 outline-none transition-all shadow-sm"
-                                    value={formData.name}
-                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                />
+                    <form onSubmit={handleSubmit} className="space-y-12">
+                        <div className="space-y-10">
+                            <div className="space-y-6">
+                                <div className="flex items-center justify-between border-b border-border/10 pb-4 mb-2">
+                                    <Label className="text-xs font-black uppercase tracking-[0.2em] text-primary">Basic Statistics</Label>
+                                    <span className="text-[10px] font-bold text-muted-foreground/30 italic uppercase">Section 01</span>
+                                </div>
+                                <div className="space-y-6">
+                                    <div className="space-y-2.5">
+                                        <Label className="text-xs font-black ml-1 text-muted-foreground/80">Full Name <span className="text-destructive">*</span></Label>
+                                        <div className="relative group">
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/50 group-focus-within:text-primary transition-colors">
+                                                <User size={18} />
+                                            </div>
+                                            <Input
+                                                required
+                                                placeholder="e.g. John Doe"
+                                                className="pl-12 h-12 rounded-xl border border-border bg-background focus:ring-4 focus:ring-primary/5 text-base font-bold transition-all shadow-xs"
+                                                value={formData.name}
+                                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <div className="space-y-2.5">
+                                            <Label className="text-xs font-black ml-1 text-muted-foreground/80">Phone Number <span className="text-destructive">*</span></Label>
+                                            <div className="relative group">
+                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/50 group-focus-within:text-primary transition-colors">
+                                                    <Phone size={18} />
+                                                </div>
+                                                <Input
+                                                    required
+                                                    type="tel"
+                                                    placeholder="07XXXXXXXX"
+                                                    className="pl-12 h-12 rounded-xl border border-border bg-background focus:ring-4 focus:ring-primary/5 text-base font-bold transition-all shadow-xs"
+                                                    value={formData.phone}
+                                                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2.5">
+                                            <Label className="text-xs font-black ml-1 text-muted-foreground/80">Email <span className="opacity-40">(Optional)</span></Label>
+                                            <div className="relative group">
+                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/50 group-focus-within:text-primary transition-colors">
+                                                    <Mail size={18} />
+                                                </div>
+                                                <Input
+                                                    type="email"
+                                                    placeholder="email@example.com"
+                                                    className="pl-12 h-12 rounded-xl border border-border bg-background focus:ring-4 focus:ring-primary/5 text-base font-bold transition-all shadow-xs"
+                                                    value={formData.email}
+                                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
+
+                            {customer?.id && (
+                                <div className="space-y-6 pt-4">
+                                    <div className="flex items-center justify-between border-b border-border/10 pb-4 mb-2">
+                                        <Label className="text-xs font-black uppercase tracking-[0.2em] text-primary">Privilege Status</Label>
+                                        <span className="text-[10px] font-bold text-muted-foreground/30 italic uppercase">Membership</span>
+                                    </div>
+                                    <div className="p-8 bg-primary/5 border-2 border-primary/10 rounded-2xl flex items-center justify-between shadow-xs">
+                                        <div className="flex items-center gap-6">
+                                            <div className="w-16 h-16 rounded-2xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
+                                                <Award size={32} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-[10px] font-black text-primary/60 uppercase tracking-widest">Available Points</p>
+                                                <p className="text-4xl font-black text-primary tracking-tighter tabular-nums leading-none">{customer.loyaltyPointsBalance || 0}</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-xs font-black bg-primary text-primary-foreground px-4 py-2 rounded-xl shadow-lg shadow-primary/20 tracking-wide uppercase">Active VIP</div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Phone Number</label>
-                            <div className="relative group">
-                                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={18} />
-                                <input
-                                    type="tel"
-                                    required
-                                    placeholder="+94 77 123 4567"
-                                    className="w-full bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl py-4 pl-12 pr-4 border-2 border-transparent focus:border-blue-500 focus:bg-white dark:focus:bg-gray-900 outline-none transition-all shadow-sm"
-                                    value={formData.phone}
-                                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Email Address (Optional)</label>
-                            <div className="relative group">
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={18} />
-                                <input
-                                    type="email"
-                                    placeholder="john@example.com"
-                                    className="w-full bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl py-4 pl-12 pr-4 border-2 border-transparent focus:border-blue-500 focus:bg-white dark:focus:bg-gray-900 outline-none transition-all shadow-sm"
-                                    value={formData.email}
-                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="pt-6 flex gap-3">
+                        <div className="pt-8 flex gap-5 border-t border-border/10">
                             <Button
                                 type="button"
                                 onClick={onClose}
                                 variant="ghost"
-                                fullWidth
-                                className="flex-1 border-2 border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                className="flex-1 h-14 rounded-xl text-base font-black border border-border bg-background shadow-xs hover:bg-muted transition-all"
                             >
-                                Cancel
+                                Cancel Discovery
                             </Button>
                             <Button
                                 type="submit"
                                 disabled={isSaving}
                                 variant="primary"
-                                className="flex-2 font-bold shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 disabled:opacity-70"
+                                className="flex-[1.5] h-14 font-black rounded-xl shadow-2xl shadow-primary/30 flex items-center justify-center gap-3 active:scale-95 transition-all text-base"
                             >
                                 {isSaving ? (
-                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    <RefreshCw className="w-5 h-5 animate-spin" />
                                 ) : (
-                                    <Save size={20} />
+                                    <Check className="w-5 h-5" />
                                 )}
-                                {customer ? 'Update Profile' : 'Create Profile'}
+                                {customer ? 'Update Specifications' : 'Publish Member'}
                             </Button>
                         </div>
                     </form>
-
-                    {customer?.id && (
-                        <div className="mt-8 space-y-6">
-                            {/* Points history were here, removing Dexie dependency for now */}
-                            <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-                                <div className="text-sm text-gray-600 dark:text-gray-300">Points Balance</div>
-                                <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400 font-bold">
-                                    <Award size={16} /> {customer.loyaltyPointsBalance || 0}
-                                </div>
-                            </div>
-                        </div>
-                    )}
                 </div>
             </DialogContent>
         </Dialog>

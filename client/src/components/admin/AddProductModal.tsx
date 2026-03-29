@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { X, Plus, Image as ImageIcon, RefreshCw } from 'lucide-react';
+import { X, Plus, Image as ImageIcon, RefreshCw, AlertCircle, Package } from 'lucide-react';
 import { CategoryManager } from '../CategoryManager';
 import { BrandManager } from './settings/BrandManager';
 import { UnitManager } from './settings/UnitManager';
@@ -9,6 +9,9 @@ import { getApiUrl } from '../../config/api';
 import type { Product } from '../../db/db';
 import { Button } from '../ui/Button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Checkbox } from '../ui/checkbox';
+import { Label } from '../ui/label';
 
 type BarcodeType = 'C128' | 'C39' | 'EAN13' | 'EAN8' | 'UPCA' | 'UPCE';
 
@@ -33,7 +36,9 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
         alert_quantity: String(product?.alert_quantity ?? product?.reorder_level ?? 0),
         description: product?.description ?? '',
         image: product?.image ?? '',
-        tax_type: product?.tax_type ?? 'inclusive'
+        tax_type: product?.tax_type ?? 'inclusive',
+        cost_price: String(product?.cost_price ?? 0),
+        retail_price: String(product?.retail_price ?? 0)
     });
 
     const [modalState, setModalState] = useState({
@@ -124,7 +129,9 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
             alert_quantity: String(product.alert_quantity ?? product.reorder_level ?? 0),
             description: product.description ?? '',
             image: product.image ?? '',
-            tax_type: product.tax_type ?? 'inclusive'
+            tax_type: product.tax_type ?? 'inclusive',
+            cost_price: String(product.cost_price ?? 0),
+            retail_price: String(product.retail_price ?? 0)
         });
     }, [product]);
 
@@ -218,6 +225,8 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
                         subCategoryId: formData.sub_category_id ? Number(formData.sub_category_id) : null,
                         brandId: formData.brand_id ? Number(formData.brand_id) : null,
                         unitId: formData.unit_id ? Number(formData.unit_id) : null,
+                        costPrice: parseFloat(formData.cost_price) || 0,
+                        retailPrice: parseFloat(formData.retail_price) || 0,
                         reorderLevel: parseFloat(formData.alert_quantity) || 0
                     })
                 });
@@ -264,18 +273,18 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
         }
     };
 
-    const ModalOverlay = ({ title, onClose, children, large }: any) => (
+    const ModalOverlay = ({ title, onClose, children }: any) => (
         <Dialog open={true} onOpenChange={onClose}>
-            <DialogContent className={`w-full ${large ? 'max-w-4xl' : 'max-w-lg'} p-0 overflow-hidden`}>
-                <DialogHeader className="p-6 border-b border-gray-200 dark:border-gray-700 bg-linear-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-900">
-                    <div className="flex justify-between items-center">
-                        <DialogTitle className="text-xl font-bold text-gray-800 dark:text-white">{title}</DialogTitle>
-                        <Button onClick={onClose} variant="ghost" size="sm" className="hover:bg-white/50 dark:hover:bg-gray-700">
-                            <X size={24} className="text-gray-500 dark:text-gray-400" />
-                        </Button>
-                    </div>
+            <DialogContent className="w-full max-w-5xl p-0 overflow-hidden rounded-xl border-border shadow-2xl h-fit border flex flex-col bg-background">
+                <DialogHeader className="p-8 border-b border-border bg-muted/30">
+                    <DialogTitle className="text-2xl font-black italic uppercase tracking-tighter">{title}</DialogTitle>
+                    <p className="text-[10px] font-black text-muted-foreground/40 mt-1 uppercase tracking-[0.2em]">Secondary Infrastructure Management</p>
                 </DialogHeader>
-                <div className="p-6 overflow-y-auto max-h-[80vh]">{children}</div>
+                <div className="p-10 overflow-y-auto max-h-[85vh] custom-scrollbar">
+                    <div className="bg-card/30 rounded-2xl border border-border/5 p-8 shadow-inner">
+                        {children}
+                    </div>
+                </div>
             </DialogContent>
         </Dialog>
     );
@@ -285,23 +294,10 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
             {/* Helper Modals */}
             {modalState.showCategory && (
                 <CategoryManager
-                    onClose={() => {
-                        setModalState({ ...modalState, showCategory: false });
-                        // Reload categories after closing
-                        const loadCategories = async () => {
-                            if (!token) return;
-                            try {
-                                const res = await fetch(getApiUrl('/categories'), { headers: { Authorization: `Bearer ${token}` } });
-                                if (res.ok) setCategories(await res.json());
-                            } catch (error) {
-                                console.error('Failed to reload categories', error);
-                            }
-                        };
-                        loadCategories();
-                    }}
+                    onClose={() => setModalState({ ...modalState, showCategory: false })}
                     onCategoryCreated={(newCategory) => {
                         setCategories(prev => [...prev, newCategory]);
-                        setFormData({ ...formData, category_id: newCategory.id });
+                        setFormData({ ...formData, category_id: String(newCategory.id) });
                         setModalState({ ...modalState, showCategory: false });
                     }}
                 />
@@ -309,25 +305,11 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
             {modalState.showBrand && (
                 <ModalOverlay
                     title="Manage Brands"
-                    large={true}
-                    onClose={() => {
-                        setModalState({ ...modalState, showBrand: false });
-                        // Reload brands after closing
-                        const loadBrands = async () => {
-                            if (!token) return;
-                            try {
-                                const res = await fetch(getApiUrl('/brands'), { headers: { Authorization: `Bearer ${token}` } });
-                                if (res.ok) setBrands(await res.json());
-                            } catch (error) {
-                                console.error('Failed to reload brands', error);
-                            }
-                        };
-                        loadBrands();
-                    }}
+                    onClose={() => setModalState({ ...modalState, showBrand: false })}
                 >
                     <BrandManager onBrandCreated={(newBrand) => {
                         setBrands(prev => [...prev, newBrand]);
-                        setFormData({ ...formData, brand_id: newBrand.id });
+                        setFormData({ ...formData, brand_id: String(newBrand.id) });
                         setModalState({ ...modalState, showBrand: false });
                     }} />
                 </ModalOverlay>
@@ -335,25 +317,11 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
             {modalState.showUnit && (
                 <ModalOverlay
                     title="Manage Units"
-                    large={true}
-                    onClose={() => {
-                        setModalState({ ...modalState, showUnit: false });
-                        // Reload units after closing
-                        const loadUnits = async () => {
-                            if (!token) return;
-                            try {
-                                const res = await fetch(getApiUrl('/units'), { headers: { Authorization: `Bearer ${token}` } });
-                                if (res.ok) setUnits(await res.json());
-                            } catch (error) {
-                                console.error('Failed to reload units', error);
-                            }
-                        };
-                        loadUnits();
-                    }}
+                    onClose={() => setModalState({ ...modalState, showUnit: false })}
                 >
                     <UnitManager onUnitCreated={(newUnit) => {
                         setUnits(prev => [...prev, newUnit]);
-                        setFormData({ ...formData, unit_id: newUnit.id });
+                        setFormData({ ...formData, unit_id: String(newUnit.id) });
                         setModalState({ ...modalState, showUnit: false });
                     }} />
                 </ModalOverlay>
@@ -361,226 +329,298 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
 
             {/* Main Modal */}
             <Dialog open={true} onOpenChange={onClose}>
-                <DialogContent className="w-full md:max-w-6xl p-0 overflow-hidden flex flex-col h-full md:h-auto md:max-h-[90vh]">
-
-                    {/* Header */}
-                    {/* Header */}
-                    <DialogHeader className="p-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 sticky top-0 z-10">
-                        <div className="flex justify-between items-center">
-                            <DialogTitle className="text-2xl font-bold text-gray-800 dark:text-white">{isEdit ? 'Edit Product' : 'Add New Product'}</DialogTitle>
-                            <Button onClick={onClose} variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
-                                <X size={28} />
-                            </Button>
+                <DialogContent className="w-full max-w-7xl p-0 overflow-hidden flex flex-col h-[95vh] rounded-xl border border-border shadow-2xl bg-background">
+                    <DialogHeader className="p-8 border-b bg-muted/5 sticky top-0 z-20 flex flex-row items-center justify-between">
+                        <div className="flex items-center gap-5">
+                            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                                <Plus size={24} />
+                            </div>
+                            <div>
+                                <DialogTitle className="text-2xl font-black tracking-tight leading-none mb-1.5">
+                                    {isEdit ? 'Update Product Details' : 'Design New Product'}
+                                </DialogTitle>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50">Architecture & Inventory Logic</p>
+                            </div>
                         </div>
+                        <Button
+                            type="button"
+                            onClick={onClose}
+                            variant="ghost"
+                            size="sm"
+                            className="rounded-lg h-10 w-10 hover:bg-muted"
+                        >
+                            <X size={20} />
+                        </Button>
                     </DialogHeader>
 
-                    {/* Scrollable Content */}
-                    <div className="flex-1 overflow-y-auto p-8">
-                        <form id="product-form" onSubmit={handleSubmit} className="space-y-8">
-
-                            {/* Basic Details Section */}
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4">Basic Information</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">Product Name*</label>
-                                        <input
-                                            required
-                                            type="text"
-                                            className={`w-full p-2.5 rounded-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none ${fieldErrors.name ? 'border-red-500 dark:border-red-500 ring-1 ring-red-500' : 'border-gray-300 dark:border-gray-600'}`}
-                                            placeholder="Product Name"
-                                            value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                        />
-                                        {fieldErrors.name && <p className="text-xs text-red-500 font-medium">{fieldErrors.name}</p>}
+                    <div className="flex-1 overflow-y-auto p-12 custom-scrollbar">
+                        <form id="product-form" onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                            
+                            {/* Left Side: General & Stock (8/12) */}
+                            <div className="lg:col-span-8 space-y-12">
+                                {/* Core Info */}
+                                <div className="p-10 rounded-2xl border border-border bg-card shadow-xs space-y-8">
+                                    <div className="flex items-center justify-between border-b border-border/10 pb-4 mb-2">
+                                        <Label className="text-xs font-black uppercase tracking-[0.2em] text-primary">Primary Identity</Label>
+                                        <span className="text-[10px] font-bold text-muted-foreground/30 italic uppercase">Step 01</span>
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                            SKU
-                                            {!isEdit && <span className="text-xs text-green-600 dark:text-green-400 ml-2">(Auto-generated)</span>}
-                                        </label>
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                className={`w-full p-2.5 pr-12 rounded-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none ${fieldErrors.skuCode ? 'border-red-500 dark:border-red-500 ring-1 ring-red-500' : 'border-gray-300 dark:border-gray-600'}`}
-                                                placeholder="SKU Code (Auto-generated)"
-                                                value={formData.sku_code} onChange={e => setFormData({ ...formData, sku_code: e.target.value })}
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-3">
+                                            <Label className="text-xs font-black ml-1 text-muted-foreground/80">Product Name <span className="text-destructive">*</span></Label>
+                                            <Input
+                                                required
+                                                className={`h-12 rounded-xl border bg-background focus:ring-4 focus:ring-primary/5 text-base font-bold transition-all shadow-xs ${fieldErrors.name ? 'border-destructive' : 'border-border'}`}
+                                                placeholder="e.g. Basmati Rice"
+                                                value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })}
                                             />
-                                            <Button
-                                                type="button"
-                                                onClick={handleGenerateSKU}
-                                                variant="ghost"
-                                                size="sm"
-                                                className="absolute right-2 top-1.5 p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md"
-                                                title="Regenerate SKU"
-                                            >
-                                                <RefreshCw size={18} />
-                                            </Button>
+                                            {fieldErrors.name && <p className="text-[10px] text-destructive ml-1">{fieldErrors.name}</p>}
                                         </div>
-                                        {fieldErrors.skuCode && <p className="text-xs text-red-500 font-medium">{fieldErrors.skuCode}</p>}
-                                        {!isEdit && !fieldErrors.skuCode && <p className="text-xs text-gray-500 dark:text-gray-400">SKU is automatically generated. Click refresh to regenerate.</p>}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">Barcode</label>
-                                        <input
-                                            type="text"
-                                            className={`w-full p-2.5 rounded-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none ${fieldErrors.barcode ? 'border-red-500 dark:border-red-500 ring-1 ring-red-500' : 'border-gray-300 dark:border-gray-600'}`}
-                                            placeholder="Barcode (Optional)"
-                                            value={formData.barcode} onChange={e => setFormData({ ...formData, barcode: e.target.value })}
-                                        />
-                                        {fieldErrors.barcode && <p className="text-xs text-red-500 font-medium">{fieldErrors.barcode}</p>}
-                                        <div className="mt-3">
-                                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">Barcode Type</label>
-                                            <select className="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none"
-                                                value={formData.barcode_type}
-                                                onChange={e => setFormData({ ...formData, barcode_type: e.target.value as BarcodeType })}>
-                                                <option value="C128">Code 128 (C128)</option>
-                                                <option value="C39">Code 39 (C39)</option>
-                                                <option value="EAN13">EAN-13</option>
-                                                <option value="EAN8">EAN-8</option>
-                                                <option value="UPCA">UPC-A</option>
-                                                <option value="UPCE">UPC-E</option>
-                                            </select>
+
+                                        <div className="space-y-3">
+                                            <Label className="text-xs font-black ml-1 text-muted-foreground/80 flex justify-between">
+                                                SKU Code
+                                                {!isEdit && <span className="text-[10px] text-primary/40 font-black tracking-[0.1em]">AUTO-GENERATED</span>}
+                                            </Label>
+                                            <div className="relative group/sku">
+                                                <Input
+                                                    className={`h-12 pl-4 pr-12 rounded-xl border bg-muted/5 font-mono font-black text-base focus:ring-4 focus:ring-primary/5 transition-all shadow-inner ${fieldErrors.skuCode ? 'border-destructive' : 'border-border'}`}
+                                                    placeholder="10001"
+                                                    value={formData.sku_code} onChange={e => setFormData({ ...formData, sku_code: e.target.value })}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={handleGenerateSKU}
+                                                    className="absolute right-1 top-1 h-10 w-10 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-white hover:shadow-sm transition-all cursor-pointer"
+                                                >
+                                                    <RefreshCw size={16} />
+                                                </button>
+                                            </div>
+                                            {fieldErrors.skuCode && <p className="text-[10px] text-destructive ml-1">{fieldErrors.skuCode}</p>}
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <Label className="text-xs font-black ml-1 text-muted-foreground/80">Barcode Identifier</Label>
+                                            <Input
+                                                className="h-12 rounded-xl border border-border bg-background focus:ring-4 focus:ring-primary/5 text-base font-bold transition-all shadow-xs"
+                                                placeholder="UPC/EAN Number"
+                                                value={formData.barcode} onChange={e => setFormData({ ...formData, barcode: e.target.value })}
+                                            />
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <Label className="text-xs font-black ml-1 text-muted-foreground/80">Symbology</Label>
+                                            <Select value={formData.barcode_type} onValueChange={(val) => setFormData({ ...formData, barcode_type: val as BarcodeType })}>
+                                                <SelectTrigger className="h-12 rounded-xl font-bold bg-background shadow-xs text-base">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent className="rounded-xl border-border shadow-2xl">
+                                                    {['C128', 'C39', 'EAN13', 'EAN8', 'UPCA', 'UPCE'].map(t => (
+                                                        <SelectItem key={t} value={t} className="font-bold py-3">{t}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-                                    <div className="space-y-2">
-                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">Unit*</label>
-                                        <div className="flex gap-2">
-                                            <select required className="flex-1 p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none"
-                                                value={formData.unit_id} onChange={e => setFormData({ ...formData, unit_id: e.target.value })}>
-                                                <option value="">Select Unit</option>
-                                                {units?.map(u => <option key={u.id} value={u.id}>{u.name} ({u.shortName || u.short_name})</option>)}
-                                            </select>
-                                            <Button type="button" onClick={() => setModalState({ ...modalState, showUnit: true })} variant="ghost" size="sm" className="p-2.5 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800"><Plus size={20} /></Button>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">Brand</label>
-                                        <div className="flex gap-2">
-                                            <select className="flex-1 p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none"
-                                                value={formData.brand_id} onChange={e => setFormData({ ...formData, brand_id: e.target.value })}>
-                                                <option value="">Select Brand</option>
-                                                {brands?.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-                                            </select>
-                                            <Button type="button" onClick={() => setModalState({ ...modalState, showBrand: true })} variant="ghost" size="sm" className="p-2.5 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800"><Plus size={20} /></Button>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">Category</label>
-                                        <div className="flex gap-2">
-                                            <select className="flex-1 p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none"
-                                                value={formData.category_id} onChange={e => {
-                                                    setFormData({
-                                                        ...formData,
-                                                        category_id: e.target.value,
-                                                        sub_category_id: '' // Reset subcategory when category changes
-                                                    });
-                                                }}>
-                                                <option value="">Select Category</option>
-                                                {categories?.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                            </select>
-                                            <Button type="button" onClick={() => setModalState({ ...modalState, showCategory: true })} variant="ghost" size="sm" className="p-2.5 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800"><Plus size={20} /></Button>
-                                        </div>
+                                {/* Commercial Logic — New Pricing Section */}
+                                <div className="p-10 rounded-2xl border border-border bg-card shadow-xs space-y-8">
+                                    <div className="flex items-center justify-between border-b border-border/10 pb-4 mb-2">
+                                        <Label className="text-xs font-black uppercase tracking-[0.2em] text-primary">Commercial Logic</Label>
+                                        <span className="text-[10px] font-bold text-muted-foreground/30 italic uppercase">Step 03</span>
                                     </div>
 
-                                    {/* SubCategory Selection */}
-                                    {formData.category_id && (
-                                        <div className="space-y-2 animate-fadeIn">
-                                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">Sub Category</label>
-                                            <select
-                                                className="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none"
-                                                value={formData.sub_category_id}
-                                                onChange={e => setFormData({ ...formData, sub_category_id: e.target.value })}
-                                            >
-                                                <option value="">Select Sub Category</option>
-                                                {subCategories?.map(sub => (
-                                                    <option key={sub.id} value={sub.id}>{sub.name}</option>
-                                                ))}
-                                                {subCategories?.length === 0 && <option disabled>No subcategories found</option>}
-                                            </select>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <div className="space-y-3">
+                                            <Label className="text-xs font-black ml-1 text-muted-foreground/80">Buying Cost (Rs.) <span className="text-destructive">*</span></Label>
+                                            <div className="relative">
+                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/40 font-black text-xs">RS</div>
+                                                <Input
+                                                    type="number" step="any" required
+                                                    className="h-14 pl-12 rounded-xl border border-border bg-background focus:ring-4 focus:ring-primary/5 text-xl font-black transition-all shadow-xs"
+                                                    placeholder="0.00"
+                                                    value={formData.cost_price} onChange={e => setFormData({ ...formData, cost_price: e.target.value })}
+                                                />
+                                            </div>
+                                            <p className="text-[10px] text-muted-foreground/40 ml-1 font-bold">Base acquisition price for margin calculation.</p>
                                         </div>
-                                    )}
+
+                                        <div className="space-y-3">
+                                            <Label className="text-xs font-black ml-1 text-muted-foreground/80">Selling Retail (Rs.) <span className="text-destructive">*</span></Label>
+                                            <div className="relative">
+                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/40 font-black text-xs">RS</div>
+                                                <Input
+                                                    type="number" step="any" required
+                                                    className="h-14 pl-12 rounded-xl border border-primary/20 bg-primary/5 focus:ring-4 focus:ring-primary/5 text-xl font-black text-primary transition-all shadow-xs"
+                                                    placeholder="0.00"
+                                                    value={formData.retail_price} onChange={e => setFormData({ ...formData, retail_price: e.target.value })}
+                                                />
+                                            </div>
+                                            <p className="text-[10px] text-primary/40 ml-1 font-bold">Standard storefront price for point-of-sale.</p>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
 
-                            {/* Inventory & Stock */}
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4">Inventory & Stock</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div className="space-y-4">
-                                        <div className="flex items-center space-x-3">
-                                            <input type="checkbox" id="manage_stock" className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-                                                checked={formData.manage_stock} onChange={e => setFormData({ ...formData, manage_stock: e.target.checked })} />
-                                            <label htmlFor="manage_stock" className="font-semibold text-gray-700 dark:text-gray-300">Manage Stock?</label>
+                                {/* Organization */}
+                                <div className="p-10 rounded-2xl border border-border bg-card shadow-xs space-y-8">
+                                    <div className="flex items-center justify-between border-b border-border/10 pb-4 mb-2">
+                                        <Label className="text-xs font-black uppercase tracking-[0.2em] text-primary">Spatial Taxonomy</Label>
+                                        <span className="text-[10px] font-bold text-muted-foreground/30 italic uppercase">Step 02</span>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                        <div className="space-y-3">
+                                            <Label className="text-xs font-black ml-1 text-muted-foreground/80">Measurement Unit <span className="text-destructive">*</span></Label>
+                                            <div className="flex gap-3 items-end">
+                                                <Select value={formData.unit_id} onValueChange={(val) => setFormData({ ...formData, unit_id: val })}>
+                                                    <SelectTrigger className="h-12 rounded-xl text-base font-bold flex-1 bg-background shadow-xs">
+                                                        <SelectValue placeholder="Select Unit" />
+                                                    </SelectTrigger>
+                                                    <SelectContent className="rounded-xl border-border shadow-2xl">
+                                                        {units?.map(u => (
+                                                            <SelectItem key={u.id} value={String(u.id)} className="font-bold py-3">{u.name}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <Button type="button" onClick={() => setModalState({ ...modalState, showUnit: true })} variant="ghost" size="sm" className="h-12 w-12 shrink-0 rounded-xl bg-primary/5 text-primary hover:bg-primary/10 transition-all shadow-xs border border-primary/10"><Plus size={20} /></Button>
+                                            </div>
                                         </div>
-                                        <p className="text-sm text-gray-500 ml-8">Enable stock management at product level</p>
 
+                                        <div className="space-y-3">
+                                            <Label className="text-xs font-black ml-1 text-muted-foreground/80">Associated Brand</Label>
+                                            <div className="flex gap-3 items-end">
+                                                <Select value={formData.brand_id} onValueChange={(val) => setFormData({ ...formData, brand_id: val })}>
+                                                    <SelectTrigger className="h-12 rounded-xl text-base font-bold flex-1 bg-background shadow-xs">
+                                                        <SelectValue placeholder="No Brand" />
+                                                    </SelectTrigger>
+                                                    <SelectContent className="rounded-xl border-border shadow-2xl">
+                                                        <SelectItem value="none" className="text-muted-foreground text-sm font-bold opacity-50 italic">None</SelectItem>
+                                                        {brands?.map(b => (
+                                                            <SelectItem key={b.id} value={String(b.id)} className="font-bold py-3">{b.name}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <Button type="button" onClick={() => setModalState({ ...modalState, showBrand: true })} variant="ghost" size="sm" className="h-12 w-12 shrink-0 rounded-xl bg-primary/5 text-primary hover:bg-primary/10 transition-all shadow-xs border border-primary/10"><Plus size={20} /></Button>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <Label className="text-xs font-black ml-1 text-muted-foreground/80">Master Category</Label>
+                                            <div className="flex gap-3 items-end">
+                                                <Select value={formData.category_id} onValueChange={(val) => setFormData({ ...formData, category_id: val, sub_category_id: '' })}>
+                                                    <SelectTrigger className="h-12 rounded-xl text-base font-bold flex-1 bg-background shadow-xs">
+                                                        <SelectValue placeholder="Select Category" />
+                                                    </SelectTrigger>
+                                                    <SelectContent className="rounded-xl border-border shadow-2xl">
+                                                        <SelectItem value="none" className="text-muted-foreground text-sm font-bold opacity-50 italic">None</SelectItem>
+                                                        {categories?.map(c => (
+                                                            <SelectItem key={c.id} value={String(c.id)} className="font-bold py-3">{c.name}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <Button type="button" onClick={() => setModalState({ ...modalState, showCategory: true })} variant="ghost" size="sm" className="h-12 w-12 shrink-0 rounded-xl bg-primary/5 text-primary hover:bg-primary/10 transition-all shadow-xs border border-primary/10"><Plus size={20} /></Button>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <Label className="text-xs font-black ml-1 text-muted-foreground/80">Nested Level</Label>
+                                            <Select disabled={!formData.category_id || formData.category_id === 'none'} value={formData.sub_category_id} onValueChange={(val) => setFormData({ ...formData, sub_category_id: val })}>
+                                                <SelectTrigger className="h-12 rounded-xl text-base font-bold flex-1 bg-background shadow-xs">
+                                                    <SelectValue placeholder="Sub-category" />
+                                                </SelectTrigger>
+                                                <SelectContent className="rounded-xl border-border shadow-2xl">
+                                                    <SelectItem value="none" className="text-muted-foreground text-sm font-bold opacity-50 italic">None</SelectItem>
+                                                    {subCategories?.map(sub => (
+                                                        <SelectItem key={sub.id} value={String(sub.id)} className="font-bold py-3">{sub.name}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Stock Manager */}
+                                <div className="p-10 rounded-2xl border-2 border-primary/10 bg-primary/5 flex items-center justify-between shadow-xs">
+                                    <div className="flex items-center gap-6">
+                                        <div className="w-14 h-14 rounded-xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
+                                            <Package size={28} />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-base font-black text-primary uppercase tracking-tight">Inventory Logic</Label>
+                                            <p className="text-xs text-muted-foreground font-bold">Monitor and manage warehouse quantities for this item.</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-10 px-8 border-l border-primary/10">
+                                        <div className="flex items-center gap-3">
+                                            <Checkbox id="manage_stock" checked={formData.manage_stock} onCheckedChange={(val) => setFormData({ ...formData, manage_stock: !!val })} className="h-6 w-6 rounded-lg border-2 border-primary/30" />
+                                            <Label htmlFor="manage_stock" className="text-sm font-black cursor-pointer select-none text-primary">Track Stock</Label>
+                                        </div>
                                         {formData.manage_stock && (
-                                            <div className="ml-8 mt-2">
-                                                <div className="space-y-1">
-                                                    <label className="block text-sm text-gray-600 dark:text-gray-400">Alert Quantity</label>
-                                                    <input type="number" step="any" className="w-1/2 p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                                                        value={formData.alert_quantity} onChange={e => setFormData({ ...formData, alert_quantity: e.target.value })} />
-                                                </div>
+                                            <div className="space-y-1.5 w-44 animate-in fade-in slide-in-from-right-4 duration-500">
+                                                <Label className="text-[10px] font-black uppercase text-muted-foreground/60 ml-1">Reorder Point</Label>
+                                                <input type="number" step="any" className="w-full h-11 bg-background rounded-xl border border-primary/20 text-xl font-black text-center focus:ring-4 focus:ring-primary/5 outline-none transition-all shadow-sm" value={formData.alert_quantity} onChange={e => setFormData({ ...formData, alert_quantity: e.target.value })} />
                                             </div>
                                         )}
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Description & Image */}
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4">Product Details</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                    <div className="md:col-span-2 space-y-2">
-                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">Product Description</label>
-                                        <textarea className="w-full h-40 p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none resize-none"
-                                            placeholder="Enter product description..."
-                                            value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}
-                                        />
+                            {/* Right Side: Media & Description (4/12) */}
+                            <div className="lg:col-span-4 space-y-12 h-fit">
+                                <div className="p-10 rounded-2xl border border-border bg-card shadow-xs space-y-8">
+                                    <div className="flex items-center justify-between border-b border-border/10 pb-4 mb-2">
+                                        <Label className="text-xs font-black uppercase tracking-[0.2em] text-primary">Visual Identity</Label>
+                                        <span className="text-[10px] font-bold text-muted-foreground/30 italic uppercase">Media</span>
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">Product Image</label>
-                                        <div
-                                            onClick={() => fileInputRef.current?.click()}
-                                            className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg h-40 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 dark:hover:border-blue-400 transition-colors bg-gray-50 dark:bg-gray-800/50"
-                                        >
-                                            {formData.image ? (
-                                                <img src={formData.image} alt="Preview" className="h-full w-full object-contain rounded-lg" />
-                                            ) : (
-                                                <>
-                                                    <ImageIcon size={32} className="text-gray-400 mb-2" />
-                                                    <span className="text-sm text-gray-500">Click to upload image</span>
-                                                </>
-                                            )}
-                                            <input
-                                                ref={fileInputRef}
-                                                type="file"
-                                                accept="image/*"
-                                                className="hidden"
-                                                onChange={handleImageUpload}
-                                            />
-                                        </div>
-                                        <p className="text-xs text-center text-gray-500">Max File size: 5MB. Aspect ratio 1:1 recommended.</p>
+                                    <div
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="relative group border-2 border-dashed border-border/60 rounded-2xl h-72 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all overflow-hidden shadow-inner bg-muted/10"
+                                    >
+                                        {formData.image ? (
+                                            <div className="relative w-full h-full p-4 focus:animate-pulse">
+                                                <img src={formData.image} alt="Preview" className="h-full w-full object-contain rounded-xl" />
+                                                <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-[2px]">
+                                                    <span className="text-xs font-black uppercase px-5 py-2.5 bg-background border border-border shadow-2xl rounded-xl">Replace Image</span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <div className="w-20 h-20 rounded-2xl bg-white dark:bg-gray-900 shadow-sm border border-border/50 flex items-center justify-center text-muted-foreground/30 mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
+                                                    <ImageIcon size={40} />
+                                                </div>
+                                                <span className="text-xs font-black uppercase text-muted-foreground/60 tracking-widest">Drop Product Photo</span>
+                                                <p className="text-[10px] text-muted-foreground/40 mt-1 uppercase font-bold">JPEG / PNG / WEBP MAX 5MB</p>
+                                            </>
+                                        )}
+                                        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
                                     </div>
                                 </div>
-                            </div>
 
+                                <div className="p-10 rounded-2xl border border-border bg-card flex flex-col gap-6 min-h-[440px] shadow-xs">
+                                    <div className="flex items-center justify-between border-b border-border/10 pb-4 mb-2">
+                                        <Label className="text-xs font-black uppercase tracking-[0.2em] text-primary">Extended Details</Label>
+                                        <span className="text-[10px] font-bold text-muted-foreground/30 italic uppercase">Description</span>
+                                    </div>
+                                    <textarea 
+                                        className="w-full flex-1 p-6 rounded-xl border border-border text-base bg-background focus:ring-4 focus:ring-primary/5 outline-none resize-none placeholder:text-muted-foreground/30 font-medium transition-all shadow-inner leading-relaxed"
+                                        placeholder="Add descriptive details for labels and online storefronts..."
+                                        value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                    />
+                                </div>
+                            </div>
                         </form>
                     </div>
 
-                    {/* Footer Actions */}
-                    <div className="p-4 md:p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 md:rounded-b-xl flex justify-end gap-3 sticky bottom-0 z-10 safe-area-bottom">
-                        <Button type="button" onClick={onClose} variant="ghost" size="sm" className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 font-medium text-sm">
-                            Cancel
+                    <div className="p-8 border-t bg-muted/5 flex justify-end gap-5 sticky bottom-0 z-20">
+                        <Button type="button" onClick={onClose} variant="ghost" className="px-10 h-14 rounded-xl text-base font-black border border-border bg-background shadow-xs hover:bg-muted transition-all">
+                            Discard Changes
                         </Button>
-                        <Button type="submit" disabled={isSubmitting} form="product-form" variant="primary" size="sm" className="flex-1 md:flex-none px-6 py-2.5 font-bold text-sm">
-                            {isSubmitting ? 'Saving...' : (isEdit ? 'Save Changes' : 'Save Product')}
+                        <Button type="submit" disabled={isSubmitting} form="product-form" variant="primary" className="px-16 h-14 font-black rounded-xl shadow-2xl shadow-primary/30 flex items-center justify-center gap-3 active:scale-95 transition-all text-base">
+                            {isSubmitting && <RefreshCw className="animate-spin" size={20} />}
+                            {isEdit ? 'Update Specification' : 'Publish Product'}
                         </Button>
                     </div>
-
                 </DialogContent>
             </Dialog>
         </>

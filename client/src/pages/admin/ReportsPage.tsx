@@ -310,7 +310,7 @@ export const ReportsPage = () => {
         <button
             onClick={() => setActiveTab(id)}
             className={`flex items-center gap-2 px-4 py-2 border-b-2 transition-all font-medium text-sm ${activeTab === id
-                ? 'border-blue-600 text-blue-600'
+                ? 'border-blue-600 text-primary'
                 : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                 }`}
         >
@@ -320,24 +320,24 @@ export const ReportsPage = () => {
     );
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-6 transition-colors font-sans">
+        <div className="min-h-screen bg-muted text-foreground p-6 transition-colors font-sans">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
                     <div className="flex items-center space-x-4">
-                        <button onClick={() => navigate('/pos')} className="p-2 bg-white dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
+                        <button onClick={() => navigate('/pos')} className="p-2 bg-card text-card-foreground rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm border border-border transition-colors">
                             <ArrowLeft size={24} className="text-gray-600 dark:text-white" />
                         </button>
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Reports Dashboard</h1>
-                            <p className="text-gray-500 dark:text-gray-400 text-sm">Analyze your business performance</p>
+                            <h1 className="text-3xl font-bold text-foreground tracking-tight">Reports Dashboard</h1>
+                            <p className="text-muted-foreground text-sm">Analyze your business performance</p>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => window.location.reload()}
-                            className="bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center gap-2 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-all font-medium text-sm"
+                            className="bg-card text-card-foreground text-muted-foreground px-4 py-2 rounded-lg border border-border flex items-center gap-2 shadow-sm hover:bg-accent hover:text-accent-foreground transition-all font-medium text-sm"
                         >
                             <Calendar size={18} />
                             Today: {new Date().toLocaleDateString()}
@@ -346,7 +346,7 @@ export const ReportsPage = () => {
                 </div>
 
                 {/* Tab Navigation */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm mb-8 sticky top-0 z-20 overflow-x-auto no-scrollbar">
+                <div className="bg-card text-card-foreground rounded-xl border border-border shadow-sm mb-8 sticky top-0 z-20 overflow-x-auto no-scrollbar">
                     <div className="flex px-4">
                         <TabButton id="overview" label="Overview" icon={BarChart3} />
                         <TabButton id="sales" label="Sales History" icon={DollarSign} />
@@ -358,9 +358,9 @@ export const ReportsPage = () => {
                 </div>
 
                 {loading && (
-                    <div className="bg-white/50 backdrop-blur-sm dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 p-8 flex flex-col items-center justify-center text-center mb-8">
+                    <div className="bg-white/50 backdrop-blur-sm dark:bg-gray-800/50 rounded-xl border border-border p-8 flex flex-col items-center justify-center text-center mb-8">
                         <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-                        <p className="text-gray-600 dark:text-gray-300 font-medium">Loading report metrics...</p>
+                        <p className="text-muted-foreground font-medium">Loading report metrics...</p>
                     </div>
                 )}
 
@@ -369,16 +369,16 @@ export const ReportsPage = () => {
                         {/* Summary Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="bg-linear-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-800 p-6 rounded-xl border border-blue-100 dark:border-blue-900/30 shadow-sm relative overflow-hidden group">
-                                <div className="absolute right-0 top-0 w-24 h-24 bg-blue-100 dark:bg-blue-800/20 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                                <div className="absolute right-0 top-0 w-24 h-24 bg-primary/20/20 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
                                 <div className="relative z-10">
                                     <div className="flex items-center justify-between mb-4">
                                         <h3 className="text-gray-600 dark:text-blue-300 font-bold">Total Sales</h3>
-                                        <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg text-blue-600 dark:text-blue-400">
+                                        <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg text-primary">
                                             <DollarSign size={24} />
                                         </div>
                                     </div>
-                                    <p className="text-3xl font-bold text-gray-900 dark:text-white">{formatCurrency(salesSummary.total)}</p>
-                                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">{salesSummary.count} Transactions in period</p>
+                                    <p className="text-3xl font-bold text-foreground">{formatCurrency(salesSummary.total)}</p>
+                                    <p className="text-xs text-primary mt-2">{salesSummary.count} Transactions in period</p>
                                 </div>
                             </div>
 
@@ -392,7 +392,7 @@ export const ReportsPage = () => {
                                                 <ShoppingBag size={24} />
                                             </div>
                                         </div>
-                                        <p className="text-3xl font-bold text-gray-900 dark:text-white">{formatCurrency(salesSummary.tax)}</p>
+                                        <p className="text-3xl font-bold text-foreground">{formatCurrency(salesSummary.tax)}</p>
                                         <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-2">Period: {fromDate.toLocaleDateString()}</p>
                                     </div>
                                 </div>
@@ -407,29 +407,29 @@ export const ReportsPage = () => {
                                             <Package size={24} />
                                         </div>
                                     </div>
-                                    <p className="text-3xl font-bold text-gray-900 dark:text-white">{lowStockItems.length}</p>
+                                    <p className="text-3xl font-bold text-foreground">{lowStockItems.length}</p>
                                     <p className="text-xs text-orange-600 dark:text-orange-400 mt-2">Inventory needs attention</p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Recent Activity Mini-table */}
-                        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-                            <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                                <h2 className="text-xl font-bold flex items-center space-x-2 text-gray-900 dark:text-white">
-                                    <Calendar size={20} className="text-blue-500" />
+                        <div className="bg-card text-card-foreground rounded-xl border border-border shadow-sm overflow-hidden">
+                            <div className="p-6 border-b border-border flex justify-between items-center">
+                                <h2 className="text-xl font-bold flex items-center space-x-2 text-foreground">
+                                    <Calendar size={20} className="text-primary" />
                                     <span>Recent Sales</span>
                                 </h2>
                                 <button
                                     onClick={() => setActiveTab('sales')}
-                                    className="text-blue-600 dark:text-blue-400 text-sm font-medium hover:underline"
+                                    className="text-primary text-sm font-medium hover:underline"
                                 >
                                     View All
                                 </button>
                             </div>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left">
-                                    <thead className="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 uppercase text-xs">
+                                    <thead className="bg-muted/50 text-muted-foreground uppercase text-xs">
                                         <tr>
                                             <th className="p-4">ID</th>
                                             <th className="p-4">Time</th>
@@ -441,17 +441,17 @@ export const ReportsPage = () => {
                                         {filteredSales.slice(0, 5).map(txn => {
                                             const isReturn = txn.type === 'return';
                                             return (
-                                                <tr key={txn.transaction_id} className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${isReturn ? 'bg-red-50/20 dark:bg-red-900/10' : ''}`}>
-                                                    <td className="p-4 text-gray-900 dark:text-white font-medium">#{txn.transaction_id} {isReturn && <span className="text-[10px] text-red-600 dark:text-red-400 font-bold uppercase ml-1">Return</span>}</td>
-                                                    <td className="p-4 text-gray-500 dark:text-gray-400">{formatDateTime(new Date(txn.timestamp))}</td>
-                                                    <td className="p-4 text-gray-500 dark:text-gray-400">{txn.customer_id ? (customerMap.get(txn.customer_id)?.name || 'Unknown') : 'Walk-in'}</td>
-                                                    <td className={`p-4 text-right font-bold ${isReturn ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>{formatCurrency(txn.total_amount)}</td>
+                                                <tr key={txn.transaction_id} className={`hover:bg-accent hover:text-accent-foreground/50 transition-colors ${isReturn ? 'bg-red-50/20 dark:bg-red-900/10' : ''}`}>
+                                                    <td className="p-4 text-foreground font-medium">#{txn.transaction_id} {isReturn && <span className="text-[10px] text-destructive font-bold uppercase ml-1">Return</span>}</td>
+                                                    <td className="p-4 text-muted-foreground">{formatDateTime(new Date(txn.timestamp))}</td>
+                                                    <td className="p-4 text-muted-foreground">{txn.customer_id ? (customerMap.get(txn.customer_id)?.name || 'Unknown') : 'Walk-in'}</td>
+                                                    <td className={`p-4 text-right font-bold ${isReturn ? 'text-destructive' : 'text-foreground'}`}>{formatCurrency(txn.total_amount)}</td>
                                                 </tr>
                                             )
                                         })}
                                         {filteredSales.length === 0 && (
                                             <tr>
-                                                <td colSpan={4} className="p-8 text-center text-gray-500 dark:text-gray-400">
+                                                <td colSpan={4} className="p-8 text-center text-muted-foreground">
                                                     No sales activity recorded in this period.
                                                 </td>
                                             </tr>
@@ -464,14 +464,14 @@ export const ReportsPage = () => {
                 )}
 
                 {activeTab === 'sales' && (
-                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden animate-in slide-in-from-bottom-4 duration-500">
-                        <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-50/50 dark:bg-gray-900/20">
-                            <div className="flex items-center gap-2 text-gray-900 dark:text-white font-bold text-lg">
+                    <div className="bg-card text-card-foreground rounded-xl border border-border shadow-sm overflow-hidden animate-in slide-in-from-bottom-4 duration-500">
+                        <div className="p-6 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-50/50 dark:bg-gray-900/20">
+                            <div className="flex items-center gap-2 text-foreground font-bold text-lg">
                                 <DollarSign size={20} className="text-green-500" />
                                 <span>Sales History</span>
                             </div>
                             <div className="flex flex-wrap items-center gap-3">
-                                <div className="flex items-center bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 p-1">
+                                <div className="flex items-center bg-white dark:bg-gray-700 rounded-lg border border-border p-1">
                                     {(['daily', 'weekly', 'monthly', 'custom'] as const).map((mode) => (
                                         <button
                                             key={mode}
@@ -492,14 +492,14 @@ export const ReportsPage = () => {
                                             type="date"
                                             value={customFrom}
                                             onChange={(e) => setCustomFrom(e.target.value)}
-                                            className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg px-3 py-1.5 text-sm"
+                                            className="bg-white dark:bg-gray-700 border border-border text-foreground rounded-lg px-3 py-1.5 text-sm"
                                         />
                                         <span className="text-gray-400">to</span>
                                         <input
                                             type="date"
                                             value={customTo}
                                             onChange={(e) => setCustomTo(e.target.value)}
-                                            className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg px-3 py-1.5 text-sm"
+                                            className="bg-white dark:bg-gray-700 border border-border text-foreground rounded-lg px-3 py-1.5 text-sm"
                                         />
                                     </div>
                                 )}
@@ -521,7 +521,7 @@ export const ReportsPage = () => {
                                         }
                                         downloadCsv(`sales-report-${formatDateInput(fromDate)}-to-${formatDateInput(toDate)}.csv`, headers, rows);
                                     }}
-                                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm text-sm font-medium"
+                                    className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg transition-colors shadow-sm text-sm font-medium"
                                 >
                                     <Download size={16} /> Export CSV
                                 </button>
@@ -530,7 +530,7 @@ export const ReportsPage = () => {
 
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm">
-                                <thead className="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 uppercase text-xs font-semibold">
+                                <thead className="bg-muted/50 text-muted-foreground uppercase text-xs font-semibold">
                                     <tr>
                                         <th className="p-4 text-left">Transaction ID</th>
                                         <th className="p-4 text-left">Date & Time</th>
@@ -547,7 +547,7 @@ export const ReportsPage = () => {
                                             <tr
                                                 key={txn.transaction_id}
                                                 onClick={() => navigate(`/admin/transactions/${txn.transaction_id}`)}
-                                                className={`hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors cursor-pointer ${isReturn ? 'bg-red-50/20 dark:bg-red-900/10' : ''}`}
+                                                className={`hover:bg-accent hover:text-accent-foreground/30 transition-colors cursor-pointer ${isReturn ? 'bg-red-50/20 dark:bg-red-900/10' : ''}`}
                                             >
                                                 <td className="p-4">
                                                     <div className="flex flex-col gap-1 items-start">
@@ -555,10 +555,10 @@ export const ReportsPage = () => {
                                                             #{txn.transaction_id}
                                                         </span>
                                                         {isReturn && (
-                                                            <span className="text-[10px] text-red-600 dark:text-red-400 font-bold uppercase tracking-wider flex flex-col gap-0.5 mt-0.5">
+                                                            <span className="text-[10px] text-destructive font-bold uppercase tracking-wider flex flex-col gap-0.5 mt-0.5">
                                                                 <span>Return</span>
                                                                 {txn.parent_sale_id && (
-                                                                    <span className="text-gray-500 dark:text-gray-400 font-medium normal-case">
+                                                                    <span className="text-muted-foreground font-medium normal-case">
                                                                         Ref: #{txn.parent_sale_id}
                                                                     </span>
                                                                 )}
@@ -566,18 +566,18 @@ export const ReportsPage = () => {
                                                         )}
                                                     </div>
                                                 </td>
-                                                <td className="p-4 text-gray-600 dark:text-gray-400">{formatDateTime(new Date(txn.timestamp))}</td>
+                                                <td className="p-4 text-muted-foreground">{formatDateTime(new Date(txn.timestamp))}</td>
                                                 <td className="p-4 text-gray-700 dark:text-gray-300">
                                                     {txn.customer_id ? (
                                                         <div className="flex items-center gap-2">
-                                                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${isReturn ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400' : 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400'}`}>
+                                                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${isReturn ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400' : 'bg-blue-100 text-primary dark:bg-blue-900/40 dark:text-blue-400'}`}>
                                                                 {(customerMap.get(txn.customer_id)?.name || 'U').charAt(0).toUpperCase()}
                                                             </div>
                                                             {customerMap.get(txn.customer_id)?.name || 'Unknown User'}
                                                         </div>
                                                     ) : <span className="text-gray-400">Walk-in Customer</span>}
                                                 </td>
-                                                <td className={`p-4 text-right font-bold ${isReturn ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
+                                                <td className={`p-4 text-right font-bold ${isReturn ? 'text-destructive' : 'text-foreground'}`}>
                                                     {formatCurrency(txn.total_amount)}
                                                 </td>
                                                 <td className={`p-4 text-right font-bold ${Number(txn.dueAmount || 0) > 0 ? 'text-red-500' : 'text-emerald-500'}`}>
@@ -589,7 +589,7 @@ export const ReportsPage = () => {
                                                             e.stopPropagation();
                                                             setSelectedPrintTxn(txn);
                                                         }}
-                                                        className="p-1 px-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                        className="p-1 px-2 text-primary hover:bg-blue-50 rounded transition-colors"
                                                         title="Print Receipt"
                                                     >
                                                         <Printer size={16} />
@@ -613,10 +613,10 @@ export const ReportsPage = () => {
                     <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {/* Low Stock Card */}
-                            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-                                <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-orange-50/30 dark:bg-orange-900/10">
-                                    <div className="flex items-center gap-2 text-gray-900 dark:text-white font-bold">
-                                        <Package size={18} className="text-orange-500" />
+                            <div className="bg-card text-card-foreground rounded-xl border border-border shadow-sm overflow-hidden">
+                                <div className="p-5 border-b border-border flex items-center justify-between bg-orange-50/30 dark:bg-orange-900/10">
+                                    <div className="flex items-center gap-2 text-foreground font-bold">
+                                        <Package size={18} className="text-accent" />
                                         <span>Low Stock Items</span>
                                     </div>
                                     <button
@@ -637,7 +637,7 @@ export const ReportsPage = () => {
                                 </div>
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-sm">
-                                        <thead className="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 text-xs uppercase font-semibold">
+                                        <thead className="bg-muted/50 text-muted-foreground text-xs uppercase font-semibold">
                                             <tr>
                                                 <th className="p-4 text-left">Product Name</th>
                                                 <th className="p-4 text-center">In Stock</th>
@@ -646,14 +646,14 @@ export const ReportsPage = () => {
                                         </thead>
                                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                                             {lowStockItems.map(item => (
-                                                <tr key={item.product_id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                                                    <td className="p-4 text-gray-900 dark:text-white font-medium">{item.name}</td>
+                                                <tr key={item.product_id} className="hover:bg-accent hover:text-accent-foreground/30 transition-colors">
+                                                    <td className="p-4 text-foreground font-medium">{item.name}</td>
                                                     <td className="p-4 text-center">
                                                         <span className="px-2 py-1 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 rounded-full text-xs font-bold">
                                                             {item.stock_quantity}
                                                         </span>
                                                     </td>
-                                                    <td className="p-4 text-center text-gray-500 dark:text-gray-400">{item.alert_quantity ?? item.reorder_level ?? 0}</td>
+                                                    <td className="p-4 text-center text-muted-foreground">{item.alert_quantity ?? item.reorder_level ?? 0}</td>
                                                 </tr>
                                             ))}
                                             {lowStockItems.length === 0 && (
@@ -667,9 +667,9 @@ export const ReportsPage = () => {
                             </div>
 
                             {/* Low Profit Card */}
-                            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-                                <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-red-50/30 dark:bg-red-900/10">
-                                    <div className="flex items-center gap-2 text-gray-900 dark:text-white font-bold">
+                            <div className="bg-card text-card-foreground rounded-xl border border-border shadow-sm overflow-hidden">
+                                <div className="p-5 border-b border-border flex items-center justify-between bg-red-50/30 dark:bg-red-900/10">
+                                    <div className="flex items-center gap-2 text-foreground font-bold">
                                         <TrendingDown size={18} className="text-red-500" />
                                         <span>Low Profit Estimate</span>
                                     </div>
@@ -678,7 +678,7 @@ export const ReportsPage = () => {
                                             Threshold:
                                             <input
                                                 type="number"
-                                                className="w-16 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded px-1 py-0.5 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-red-500"
+                                                className="w-16 bg-white dark:bg-gray-700 border border-border rounded px-1 py-0.5 text-foreground focus:outline-none focus:ring-1 focus:ring-red-500"
                                                 value={profitThreshold}
                                                 onChange={(e) => setProfitThreshold(Number(e.target.value))}
                                             />
@@ -702,7 +702,7 @@ export const ReportsPage = () => {
                                 </div>
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-sm">
-                                        <thead className="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 text-xs uppercase font-semibold">
+                                        <thead className="bg-muted/50 text-muted-foreground text-xs uppercase font-semibold">
                                             <tr>
                                                 <th className="p-4 text-left">Product</th>
                                                 <th className="p-4 text-center">Qty Sold</th>
@@ -711,10 +711,10 @@ export const ReportsPage = () => {
                                         </thead>
                                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                                             {lowProfitItems.map(item => (
-                                                <tr key={item.product_id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                                                    <td className="p-4 text-gray-900 dark:text-white font-medium">{item.name}</td>
-                                                    <td className="p-4 text-center text-gray-600 dark:text-gray-400">{item.qty}</td>
-                                                    <td className="p-4 text-right font-bold text-red-600 dark:text-red-400">{formatCurrency(item.profit)}</td>
+                                                <tr key={item.product_id} className="hover:bg-accent hover:text-accent-foreground/30 transition-colors">
+                                                    <td className="p-4 text-foreground font-medium">{item.name}</td>
+                                                    <td className="p-4 text-center text-muted-foreground">{item.qty}</td>
+                                                    <td className="p-4 text-right font-bold text-destructive">{formatCurrency(item.profit)}</td>
                                                 </tr>
                                             ))}
                                             {lowProfitItems.length === 0 && (
@@ -731,10 +731,10 @@ export const ReportsPage = () => {
                 )}
 
                 {activeTab === 'customers' && (
-                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden animate-in slide-in-from-bottom-4 duration-500">
-                        <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-blue-50/30 dark:bg-blue-900/10">
-                            <div className="flex items-center gap-2 text-gray-900 dark:text-white font-bold">
-                                <Users size={18} className="text-blue-500" />
+                    <div className="bg-card text-card-foreground rounded-xl border border-border shadow-sm overflow-hidden animate-in slide-in-from-bottom-4 duration-500">
+                        <div className="p-5 border-b border-border flex items-center justify-between bg-blue-50/30 dark:bg-blue-900/10">
+                            <div className="flex items-center gap-2 text-foreground font-bold">
+                                <Users size={18} className="text-primary" />
                                 <span>Customer Spending Analysis</span>
                             </div>
                             <button
@@ -743,14 +743,14 @@ export const ReportsPage = () => {
                                     ['Customer', 'Orders', 'Total Spend'],
                                     customerReport.map(c => [c.name, c.count, c.total.toFixed(2)])
                                 )}
-                                className="p-2 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                className="p-2 text-gray-500 hover:text-primary dark:hover:text-blue-400 transition-colors"
                             >
                                 <Download size={18} />
                             </button>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm">
-                                <thead className="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 text-xs uppercase font-semibold">
+                                <thead className="bg-muted/50 text-muted-foreground text-xs uppercase font-semibold">
                                     <tr>
                                         <th className="p-4 text-left">Customer</th>
                                         <th className="p-4 text-center">Orders</th>
@@ -760,10 +760,10 @@ export const ReportsPage = () => {
                                 </thead>
                                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                                     {customerReport.map(c => (
-                                        <tr key={c.customer_id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                                            <td className="p-4 text-gray-900 dark:text-white font-medium">{c.name}</td>
-                                            <td className="p-4 text-center text-gray-600 dark:text-gray-400">{c.count}</td>
-                                            <td className="p-4 text-right font-bold text-gray-900 dark:text-white">{formatCurrency(c.total)}</td>
+                                        <tr key={c.customer_id} className="hover:bg-accent hover:text-accent-foreground/30 transition-colors">
+                                            <td className="p-4 text-foreground font-medium">{c.name}</td>
+                                            <td className="p-4 text-center text-muted-foreground">{c.count}</td>
+                                            <td className="p-4 text-right font-bold text-foreground">{formatCurrency(c.total)}</td>
                                             <td className={`p-4 text-right font-bold ${Number(customerMap.get(c.customer_id)?.totalDue || 0) > 0 ? 'text-red-500' : 'text-gray-400'}`}>
                                                 {formatCurrency(Number(customerMap.get(c.customer_id)?.totalDue || 0))}
                                             </td>
@@ -782,9 +782,9 @@ export const ReportsPage = () => {
 
                 {activeTab === 'suppliers' && (
                     <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-                        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-                            <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-purple-50/30 dark:bg-purple-900/10">
-                                <div className="flex items-center gap-2 text-gray-900 dark:text-white font-bold">
+                        <div className="bg-card text-card-foreground rounded-xl border border-border shadow-sm overflow-hidden">
+                            <div className="p-5 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4 bg-purple-50/30 dark:bg-purple-900/10">
+                                <div className="flex items-center gap-2 text-foreground font-bold">
                                     <Truck size={18} className="text-purple-500" />
                                     <span>Supplier Purchases</span>
                                 </div>
@@ -792,7 +792,7 @@ export const ReportsPage = () => {
                                     <select
                                         value={supplierFilter}
                                         onChange={(e) => setSupplierFilter(e.target.value ? Number(e.target.value) : '')}
-                                        className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm"
+                                        className="bg-white dark:bg-gray-700 border border-border rounded-lg px-3 py-1.5 text-sm"
                                     >
                                         <option value="">All Suppliers</option>
                                         {suppliers?.map(s => (
@@ -814,10 +814,10 @@ export const ReportsPage = () => {
                             <div className="p-6 space-y-4">
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {supplierReport.suppliers.map(s => (
-                                        <div key={s.supplier_id} className="p-4 bg-gray-50 dark:bg-gray-900/40 rounded-lg border border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                                        <div key={s.supplier_id} className="p-4 bg-muted/40 rounded-lg border border-border flex justify-between items-center">
                                             <div>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">{s.name}</p>
-                                                <p className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(s.total)}</p>
+                                                <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">{s.name}</p>
+                                                <p className="text-lg font-bold text-foreground">{formatCurrency(s.total)}</p>
                                             </div>
                                             <div className="text-right">
                                                 <p className="text-xs text-gray-400">{s.items} units</p>
@@ -829,11 +829,11 @@ export const ReportsPage = () => {
                                     )}
                                 </div>
 
-                                <div className="pt-6 border-t border-gray-100 dark:border-gray-800">
-                                    <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4">Product-wise Breakdown</h3>
+                                <div className="pt-6 border-t border-border">
+                                    <h3 className="text-sm font-bold text-foreground mb-4">Product-wise Breakdown</h3>
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-sm">
-                                            <thead className="text-gray-400 text-[10px] uppercase font-bold border-b border-gray-100 dark:border-gray-800">
+                                            <thead className="text-gray-400 text-[10px] uppercase font-bold border-b border-border">
                                                 <tr>
                                                     <th className="pb-2 text-left">Product</th>
                                                     <th className="pb-2 text-center">Qty</th>
@@ -844,8 +844,8 @@ export const ReportsPage = () => {
                                                 {supplierReport.products.map(p => (
                                                     <tr key={p.product_id}>
                                                         <td className="py-3 text-gray-700 dark:text-gray-300">{p.name}</td>
-                                                        <td className="py-3 text-center text-gray-600 dark:text-gray-400">{p.qty}</td>
-                                                        <td className="py-3 text-right font-medium text-gray-900 dark:text-white">{formatCurrency(p.total)}</td>
+                                                        <td className="py-3 text-center text-muted-foreground">{p.qty}</td>
+                                                        <td className="py-3 text-right font-medium text-foreground">{formatCurrency(p.total)}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -936,7 +936,7 @@ export const ReportsPage = () => {
                                             </td>
                                             <td className="p-4 text-right">
                                                 <div className="flex flex-col items-end gap-1">
-                                                    <span className={`font-bold ${s.variance < 0 ? 'text-red-500' : s.variance > 0 ? 'text-blue-500' : 'text-emerald-500'}`}>
+                                                    <span className={`font-bold ${s.variance < 0 ? 'text-red-500' : s.variance > 0 ? 'text-primary' : 'text-emerald-500'}`}>
                                                         {s.variance > 0 ? '+' : ''}{formatCurrency(s.variance)}
                                                     </span>
                                                     {s.variance !== 0 && (

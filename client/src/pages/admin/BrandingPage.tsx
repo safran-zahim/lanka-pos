@@ -98,15 +98,15 @@ export const BrandingPage = ({ hideSave, onSaveReady, onSavingChange }: Branding
     if (loading) {
         return (
             <div className="p-6 flex justify-center items-center h-full">
-                <Loader className="animate-spin text-blue-600" size={32} />
+                <Loader className="animate-spin text-primary" size={32} />
             </div>
         );
     }
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-6">
+        <div className="bg-card text-card-foreground rounded-xl border border-border p-6 space-y-6">
             <div className="flex items-center gap-6">
-                <div className="w-24 h-24 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-900">
+                <div className="w-24 h-24 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden bg-muted">
                     {logo ? (
                         <img src={logo} alt="Logo" className="w-full h-full object-contain" />
                     ) : (
@@ -130,7 +130,7 @@ export const BrandingPage = ({ hideSave, onSaveReady, onSavingChange }: Branding
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Company Name</label>
                     <input
                         type="text"
-                        className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white rounded-lg px-3 py-2 border border-gray-200 dark:border-gray-700"
+                        className="w-full bg-muted text-foreground rounded-lg px-3 py-2 border border-border"
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
                     />
@@ -139,7 +139,7 @@ export const BrandingPage = ({ hideSave, onSaveReady, onSavingChange }: Branding
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Phone</label>
                     <input
                         type="text"
-                        className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white rounded-lg px-3 py-2 border border-gray-200 dark:border-gray-700"
+                        className="w-full bg-muted text-foreground rounded-lg px-3 py-2 border border-border"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                     />
@@ -148,7 +148,7 @@ export const BrandingPage = ({ hideSave, onSaveReady, onSavingChange }: Branding
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Email</label>
                     <input
                         type="email"
-                        className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white rounded-lg px-3 py-2 border border-gray-200 dark:border-gray-700"
+                        className="w-full bg-muted text-foreground rounded-lg px-3 py-2 border border-border"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                     />
@@ -157,7 +157,7 @@ export const BrandingPage = ({ hideSave, onSaveReady, onSavingChange }: Branding
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Website</label>
                     <input
                         type="text"
-                        className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white rounded-lg px-3 py-2 border border-gray-200 dark:border-gray-700"
+                        className="w-full bg-muted text-foreground rounded-lg px-3 py-2 border border-border"
                         value={website}
                         onChange={(e) => setWebsite(e.target.value)}
                     />
@@ -165,7 +165,7 @@ export const BrandingPage = ({ hideSave, onSaveReady, onSavingChange }: Branding
                 <div className="md:col-span-2">
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Address</label>
                     <textarea
-                        className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white rounded-lg px-3 py-2 border border-gray-200 dark:border-gray-700"
+                        className="w-full bg-muted text-foreground rounded-lg px-3 py-2 border border-border"
                         rows={3}
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
@@ -178,7 +178,7 @@ export const BrandingPage = ({ hideSave, onSaveReady, onSavingChange }: Branding
                     <button
                         onClick={handleSave}
                         disabled={isSaving}
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+                        className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg"
                     >
                         {isSaving ? <Loader size={16} className="animate-spin" /> : <Save size={16} />}
                         {isSaving ? 'Saving...' : 'Save Branding'}

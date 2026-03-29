@@ -5,6 +5,9 @@ import { useToast } from '../../store/useToast';
 import { DataTable } from '../../components/ui/DataTable';
 import { CustomerModal } from '../../components/admin/CustomerModal';
 import { BulkUploadModal } from '../../components/shared/BulkUploadModal';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 
 export const CustomerList = () => {
     const { addToast } = useToast();
@@ -96,7 +99,7 @@ export const CustomerList = () => {
             accessorKey: 'name',
             cell: (row: any) => (
                 <div>
-                    <div className="font-medium text-gray-900 dark:text-white">{row.name}</div>
+                    <div className="font-medium text-foreground">{row.name}</div>
                     <div className="text-xs text-gray-400">CUS-{String(row.id).slice(0, 8)}</div>
                 </div>
             ),
@@ -134,27 +137,30 @@ export const CustomerList = () => {
             header: 'Actions',
             cell: (row: any) => (
                 <div className="flex justify-end gap-2">
-                    <button
+                    <Button
+                        variant="ghost" size="sm"
                         onClick={(e) => { e.stopPropagation(); navigate(`/admin/customers/${row.id}`); }}
-                        className="p-1.5 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                        className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-gray-700"
                         title="View Profile"
                     >
                         <Eye size={16} />
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                        variant="ghost" size="sm"
                         onClick={(e) => handleEdit(row, e)}
-                        className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                        className="text-primary hover:text-primary/90 hover:bg-blue-50 dark:hover:bg-gray-700"
                         title="Edit"
                     >
                         <Edit2 size={16} />
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                        variant="ghost" size="sm"
                         onClick={(e) => handleDelete(row.id, e)}
-                        className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                        className="text-destructive hover:text-destructive/90 hover:bg-red-50 dark:hover:bg-gray-700"
                         title="Delete"
                     >
                         <Trash2 size={16} />
-                    </button>
+                    </Button>
                 </div>
             )
         }
@@ -164,66 +170,71 @@ export const CustomerList = () => {
         <div className="p-6 max-w-[1600px] mx-auto">
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-                        <Users className="text-blue-600" />
+                    <h1 className="text-2xl font-bold text-foreground mb-2 flex items-center gap-2">
+                        <Users className="text-primary" />
                         Customers
                     </h1>
-                    <p className="text-gray-500 dark:text-gray-400">Manage your customer base</p>
+                    <p className="text-muted-foreground">Manage your customer base</p>
                 </div>
                 <div className="flex gap-3">
-                    <button
+                    <Button
+                        variant="secondary"
                         onClick={() => setIsBulkModalOpen(true)}
-                        className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-sm"
+                        className="flex items-center gap-2"
                     >
                         <Upload size={20} />
                         Bulk Import
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                        variant="primary"
                         onClick={() => setModalState({ show: true, customer: null })}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-md hover:shadow-lg transition-all"
+                        className="flex items-center gap-2"
                     >
                         <Plus size={20} />
                         Add Customer
-                    </button>
+                    </Button>
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+            <div className="bg-card text-card-foreground rounded-lg p-4 shadow-sm border border-border mb-6">
                 <div className="flex items-center gap-2 mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
                     <Filter size={16} /> Advanced Filters
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                    <input
+                    <Input
                         type="number"
                         min="0"
                         placeholder="Min Points"
-                        className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                         value={minPoints}
                         onChange={(e) => setMinPoints(e.target.value)}
                     />
-                    <input
+                    <Input
                         type="number"
                         min="0"
                         placeholder="Min Spend"
-                        className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                         value={minSpend}
                         onChange={(e) => setMinSpend(e.target.value)}
                     />
-                    <select
-                        className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                    <Select
                         value={emailFilter}
-                        onChange={(e) => setEmailFilter(e.target.value as any)}
+                        onValueChange={(val) => setEmailFilter(val as any)}
                     >
-                        <option value="all">All Emails</option>
-                        <option value="with">With Email</option>
-                        <option value="without">No Email</option>
-                    </select>
-                    <button
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Email Filter" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Emails</SelectItem>
+                            <SelectItem value="with">With Email</SelectItem>
+                            <SelectItem value="without">No Email</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Button
+                        variant="secondary"
                         onClick={() => { setMinPoints(''); setMinSpend(''); setEmailFilter('all'); }}
-                        className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                        className="flex items-center justify-center gap-2"
                     >
                         <RotateCcw size={16} /> Reset
-                    </button>
+                    </Button>
                 </div>
             </div>
 

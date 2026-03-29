@@ -30,7 +30,7 @@ export const NotificationCenter = () => {
             case 'success': return <CheckCircle className="text-emerald-500 shrink-0" size={16} />;
             case 'warning': return <AlertTriangle className="text-amber-500 shrink-0" size={16} />;
             case 'error':   return <AlertOctagon  className="text-red-500 shrink-0"   size={16} />;
-            default:        return <Info           className="text-blue-500 shrink-0"  size={16} />;
+            default:        return <Info           className="text-primary shrink-0"  size={16} />;
         }
     };
 

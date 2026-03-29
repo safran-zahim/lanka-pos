@@ -26,20 +26,20 @@ export const EditTaxModal = ({ currentRate, onConfirm, onClose }: EditTaxModalPr
         <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
             <DialogContent className="w-90 max-w-[92vw] p-6" showCloseButton>
                 <DialogHeader className="mb-6">
-                    <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <Percent className="text-blue-500" />
+                    <DialogTitle className="text-xl font-bold text-foreground flex items-center gap-2">
+                        <Percent className="text-primary" />
                         Edit Tax Rate
                     </DialogTitle>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Tax Rate (%)</label>
+                        <label className="block text-sm text-muted-foreground mb-1">Tax Rate (%)</label>
                         <input
                             type="number"
                             step="0.01"
                             min="0"
-                            className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none border border-gray-300 dark:border-transparent"
+                            className="w-full bg-gray-100 dark:bg-gray-700 text-foreground p-2 rounded focus:ring-2 focus:ring-ring outline-none border border-gray-300 dark:border-transparent"
                             value={rateInput}
                             onChange={(e) => setRateInput(e.target.value)}
                             autoFocus

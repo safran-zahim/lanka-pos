@@ -152,8 +152,8 @@ export const UnifiedCheckoutModal: React.FC<UnifiedCheckoutModalProps> = ({
             <DialogContent className="max-w-4xl max-h-200 h-[90vh] sm:h-[80vh] p-0 flex flex-col">
 
                 {/* Header */}
-                <div className="flex justify-between items-center p-4 sm:p-5 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <div className="flex justify-between items-center p-4 sm:p-5 border-b border-border bg-muted/50">
+                    <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
                         Checkout
                     </h2>
                 </div>
@@ -161,11 +161,11 @@ export const UnifiedCheckoutModal: React.FC<UnifiedCheckoutModalProps> = ({
                 <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
 
                     {/* Left Panel: Summary & Tenders */}
-                    <div className="w-full lg:w-5/12 bg-gray-50/50 dark:bg-gray-800/20 border-r border-gray-100 dark:border-gray-800 p-5 flex flex-col overflow-y-auto">
+                    <div className="w-full lg:w-5/12 bg-gray-50/50 dark:bg-gray-800/20 border-r border-border p-5 flex flex-col overflow-y-auto">
 
-                        <div className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-700 mb-6">
-                            <div className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Total Due</div>
-                            <div className="text-4xl font-extrabold text-gray-900 dark:text-white">
+                        <div className="bg-card text-card-foreground rounded-xl p-5 shadow-sm border border-border mb-6">
+                            <div className="text-muted-foreground text-sm font-medium mb-1">Total Due</div>
+                            <div className="text-4xl font-extrabold text-foreground">
                                 {formatCurrency(total)}
                             </div>
                         </div>
@@ -174,13 +174,13 @@ export const UnifiedCheckoutModal: React.FC<UnifiedCheckoutModalProps> = ({
                         <div className="flex-1 mb-6">
                             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 uppercase tracking-wider">Payments Applied</h3>
                             {tenders.length === 0 ? (
-                                <div className="text-gray-400 dark:text-gray-500 text-sm italic py-4 text-center border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
+                                <div className="text-muted-foreground text-sm italic py-4 text-center border-2 border-dashed border-border rounded-lg">
                                     No payments applied yet
                                 </div>
                             ) : (
                                 <div className="space-y-2">
                                     {tenders.map((tender, idx) => (
-                                        <div key={idx} className="flex items-center justify-between bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm animate-in fade-in slide-in-from-right-4">
+                                        <div key={idx} className="flex items-center justify-between bg-card text-card-foreground p-3 rounded-lg border border-border shadow-sm animate-in fade-in slide-in-from-right-4">
                                             <div className="flex items-center gap-3">
                                                 <div className={`p-2 rounded-lg ${tender.method === 'cash' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
                                                         tender.method === 'card' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
@@ -190,12 +190,12 @@ export const UnifiedCheckoutModal: React.FC<UnifiedCheckoutModalProps> = ({
                                                     {tender.method === 'card' && <CreditCard size={18} />}
                                                     {tender.method === 'credit' && <Users size={18} />}
                                                 </div>
-                                                <span className="font-semibold text-gray-700 dark:text-gray-200 capitalize">
+                                                <span className="font-semibold text-foreground capitalize">
                                                     {tender.method}
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-3">
-                                                <span className="font-bold text-gray-900 dark:text-white">
+                                                <span className="font-bold text-foreground">
                                                     {formatCurrency(tender.amount)}
                                                 </span>
                                                 <button
@@ -217,11 +217,11 @@ export const UnifiedCheckoutModal: React.FC<UnifiedCheckoutModalProps> = ({
                                 : 'bg-red-50/50 border-red-100 dark:bg-red-900/10 dark:border-red-900/30'
                             }`}>
                             <div className="flex justify-between items-center mb-1">
-                                <span className={`text-sm font-semibold ${isReadyToComplete ? 'text-green-700 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                <span className={`text-sm font-semibold ${isReadyToComplete ? 'text-green-700 dark:text-green-400' : 'text-destructive'}`}>
                                     {isReadyToComplete ? 'Change Due' : 'Remaining Balance'}
                                 </span>
                             </div>
-                            <div className={`text-3xl font-black ${isReadyToComplete ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                            <div className={`text-3xl font-black ${isReadyToComplete ? 'text-success' : 'text-destructive'}`}>
                                 {formatCurrency(isReadyToComplete ? changeDue : balanceDue)}
                             </div>
                         </div>
@@ -229,13 +229,13 @@ export const UnifiedCheckoutModal: React.FC<UnifiedCheckoutModalProps> = ({
                     </div>
 
                     {/* Right Panel: Numpad & Tenders */}
-                    <div className="w-full lg:w-7/12 p-3 sm:p-5 flex flex-col bg-white dark:bg-gray-900">
+                    <div className="w-full lg:w-7/12 p-3 sm:p-5 flex flex-col bg-background text-foreground">
                         {/* Custom Input Display */}
                         <div className="mb-4">
                             <div className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2 px-1">Tender Amount</div>
-                            <div className="bg-gray-50 dark:bg-gray-800 border-2 border-blue-200 dark:border-blue-900/50 rounded-xl p-4 flex justify-between items-center">
+                            <div className="bg-muted border-2 border-blue-200 dark:border-blue-900/50 rounded-xl p-4 flex justify-between items-center">
                                 <span className="text-xl sm:text-2xl text-gray-400 font-bold">{currencySymbol}</span>
-                                <span className={`text-4xl sm:text-5xl font-black tracking-tight ${inputValue ? 'text-gray-900 dark:text-white' : 'text-gray-300 dark:text-gray-600'}`}>
+                                <span className={`text-4xl sm:text-5xl font-black tracking-tight ${inputValue ? 'text-foreground' : 'text-gray-300 dark:text-gray-600'}`}>
                                     {inputValue || (balanceDue > 0 ? balanceDue.toFixed(2) : '0.00')}
                                 </span>
                             </div>
@@ -329,7 +329,7 @@ export const UnifiedCheckoutModal: React.FC<UnifiedCheckoutModalProps> = ({
                 </div>
 
                 {/* Footer Action */}
-                <div className="p-4 sm:p-5 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 mt-auto">
+                <div className="p-4 sm:p-5 border-t border-border bg-background text-foreground mt-auto">
                     <Button
                         onClick={handleComplete}
                         disabled={!isReadyToComplete}

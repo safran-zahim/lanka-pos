@@ -252,23 +252,23 @@ export const CategoryManagerPanel = () => {
         <div className="flex flex-col h-full gap-4 relative">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full min-h-0">
                 {/* Categories Panel - Left Side */}
-                <div className="flex flex-col rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-900/50">
-                    <div className="bg-white dark:bg-gray-800 p-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex flex-col rounded-lg border border-border overflow-hidden bg-muted/50">
+                    <div className="bg-card text-card-foreground p-4 border-b border-border">
                         <h3 className="text-base font-bold text-gray-800 dark:text-white mb-3 flex items-center gap-2">
-                            <Folder size={18} className="text-blue-600 dark:text-blue-400" />
+                            <Folder size={18} className="text-primary" />
                             Categories
                         </h3>
                         <form onSubmit={handleAddCategory} className="flex gap-2">
                             <input
                                 type="text"
                                 placeholder="New category..."
-                                className="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white p-2 text-sm rounded border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none"
+                                className="flex-1 bg-gray-100 dark:bg-gray-700 text-foreground p-2 text-sm rounded border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-ring outline-none"
                                 value={newCategoryName}
                                 onChange={(e) => setNewCategoryName(e.target.value)}
                             />
                             <button
                                 type="submit"
-                                className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded transition-colors disabled:opacity-50"
+                                className="bg-primary hover:bg-primary/90 text-white p-2 rounded transition-colors disabled:opacity-50"
                                 disabled={!newCategoryName.trim()}
                                 title="Add Category"
                             >
@@ -284,8 +284,8 @@ export const CategoryManagerPanel = () => {
                                 className={`
                                     flex justify-between items-center p-3 rounded-lg cursor-pointer transition-all group
                                     ${selectedCategory?.id === category.id
-                                        ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-600 shadow-sm'
-                                        : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 border border-transparent'}
+                                        ? 'bg-primary/20 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-600 shadow-sm'
+                                        : 'hover:bg-accent hover:text-accent-foreground text-gray-700 dark:text-gray-300 border border-transparent'}
                                 `}
                             >
                                 {editingCategory?.id === category.id ? (
@@ -309,7 +309,7 @@ export const CategoryManagerPanel = () => {
                                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); fetchProducts('category', category.id, category.name); }}
-                                                className="text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-300 p-1"
+                                                className="text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-blue-300 p-1"
                                                 title="View Products"
                                             >
                                                 <Package size={14} />
@@ -337,22 +337,22 @@ export const CategoryManagerPanel = () => {
                 </div>
 
                 {/* Subcategories Panel - Right Side */}
-                <div className="flex flex-col rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-900">
+                <div className="flex flex-col rounded-lg border border-border overflow-hidden bg-background text-foreground">
                     {selectedCategory ? (
                         <>
-                            <div className="bg-white dark:bg-gray-800 p-4 border-b border-gray-200 dark:border-gray-700">
+                            <div className="bg-card text-card-foreground p-4 border-b border-border">
                                 <h3 className="text-base font-bold text-gray-800 dark:text-white mb-2 flex items-center gap-2">
                                     <List size={18} className="text-purple-600 dark:text-purple-400" />
                                     Subcategories
                                 </h3>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                                <p className="text-xs text-muted-foreground mb-3">
                                     For: <span className="font-semibold text-purple-600 dark:text-purple-400">{selectedCategory.name}</span>
                                 </p>
                                 <form onSubmit={handleAddSubCategory} className="flex gap-2">
                                     <input
                                         type="text"
                                         placeholder="New subcategory..."
-                                        className="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white p-2 text-sm rounded border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-purple-500 outline-none"
+                                        className="flex-1 bg-gray-100 dark:bg-gray-700 text-foreground p-2 text-sm rounded border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-purple-500 outline-none"
                                         value={newSubCategoryName}
                                         onChange={(e) => setNewSubCategoryName(e.target.value)}
                                     />
@@ -372,7 +372,7 @@ export const CategoryManagerPanel = () => {
                                     .map((subCategory) => (
                                         <div
                                             key={subCategory.id}
-                                            className="flex justify-between items-center p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700 transition-all group"
+                                            className="flex justify-between items-center p-3 rounded-lg bg-muted/50 border border-border hover:border-purple-300 dark:hover:border-purple-700 transition-all group"
                                         >
                                             {editingSubCategory?.id === subCategory.id ? (
                                                 <form onSubmit={handleUpdateSubCategory} className="flex gap-2 w-full">
@@ -395,7 +395,7 @@ export const CategoryManagerPanel = () => {
                                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                         <button
                                                             onClick={() => fetchProducts('subcategory', subCategory.id, subCategory.name)}
-                                                            className="text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-300 p-1"
+                                                            className="text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-blue-300 p-1"
                                                             title="View Products"
                                                         >
                                                             <Package size={14} />
@@ -433,8 +433,8 @@ export const CategoryManagerPanel = () => {
 
             {/* Products Viewer Modal/Panel */}
             {viewingProducts && (
-                <div className="absolute inset-0 bg-white dark:bg-gray-900 z-10 flex flex-col animate-slideUp">
-                    <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
+                <div className="absolute inset-0 bg-background text-foreground z-10 flex flex-col animate-slideUp">
+                    <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 bg-muted">
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={() => setViewingProducts(null)}
@@ -444,10 +444,10 @@ export const CategoryManagerPanel = () => {
                             </button>
                             <div>
                                 <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                                    <Package className="text-blue-600" />
+                                    <Package className="text-primary" />
                                     Products in {viewingProducts.type === 'category' ? 'Category' : 'Subcategory'}: {viewingProducts.name}
                                 </h3>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                <p className="text-sm text-muted-foreground">
                                     {loadingProducts ? 'Loading...' : `${productsList.length} products found`}
                                 </p>
                             </div>
@@ -468,14 +468,14 @@ export const CategoryManagerPanel = () => {
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                 {productsList.map(product => (
-                                    <div key={product.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                    <div key={product.id} className="bg-card text-card-foreground border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
                                         <div className="flex justify-between items-start mb-2">
                                             <h4 className="font-semibold text-gray-800 dark:text-white truncate pr-2" title={product.name}>{product.name}</h4>
                                             <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full whitespace-nowrap">
                                                 Stock: {product.stock ?? 0}
                                             </span>
                                         </div>
-                                        <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                                        <div className="space-y-1 text-sm text-muted-foreground">
                                             <p className="flex justify-between">
                                                 <span>Price:</span>
                                                 <span className="font-medium text-gray-900 dark:text-gray-200">

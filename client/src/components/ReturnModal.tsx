@@ -9,6 +9,8 @@ import { useSettingsStore } from '../store/useSettingsStore';
 import { getApiUrl } from '../config/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/Button';
+import { Input } from './ui/Input';
+import { Label } from './ui/label';
 
 interface ReturnModalProps {
     saleId: string;
@@ -386,8 +388,8 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
             <Dialog open={true}>
                 <DialogContent className="flex items-center justify-center">
                     <div className="flex items-center gap-3">
-                        <RefreshCcw className="animate-spin text-orange-500" size={20} />
-                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Loading bill...</span>
+                        <RefreshCcw className="animate-spin text-accent" size={20} />
+                        <span className="text-sm font-semibold text-foreground">Loading bill...</span>
                     </div>
                 </DialogContent>
             </Dialog>
@@ -398,7 +400,7 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
         <Dialog open={true} onOpenChange={onClose}>
             <DialogContent className="max-w-5xl max-h-[90vh] p-0 flex flex-col">
                 {/* Header */}
-                <div className="p-4 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+                <div className="p-4 border-b border-border bg-background text-foreground">
                     <DialogHeader>
                         <div className="flex justify-between items-center w-full">
                             <div className="flex items-center gap-3">
@@ -406,7 +408,7 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                                     <RefreshCcw size={18} />
                                 </div>
                                 <div>
-                                    <DialogTitle className="text-base font-bold text-gray-900 dark:text-white leading-tight">Return & Bill Details</DialogTitle>
+                                    <DialogTitle className="text-base font-bold text-foreground leading-tight">Return & Bill Details</DialogTitle>
                                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Sale ID: {saleId}</p>
                                 </div>
                             </div>
@@ -422,40 +424,40 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                     </DialogHeader>
                 </div>
 
-                <div className="flex-1 overflow-hidden flex flex-col md:flex-row min-h-0 bg-gray-50 dark:bg-gray-900/20">
+                <div className="flex-1 overflow-hidden flex flex-col md:flex-row min-h-0 bg-muted/20">
 
                     {/* Main Scrollable Area - Content combined */}
                     <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-800">
 
                         {/* Section: Original Bill Details */}
-                        <section className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
+                        <section className="bg-card text-card-foreground rounded-2xl p-5 border border-border shadow-sm">
                             <div className="flex items-center gap-2 mb-4">
-                                <FileText size={16} className="text-blue-500" />
+                                <FileText size={16} className="text-primary" />
                                 <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Transaction Info</h3>
                             </div>
 
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                                 <div className="space-y-1">
                                     <div className="text-[10px] text-gray-400 uppercase font-black">Date</div>
-                                    <div className="text-xs font-bold text-gray-800 dark:text-gray-200">
+                                    <div className="text-xs font-bold text-foreground">
                                         {sale && new Date(sale.createdAt).toLocaleString()}
                                     </div>
                                 </div>
                                 <div className="space-y-1">
                                     <div className="text-[10px] text-gray-400 uppercase font-black">Customer</div>
-                                    <div className="text-xs font-bold text-gray-800 dark:text-gray-200">
+                                    <div className="text-xs font-bold text-foreground">
                                         {customer?.name || 'Walk-in'}
                                     </div>
                                 </div>
                                 <div className="space-y-1">
                                     <div className="text-[10px] text-gray-400 uppercase font-black">Method</div>
-                                    <div className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase">
+                                    <div className="text-xs font-black text-primary uppercase">
                                         {sale?.paymentMethod || 'N/A'}
                                     </div>
                                 </div>
                                 <div className="space-y-1 text-right">
                                     <div className="text-[10px] text-gray-400 uppercase font-black">Total Paid</div>
-                                    <div className="text-xs font-black text-gray-900 dark:text-white">
+                                    <div className="text-xs font-black text-foreground">
                                         {formatCurrency(sale?.total || 0)}
                                     </div>
                                 </div>
@@ -470,7 +472,7 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                                     </div>
                                 )}
                                 {salePaymentDetails?.cardAmount > 0 && (
-                                    <div className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-md">
+                                    <div className="flex items-center gap-1.5 px-2 py-1 bg-primary/20 border border-blue-100 dark:border-blue-800 rounded-md">
                                         <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
                                         <span className="text-[10px] font-black text-blue-700 dark:text-blue-400 uppercase">Card: {formatCurrency(salePaymentDetails.cardAmount)}</span>
                                     </div>
@@ -485,10 +487,10 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                         </section>
 
                         {/* Section: Sale Note Editing */}
-                        <section className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
+                        <section className="bg-card text-card-foreground rounded-2xl p-5 border border-border shadow-sm">
                             <div className="flex justify-between items-center mb-4">
                                 <div className="flex items-center gap-2">
-                                    <Edit2 size={16} className="text-orange-500" />
+                                    <Edit2 size={16} className="text-accent" />
                                     <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Bill Note</h3>
                                 </div>
                                 {!isEditingNote ? (
@@ -526,11 +528,11 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                                 <textarea
                                     value={editingNoteValue}
                                     onChange={(e) => setEditingNoteValue(e.target.value)}
-                                    className="w-full bg-gray-50 dark:bg-gray-900/50 border border-orange-200 dark:border-orange-900/50 rounded-xl p-3 text-xs font-medium focus:ring-2 focus:ring-orange-500 outline-none min-h-20"
+                                    className="w-full bg-muted/50 border border-orange-200 dark:border-orange-900/50 rounded-xl p-3 text-xs font-medium focus:ring-2 focus:ring-orange-500 outline-none min-h-20"
                                     autoFocus
                                 />
                             ) : (
-                                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed italic">
+                                <p className="text-xs text-muted-foreground leading-relaxed italic">
                                     {sale?.note || 'No notes for this transaction.'}
                                 </p>
                             )}
@@ -539,7 +541,7 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                         {/* Section: Returnable Items */}
                         <section>
                             <div className="flex items-center gap-2 mb-4">
-                                <List size={16} className="text-orange-500" />
+                                <List size={16} className="text-accent" />
                                 <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Items to Return</h3>
                             </div>
 
@@ -554,16 +556,16 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                                             key={`${item.productId}-${index}`}
                                             className={`flex items-center gap-4 p-3 rounded-xl border transition-all cursor-pointer ${isSelected
                                                 ? 'border-orange-300 bg-orange-50/20 dark:border-orange-900/50 dark:bg-orange-900/10'
-                                                : 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800 shadow-sm hover:border-orange-200 dark:hover:border-orange-800'
+                                                : 'border-border bg-card text-card-foreground shadow-sm hover:border-orange-200 dark:hover:border-orange-800'
                                                 }`}
                                             onClick={() => handleToggleSelect(index)}
                                         >
-                                            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${isSelected ? 'bg-orange-500 border-orange-500 text-white' : 'border-gray-200 dark:border-gray-700'}`}>
+                                            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${isSelected ? 'bg-orange-500 border-orange-500 text-white' : 'border-border'}`}>
                                                 {isSelected && <Check size={12} strokeWidth={4} />}
                                             </div>
 
                                             <div className="flex-1 min-w-0">
-                                                <div className="text-sm font-bold text-gray-800 dark:text-gray-200 truncate">{item.name}</div>
+                                                <div className="text-sm font-bold text-foreground truncate">{item.name}</div>
                                                 <div className="flex items-center gap-3 mt-1 text-[10px] uppercase font-bold tracking-wider text-gray-400">
                                                     <span className="text-gray-500">{formatCurrency(item.price)}</span>
                                                     <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-700" />
@@ -571,17 +573,17 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                                                     {item.batchId && (
                                                         <>
                                                             <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-700" />
-                                                            <span className="text-blue-500">Batch {item.batchId}</span>
+                                                            <span className="text-primary">Batch {item.batchId}</span>
                                                         </>
                                                     )}
                                                 </div>
                                             </div>
 
                                             <div className={`flex items-center gap-2 ${!isSelected ? 'opacity-30' : ''}`} onClick={(e) => e.stopPropagation()}>
-                                                <div className="flex items-center bg-gray-100 dark:bg-gray-700/50 rounded-lg p-0.5 border border-gray-200 dark:border-gray-600">
+                                                <div className="flex items-center bg-gray-100 dark:bg-gray-700/50 rounded-lg p-0.5 border border-border">
                                                     <button
                                                         onClick={() => handleQtyChange(index, (returnQty - 1).toString())}
-                                                        className="p-1 hover:text-orange-500 transition-colors"
+                                                        className="p-1 hover:text-accent transition-colors"
                                                         disabled={returnQty <= 1 || !isSelected}
                                                     >
                                                         <Minus size={12} />
@@ -590,19 +592,19 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                                                         type="number"
                                                         value={returnQty}
                                                         onChange={(e) => handleQtyChange(index, e.target.value)}
-                                                        className="w-8 text-center text-[11px] font-black bg-transparent border-none focus:ring-0 p-0 text-gray-900 dark:text-white"
+                                                        className="w-8 text-center text-[11px] font-black bg-transparent border-none focus:ring-0 p-0 text-foreground"
                                                         disabled={!isSelected}
                                                         max={maxReturnable}
                                                     />
                                                     <button
                                                         onClick={() => handleQtyChange(index, (returnQty + 1).toString())}
-                                                        className="p-1 hover:text-orange-500 transition-colors"
+                                                        className="p-1 hover:text-accent transition-colors"
                                                         disabled={returnQty >= maxReturnable || !isSelected}
                                                     >
                                                         <Plus size={12} />
                                                     </button>
                                                 </div>
-                                                <div className="text-right min-w-17.5 text-xs font-black text-gray-900 dark:text-white">
+                                                <div className="text-right min-w-17.5 text-xs font-black text-foreground">
                                                     {formatCurrency(item.price * returnQty)}
                                                 </div>
                                             </div>
@@ -614,18 +616,18 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                     </div>
 
                     {/* Right Panel - Sticky Refund & Checkout */}
-                    <div className="w-full md:w-90 border-l border-gray-100 dark:border-gray-800 p-6 flex flex-col gap-6 bg-white dark:bg-gray-900">
+                    <div className="w-full md:w-90 border-l border-border p-6 flex flex-col gap-6 bg-background text-foreground">
                         <div className="space-y-4">
                             <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Refund Summary</h3>
-                            <div className="space-y-2.5 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800">
+                            <div className="space-y-2.5 p-4 rounded-2xl bg-muted/50 border border-border">
                                 <div className="flex justify-between text-xs">
                                     <span className="text-gray-500 font-medium">Subtotal</span>
-                                    <span className="font-bold text-gray-900 dark:text-white">{formatCurrency(refundSubtotal)}</span>
+                                    <span className="font-bold text-foreground">{formatCurrency(refundSubtotal)}</span>
                                 </div>
                                 {taxEnabled && (
                                     <div className="flex justify-between text-xs">
                                         <span className="text-gray-500 font-medium">Tax Adjustment</span>
-                                        <span className="font-bold text-gray-900 dark:text-white">{formatCurrency(refundTax)}</span>
+                                        <span className="font-bold text-foreground">{formatCurrency(refundTax)}</span>
                                     </div>
                                 )}
                                 {refundDiscount > 0 && (
@@ -634,9 +636,9 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                                         <span className="font-bold">-{formatCurrency(refundDiscount)}</span>
                                     </div>
                                 )}
-                                <div className="pt-3 mt-1 border-t border-gray-200 dark:border-gray-700 flex justify-between items-baseline">
-                                    <span className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">Net Refund</span>
-                                    <span className="text-2xl font-black text-orange-600 dark:text-orange-500 tracking-tighter">
+                                <div className="pt-3 mt-1 border-t border-border flex justify-between items-baseline">
+                                    <span className="text-xs font-black text-foreground uppercase tracking-wider">Net Refund</span>
+                                    <span className="text-2xl font-black text-orange-600 dark:text-accent tracking-tighter">
                                         {formatCurrency(refundTotal)}
                                     </span>
                                 </div>
@@ -655,7 +657,7 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                                             variant={refundMethod === method ? 'primary' : 'ghost'}
                                             size="sm"
                                             className={`text-[10px] font-black uppercase ${refundMethod === method
-                                                ? 'bg-orange-500 text-white hover:bg-orange-600'
+                                                ? 'bg-accent text-accent-foreground hover:bg-accent/90'
                                                 : ''
                                                 }`}
                                         >
@@ -675,7 +677,7 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                             )}
                             {sale?.parentSaleId && (
                                 <div className="flex items-start gap-2.5 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-900/30 rounded-xl">
-                                    <Info size={14} className="text-orange-500 mt-0.5 shrink-0" />
+                                    <Info size={14} className="text-accent mt-0.5 shrink-0" />
                                     <p className="text-[10px] font-bold text-orange-700 dark:text-orange-400 leading-tight">
                                         This is a Refund Transaction. You cannot refund a refund.
                                     </p>
@@ -696,7 +698,7 @@ export const ReturnModal = ({ saleId, onClose, onSuccess }: ReturnModalProps) =>
                                 <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Internal Note</h3>
                                 <textarea
                                     placeholder="Add refund reason..."
-                                    className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-3 text-xs focus:ring-2 focus:ring-orange-500 outline-none min-h-17.5 transition-all"
+                                    className="w-full bg-muted border border-border rounded-xl p-3 text-xs focus:ring-2 focus:ring-orange-500 outline-none min-h-17.5 transition-all"
                                     value={refundNote}
                                     onChange={(e) => setRefundNote(e.target.value)}
                                     disabled={!!sale?.parentSaleId || items.every(i => i.max_qty <= 0)}

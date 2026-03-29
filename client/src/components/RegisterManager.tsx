@@ -115,13 +115,13 @@ export const RegisterManager: React.FC<RegisterManagerProps> = ({ onRegisterStat
                 </Button>
 
                 <div className="text-center mb-6 mt-2">
-                    <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-200 dark:border-blue-800">
+                    <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 text-primary rounded-full flex items-center justify-center mx-auto mb-4 border border-primary/20">
                         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Open Register</h2>
-                    <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm">
+                    <h2 className="text-2xl font-bold text-foreground">Open Register</h2>
+                    <p className="text-muted-foreground mt-2 text-sm">
                         You must open a register session with a starting cash float before you can make sales.
                     </p>
                 </div>
@@ -132,7 +132,7 @@ export const RegisterManager: React.FC<RegisterManagerProps> = ({ onRegisterStat
                             Starting Cash Float
                         </label>
                         <div className="relative">
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 font-bold">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">
                                 LKR
                             </span>
                             <input
@@ -143,7 +143,7 @@ export const RegisterManager: React.FC<RegisterManagerProps> = ({ onRegisterStat
                                 step="any"
                                 value={startingCash}
                                 onChange={(e) => setStartingCash(e.target.value)}
-                                className="w-full pl-14 pr-4 py-3.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500 outline-none transition-all text-xl font-bold text-gray-900 dark:text-white"
+                                className="w-full pl-14 pr-4 py-3.5 bg-muted border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-ring focus:border-blue-500 dark:focus:ring-ring outline-none transition-all text-xl font-bold text-foreground"
                                 placeholder="0.00"
                             />
                         </div>

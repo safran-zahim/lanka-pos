@@ -124,26 +124,26 @@ export const PurchaseDetailPage = () => {
                 <div className="flex items-center gap-4 mb-6">
                     <button
                         onClick={() => navigate('/admin/purchases')}
-                        className="p-2 bg-white dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors"
+                        className="p-2 bg-card text-card-foreground rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm border border-border transition-colors"
                     >
                         <ArrowLeft size={20} />
                     </button>
                     <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Purchase Details</h1>
                 </div>
-                <div className="text-gray-500 dark:text-gray-400">Purchase not found.</div>
+                <div className="text-muted-foreground">Purchase not found.</div>
             </div>
         );
     }
 
     return (
         <div className="p-6 max-w-[1600px] mx-auto space-y-6">
-            <div className="flex justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="flex justify-between items-center bg-card text-card-foreground p-4 rounded-xl shadow-sm border border-border">
                 <div className="flex items-center gap-4">
                     <button onClick={() => navigate('/admin/purchases')} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
                         <ArrowLeft />
                     </button>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Purchase Details</h1>
+                        <h1 className="text-2xl font-bold text-foreground">Purchase Details</h1>
                         <p className="text-gray-500 text-sm">#{purchase.id} • {formatDateTime(new Date(purchase.date))}</p>
                     </div>
                 </div>
@@ -151,39 +151,39 @@ export const PurchaseDetailPage = () => {
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                 <div className="xl:col-span-2 space-y-6">
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="bg-card text-card-foreground p-6 rounded-xl shadow-sm border border-border">
                         <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-                            <Truck className="text-blue-500" /> Supplier & Details
+                            <Truck className="text-primary" /> Supplier & Details
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div className="space-y-1">
                                 <label className="text-xs font-semibold text-gray-500 uppercase">Supplier</label>
-                                <div className="w-full p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200">
+                                <div className="w-full p-2.5 bg-muted border border-border rounded-lg text-foreground">
                                     {purchase.supplier?.name || 'N/A'}
                                 </div>
                             </div>
                             <div className="space-y-1">
                                 <label className="text-xs font-semibold text-gray-500 uppercase">Purchase Date</label>
-                                <div className="w-full p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200">
+                                <div className="w-full p-2.5 bg-muted border border-border rounded-lg text-foreground">
                                     {formatDateTime(new Date(purchase.date))}
                                 </div>
                             </div>
                             <div className="space-y-1">
                                 <label className="text-xs font-semibold text-gray-500 uppercase">Status</label>
-                                <div className="w-full p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200">
+                                <div className="w-full p-2.5 bg-muted border border-border rounded-lg text-foreground">
                                     {String(purchase.status || 'PENDING').toUpperCase()}
                                 </div>
                             </div>
                             <div className="space-y-1">
                                 <label className="text-xs font-semibold text-gray-500 uppercase">Reference</label>
-                                <div className="w-full p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200">
+                                <div className="w-full p-2.5 bg-muted border border-border rounded-lg text-foreground">
                                     {purchase.refNumber || purchase.ref_number || '-'}
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="bg-card text-card-foreground p-6 rounded-xl shadow-sm border border-border">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
                                 <Package className="text-green-500" /> Items
@@ -192,7 +192,7 @@ export const PurchaseDetailPage = () => {
 
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
-                                <thead className="bg-gray-100 dark:bg-gray-900/50 text-gray-600 dark:text-gray-400 uppercase text-xs">
+                                <thead className="bg-background/50 text-muted-foreground uppercase text-xs">
                                     <tr>
                                         <th className="p-3 rounded-l-lg">Product Name</th>
                                         <th className="p-3 w-24 text-center">Qty</th>
@@ -202,9 +202,9 @@ export const PurchaseDetailPage = () => {
                                 </thead>
                                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
                                     {(purchase.items || []).map((item: any) => (
-                                        <tr key={item.id} className="group hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                                        <tr key={item.id} className="group hover:bg-accent hover:text-accent-foreground/30">
                                             <td className="p-3 font-medium">
-                                                <div className="text-gray-900 dark:text-white">{item.product?.name || 'Unknown'}</div>
+                                                <div className="text-foreground">{item.product?.name || 'Unknown'}</div>
                                                 <div className="text-xs text-gray-500">{item.product?.skuCode || item.product?.sku_code || '-'}</div>
                                             </td>
                                             <td className="p-3 text-center">{item.quantity}</td>
@@ -228,17 +228,17 @@ export const PurchaseDetailPage = () => {
                 </div>
 
                 <div className="space-y-6">
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="bg-card text-card-foreground p-6 rounded-xl shadow-sm border border-border">
                         <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-2">
                             <DollarSign className="text-green-500" /> Payment Summary
                         </h2>
 
-                        <div className="space-y-4 pb-6 border-b border-gray-200 dark:border-gray-700">
+                        <div className="space-y-4 pb-6 border-b border-border">
                             {/* Progress Bar */}
                             <div className="space-y-2">
                                 <div className="flex justify-between text-xs">
-                                    <span className="font-semibold text-gray-600 dark:text-gray-300">Payment Progress</span>
-                                    <span className="font-semibold text-gray-600 dark:text-gray-300">{totals.total > 0 ? Math.round((totals.paid / totals.total) * 100) : 0}%</span>
+                                    <span className="font-semibold text-muted-foreground">Payment Progress</span>
+                                    <span className="font-semibold text-muted-foreground">{totals.total > 0 ? Math.round((totals.paid / totals.total) * 100) : 0}%</span>
                                 </div>
                                 <div className="w-full h-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                                     <div
@@ -250,29 +250,29 @@ export const PurchaseDetailPage = () => {
 
                             {/* Cost Breakdown */}
                             <div className="space-y-2 text-sm">
-                                <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                                <div className="flex justify-between text-muted-foreground">
                                     <span>Subtotal</span>
                                     <span>{formatCurrency(totals.subtotal)}</span>
                                 </div>
                                 {totals.shipping > 0 && (
-                                    <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                                    <div className="flex justify-between text-muted-foreground">
                                         <span>Shipping</span>
-                                        <span className="text-blue-600 dark:text-blue-400">+{formatCurrency(totals.shipping)}</span>
+                                        <span className="text-primary">+{formatCurrency(totals.shipping)}</span>
                                     </div>
                                 )}
                                 {totals.discount > 0 && (
-                                    <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                                    <div className="flex justify-between text-muted-foreground">
                                         <span>Discount</span>
-                                        <span className="text-green-600 dark:text-green-400">−{formatCurrency(totals.discount)}</span>
+                                        <span className="text-success">−{formatCurrency(totals.discount)}</span>
                                     </div>
                                 )}
                                 {totals.taxAmount > 0 && (
-                                    <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                                    <div className="flex justify-between text-muted-foreground">
                                         <span>Tax</span>
                                         <span>+{formatCurrency(totals.taxAmount)}</span>
                                     </div>
                                 )}
-                                <div className="flex justify-between font-bold text-gray-800 dark:text-white border-t border-gray-200 dark:border-gray-600 pt-2">
+                                <div className="flex justify-between font-bold text-gray-800 dark:text-white border-t border-border pt-2">
                                     <span>Grand Total</span>
                                     <span>{formatCurrency(totals.total)}</span>
                                 </div>
@@ -280,17 +280,17 @@ export const PurchaseDetailPage = () => {
 
                             {/* Amount Summary */}
                             <div className="grid grid-cols-3 gap-2">
-                                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
-                                    <div className="text-xs text-gray-500 dark:text-gray-400">Total</div>
-                                    <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{formatCurrency(totals.total)}</div>
+                                <div className="bg-primary/20 p-3 rounded-lg">
+                                    <div className="text-xs text-muted-foreground">Total</div>
+                                    <div className="text-lg font-bold text-primary">{formatCurrency(totals.total)}</div>
                                 </div>
                                 <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
-                                    <div className="text-xs text-gray-500 dark:text-gray-400">Paid</div>
-                                    <div className="text-lg font-bold text-green-600 dark:text-green-400">{formatCurrency(totals.paid)}</div>
+                                    <div className="text-xs text-muted-foreground">Paid</div>
+                                    <div className="text-lg font-bold text-success">{formatCurrency(totals.paid)}</div>
                                 </div>
                                 <div className={`p-3 rounded-lg ${totals.due <= 0 ? 'bg-green-50 dark:bg-green-900/20' : 'bg-orange-50 dark:bg-orange-900/20'}`}>
-                                    <div className="text-xs text-gray-500 dark:text-gray-400">Due</div>
-                                    <div className={`text-lg font-bold ${totals.due <= 0 ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}>{formatCurrency(totals.due)}</div>
+                                    <div className="text-xs text-muted-foreground">Due</div>
+                                    <div className={`text-lg font-bold ${totals.due <= 0 ? 'text-success' : 'text-orange-600 dark:text-orange-400'}`}>{formatCurrency(totals.due)}</div>
                                 </div>
                             </div>
                         </div>
@@ -320,7 +320,7 @@ export const PurchaseDetailPage = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase mb-2">Custom Amount</label>
+                                    <label className="block text-xs font-semibold text-muted-foreground uppercase mb-2">Custom Amount</label>
                                     <div className="flex gap-2">
                                         <div className="flex-1 relative">
                                             <span className="absolute left-3 top-2.5 text-gray-400 text-sm">$</span>
@@ -335,30 +335,30 @@ export const PurchaseDetailPage = () => {
                                             />
                                         </div>
                                         {paymentAmount && Number(paymentAmount) > totals.due && (
-                                            <div className="text-right text-xs text-red-600 dark:text-red-400 font-semibold">
+                                            <div className="text-right text-xs text-destructive font-semibold">
                                                 Over by {formatCurrency(Number(paymentAmount) - totals.due)}
                                             </div>
                                         )}
                                     </div>
                                     {paymentAmount && Number(paymentAmount) > 0 && (
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Remaining: {formatCurrency(Math.max(0, totals.due - Number(paymentAmount)))}</p>
+                                        <p className="text-xs text-muted-foreground mt-1">Remaining: {formatCurrency(Math.max(0, totals.due - Number(paymentAmount)))}</p>
                                     )}
                                 </div>
 
                                 <div className="space-y-3">
                                     <div>
-                                        <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase mb-2">Payment Date</label>
+                                        <label className="block text-xs font-semibold text-muted-foreground uppercase mb-2">Payment Date</label>
                                         <input
                                             type="date"
-                                            className="w-full p-2.5 bg-white dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-lg outline-none text-sm focus:border-blue-500 dark:focus:border-blue-400 cursor-pointer"
+                                            className="w-full p-2.5 bg-white dark:bg-gray-700 border-2 border-border rounded-lg outline-none text-sm focus:border-blue-500 dark:focus:border-blue-400 cursor-pointer"
                                             value={paymentDate}
                                             onChange={(e) => setPaymentDate(e.target.value)}
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase mb-2">Payment Method</label>
+                                        <label className="block text-xs font-semibold text-muted-foreground uppercase mb-2">Payment Method</label>
                                         <select
-                                            className="w-full p-2.5 bg-white dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-lg outline-none text-sm focus:border-blue-500 dark:focus:border-blue-400 cursor-pointer"
+                                            className="w-full p-2.5 bg-white dark:bg-gray-700 border-2 border-border rounded-lg outline-none text-sm focus:border-blue-500 dark:focus:border-blue-400 cursor-pointer"
                                             value={paymentMethod}
                                             onChange={(e) => setPaymentMethod(e.target.value)}
                                         >
@@ -379,8 +379,8 @@ export const PurchaseDetailPage = () => {
                                                 : !paymentAmount || Number(paymentAmount) <= 0
                                                     ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'
                                                     : paymentAmount && Number(paymentAmount) === totals.due
-                                                        ? 'bg-green-600 hover:bg-green-700 shadow-md shadow-green-600/30'
-                                                        : 'bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-600/30'
+                                                        ? 'bg-success hover:bg-success/90 shadow-md shadow-green-600/30'
+                                                        : 'bg-primary hover:bg-primary/90 shadow-md shadow-blue-600/30'
                                             }`}
                                     >
                                         {paymentAmount && Number(paymentAmount) === totals.due ? '✓ Pay Full Amount' : `Pay ${paymentAmount ? formatCurrency(Number(paymentAmount)) : '0.00'}`}
@@ -392,12 +392,12 @@ export const PurchaseDetailPage = () => {
                         {totals.due <= 0 && (
                             <div className="py-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-center">
                                 <p className="text-green-700 dark:text-green-300 font-bold">✓ Payment Complete</p>
-                                <p className="text-xs text-green-600 dark:text-green-400">All invoices paid</p>
+                                <p className="text-xs text-success">All invoices paid</p>
                             </div>
                         )}
                     </div>
 
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="bg-card text-card-foreground p-6 rounded-xl shadow-sm border border-border">
                         <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
                             <FileText className="text-purple-500" /> Payment History
                         </h2>
@@ -405,7 +405,7 @@ export const PurchaseDetailPage = () => {
                             {(purchase.payments || []).length > 0 ? (
                                 (purchase.payments || []).map((payment: any) => (
                                     <div key={payment.id} className="flex items-center justify-between text-sm">
-                                        <div className="text-gray-600 dark:text-gray-400">
+                                        <div className="text-muted-foreground">
                                             {formatDateTime(new Date(payment.paidAt))} • {payment.method}
                                         </div>
                                         <div className="font-semibold text-green-600">{formatCurrency(Number(payment.amount))}</div>

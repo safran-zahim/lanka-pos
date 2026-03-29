@@ -11,7 +11,7 @@ interface PageSectionProps {
 
 export function PageSection({ title, children, className }: PageSectionProps) {
   return (
-    <Card className={cn('overflow-hidden border-gray-200 dark:border-gray-700', className)}>
+    <Card className={cn('overflow-hidden border-border', className)}>
       {title ? (
         <CardHeader className="pb-2">
           <CardTitle className="text-base font-semibold">{title}</CardTitle>

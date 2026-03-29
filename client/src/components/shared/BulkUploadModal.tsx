@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Upload, FileSpreadsheet, AlertCircle, CheckCircle, Download } from 'lucide-react';
+import { X, Upload, FileSpreadsheet, AlertCircle, CheckCircle, Download, RefreshCcw } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Button } from '../ui/Button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
@@ -177,10 +177,10 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClos
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="w-full max-w-lg p-0 overflow-hidden">
-                <DialogHeader className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <DialogHeader className="p-6 border-b border-border">
                     <div className="flex justify-between items-center">
-                        <DialogTitle className="text-xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
-                            <Upload size={24} className="text-blue-600" />
+                        <DialogTitle className="text-xl font-bold flex items-center gap-2 text-foreground">
+                            <Upload size={24} className="text-primary" />
                             Bulk Import {type === 'products' ? 'Products' : 'Customers'}
                         </DialogTitle>
                         <Button onClick={onClose} variant="ghost" size="sm">
@@ -193,7 +193,7 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClos
                     {/* Removed top-right sample button to align in footer */}
 
                     {/* File Drop / Select */}
-                    <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center bg-muted/50 hover:bg-accent hover:text-accent-foreground transition-colors">
                         <FileSpreadsheet className="mx-auto text-green-600 mb-4" size={48} />
                         <label className="cursor-pointer">
                             <span className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">Select Excel/CSV File</span>
@@ -210,7 +210,7 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClos
                     )}
 
                     {preview.length > 0 && (
-                        <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                        <div className="bg-muted rounded-lg p-4">
                             <h3 className="text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Preview (First 5 rows)</h3>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-xs text-left">
@@ -231,17 +231,17 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClos
                         </div>
                     )}
 
-                    <div className="flex justify-between items-center gap-3">
+                    <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-border">
                         <Button
                             onClick={handleDownloadSample}
                             variant="ghost"
                             size="sm"
-                            className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-1"
+                            className="text-xs text-primary hover:text-primary/80 flex items-center gap-2 h-9"
                         >
-                            <Download size={16} /> Download Sample Template
+                            <Download size={14} /> Download Sample Template
                         </Button>
-                        <div className="flex gap-3">
-                            <Button onClick={onClose} variant="ghost" size="sm">
+                        <div className="flex gap-3 w-full sm:w-auto">
+                            <Button onClick={onClose} variant="ghost" size="sm" className="flex-1 sm:flex-none">
                                 Cancel
                             </Button>
                             <Button
@@ -249,8 +249,13 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClos
                                 disabled={!file || uploading}
                                 variant="primary"
                                 size="sm"
-                                className="flex items-center gap-2"
+                                className="flex-1 sm:flex-none flex items-center justify-center gap-2"
                             >
+                                {uploading ? (
+                                    <RefreshCcw size={16} className="animate-spin" />
+                                ) : (
+                                    <Upload size={16} />
+                                )}
                                 {uploading ? 'Importing...' : 'Start Import'}
                             </Button>
                         </div>

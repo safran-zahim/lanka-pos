@@ -187,20 +187,20 @@ export const PurchasePage = () => {
     return (
         <div className="p-6 max-w-[1600px] mx-auto space-y-6 animate-fade-in">
             {/* Header / Actions */}
-            <div className="flex justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="flex justify-between items-center bg-card text-card-foreground p-4 rounded-xl shadow-sm border border-border">
                 <div className="flex items-center gap-4">
                     <button onClick={() => navigate('/admin/purchases')} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
                         <ArrowLeft />
                     </button>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">New Purchase Order</h1>
+                        <h1 className="text-2xl font-bold text-foreground">New Purchase Order</h1>
                         <p className="text-gray-500 text-sm">Create a new stock-in record</p>
                     </div>
                 </div>
                 <div className="flex gap-2">
                     <button
                         onClick={handleSubmit}
-                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-lg font-medium flex items-center gap-2 shadow-lg shadow-green-500/20"
+                        className="bg-success hover:bg-success/90 text-white px-6 py-2.5 rounded-lg font-medium flex items-center gap-2 shadow-lg shadow-green-500/20"
                     >
                         <Save size={20} />
                         Finalize Purchase
@@ -214,15 +214,15 @@ export const PurchasePage = () => {
                 <div className="xl:col-span-2 space-y-6">
 
                     {/* SECTION A: Supplier & Details */}
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="bg-card text-card-foreground p-6 rounded-xl shadow-sm border border-border">
                         <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-                            <Truck className="text-blue-500" /> Supplier & Details
+                            <Truck className="text-primary" /> Supplier & Details
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div className="space-y-1">
                                 <label className="text-xs font-semibold text-gray-500 uppercase">Supplier</label>
                                 <select
-                                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full p-2.5 bg-muted border border-border rounded-lg focus:ring-2 focus:ring-ring outline-none"
                                     value={supplierId}
                                     onChange={e => setSupplierId(e.target.value)}
                                 >
@@ -238,7 +238,7 @@ export const PurchasePage = () => {
                                     <Calendar className="absolute left-3 top-2.5 text-gray-400" size={18} />
                                     <input
                                         type="date"
-                                        className="w-full pl-10 p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+                                        className="w-full pl-10 p-2.5 bg-muted border border-border rounded-lg outline-none"
                                         value={date}
                                         onChange={e => setDate(e.target.value)}
                                     />
@@ -251,7 +251,7 @@ export const PurchasePage = () => {
                                     <input
                                         type="text"
                                         placeholder="PO-2024-001"
-                                        className="w-full pl-10 p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+                                        className="w-full pl-10 p-2.5 bg-muted border border-border rounded-lg outline-none"
                                         value={refNo}
                                         onChange={e => setRefNo(e.target.value)}
                                     />
@@ -260,7 +260,7 @@ export const PurchasePage = () => {
                             <div className="space-y-1">
                                 <label className="text-xs font-semibold text-gray-500 uppercase">Location</label>
                                 <select
-                                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+                                    className="w-full p-2.5 bg-muted border border-border rounded-lg outline-none"
                                     value={warehouse}
                                     onChange={e => setWarehouse(e.target.value)}
                                 >
@@ -272,7 +272,7 @@ export const PurchasePage = () => {
                     </div>
 
                     {/* SECTION B: Items Table */}
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 min-h-[400px]">
+                    <div className="bg-card text-card-foreground p-6 rounded-xl shadow-sm border border-border min-h-[400px]">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
                                 <Plus className="text-green-500" /> Items
@@ -283,17 +283,17 @@ export const PurchasePage = () => {
                                     <input
                                         type="text"
                                         placeholder="Search Product to Add..."
-                                        className="w-full pl-10 p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-green-500"
+                                        className="w-full pl-10 p-2.5 bg-muted border border-border rounded-lg outline-none focus:ring-2 focus:ring-green-500"
                                         value={itemSearch}
                                         onChange={e => setItemSearch(e.target.value)}
                                     />
                                     {itemSearch && (
-                                        <div className="absolute top-full left-0 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 mt-1 rounded-lg shadow-xl z-20 max-h-60 overflow-y-auto">
+                                        <div className="absolute top-full left-0 w-full bg-card text-card-foreground border border-border mt-1 rounded-lg shadow-xl z-20 max-h-60 overflow-y-auto">
                                             {filteredProducts?.map(p => (
                                                 <div
                                                     key={p.id || p.product_id}
                                                     onClick={() => addItem(p)}
-                                                    className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-0"
+                                                    className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-b border-border last:border-0"
                                                 >
                                                     <div className="font-bold text-gray-800 dark:text-white">{p.name}</div>
                                                     <div className="text-xs text-gray-500 font-mono mt-0.5">{p.skuCode || p.sku_code}</div>
@@ -307,7 +307,7 @@ export const PurchasePage = () => {
                                 </div>
                                 <button
                                     onClick={() => setShowAddProductModal(true)}
-                                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg"
+                                    className="flex items-center gap-2 bg-success hover:bg-success/90 text-white px-3 py-2 rounded-lg"
                                 >
                                     <PlusCircle size={18} /> Add New Product
                                 </button>
@@ -316,7 +316,7 @@ export const PurchasePage = () => {
 
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
-                                <thead className="bg-gray-100 dark:bg-gray-900/50 text-gray-600 dark:text-gray-400 uppercase text-xs">
+                                <thead className="bg-background/50 text-muted-foreground uppercase text-xs">
                                     <tr>
                                         <th className="p-3 rounded-l-lg">Product Name</th>
                                         <th className="p-3 w-24 text-center">Qty</th>
@@ -329,15 +329,15 @@ export const PurchasePage = () => {
                                 </thead>
                                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
                                     {items.map((item, index) => (
-                                        <tr key={item.product_id} className="group hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                                        <tr key={item.product_id} className="group hover:bg-accent hover:text-accent-foreground/30">
                                             <td className="p-3 font-medium">
-                                                <div className="text-gray-900 dark:text-white">{item.name}</div>
+                                                <div className="text-foreground">{item.name}</div>
                                                 <div className="text-xs text-gray-500">{item.sku}</div>
                                             </td>
                                             <td className="p-3">
                                                 <input
                                                     type="number"
-                                                    className="w-full bg-gray-50 dark:bg-gray-900 p-1.5 rounded text-center outline-none focus:ring-1 focus:ring-blue-500"
+                                                    className="w-full bg-muted p-1.5 rounded text-center outline-none focus:ring-1 focus:ring-ring"
                                                     value={item.qty || ''}
                                                     onFocus={e => e.target.select()}
                                                     onChange={e => updateItem(index, 'qty', e.target.value === '' ? 0 : Number(e.target.value))}
@@ -347,7 +347,7 @@ export const PurchasePage = () => {
                                                 <input
                                                     type="number"
                                                     step="0.01"
-                                                    className="w-full bg-gray-50 dark:bg-gray-900 p-1.5 rounded text-right outline-none focus:ring-1 focus:ring-blue-500"
+                                                    className="w-full bg-muted p-1.5 rounded text-right outline-none focus:ring-1 focus:ring-ring"
                                                     value={item.cost || ''}
                                                     onFocus={e => e.target.select()}
                                                     onChange={e => updateItem(index, 'cost', e.target.value === '' ? 0 : Number(e.target.value))}
@@ -357,7 +357,7 @@ export const PurchasePage = () => {
                                                 <input
                                                     type="number"
                                                     step="0.01"
-                                                    className="w-full bg-gray-50 dark:bg-gray-900 p-1.5 rounded text-right outline-none focus:ring-1 focus:ring-blue-500"
+                                                    className="w-full bg-muted p-1.5 rounded text-right outline-none focus:ring-1 focus:ring-ring"
                                                     value={item.retail_price || ''}
                                                     onFocus={e => e.target.select()}
                                                     onChange={e => updateItem(index, 'retail_price', e.target.value === '' ? 0 : Number(e.target.value))}
@@ -401,32 +401,32 @@ export const PurchasePage = () => {
                 <div className="space-y-6">
 
                     {/* SECTION C: Financial Summary */}
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="bg-card text-card-foreground p-6 rounded-xl shadow-sm border border-border">
                         <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
                             <DollarSign className="text-green-500" /> Payment Summary
                         </h2>
 
-                        <div className="space-y-3 pb-6 border-b border-gray-200 dark:border-gray-700">
-                            <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                        <div className="space-y-3 pb-6 border-b border-border">
+                            <div className="flex justify-between text-muted-foreground">
                                 <span>Subtotal</span>
                                 <span>{formatCurrency(subtotal)}</span>
                             </div>
-                            <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                            <div className="flex justify-between text-muted-foreground">
                                 <span>Order Tax</span>
                                 <span>{formatCurrency(totalTax)}</span>
                             </div>
-                            <div className="flex justify-between items-center text-gray-600 dark:text-gray-400">
+                            <div className="flex justify-between items-center text-muted-foreground">
                                 <span>Shipping Cost</span>
                                 <input
                                     type="number"
-                                    className="w-20 text-right bg-gray-50 dark:bg-gray-900 p-1 rounded border border-gray-200 dark:border-gray-700 outline-none text-sm"
+                                    className="w-20 text-right bg-muted p-1 rounded border border-border outline-none text-sm"
                                     value={shipping || ''}
                                     placeholder="0"
                                     onFocus={e => e.target.select()}
                                     onChange={e => setShipping(e.target.value === '' ? 0 : Number(e.target.value))}
                                 />
                             </div>
-                            <div className="flex justify-between items-center text-green-600 dark:text-green-400">
+                            <div className="flex justify-between items-center text-success">
                                 <span>Discount</span>
                                 <input
                                     type="number"
@@ -441,10 +441,10 @@ export const PurchasePage = () => {
 
                         <div className="py-4 flex justify-between items-center">
                             <span className="text-xl font-bold text-gray-800 dark:text-white">Grand Total</span>
-                            <span className="text-2xl font-extrabold text-blue-600 dark:text-blue-400">{formatCurrency(grandTotal)}</span>
+                            <span className="text-2xl font-extrabold text-primary">{formatCurrency(grandTotal)}</span>
                         </div>
 
-                        <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <div className="space-y-4 pt-4 border-t border-border">
                             <div>
                                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Payment Status</label>
                                 <div className="grid grid-cols-3 gap-2">
@@ -458,7 +458,7 @@ export const PurchasePage = () => {
                                             }}
                                             className={`py-2 rounded-lg text-sm capitalize font-medium border ${paymentStatus === status
                                                 ? 'bg-blue-600 text-white border-blue-600'
-                                                : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700'
+                                                : 'bg-background text-foreground text-muted-foreground border-border'
                                                 }`}
                                         >
                                             {status}
@@ -472,7 +472,7 @@ export const PurchasePage = () => {
                                     <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Amount Paid</label>
                                     <input
                                         type="number"
-                                        className="w-full p-2.5 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg outline-none font-bold text-blue-600 dark:text-blue-400"
+                                        className="w-full p-2.5 bg-blue-50 dark:bg-blue-900/10 border border-primary/20 rounded-lg outline-none font-bold text-primary"
                                         value={paidAmount || ''}
                                         onFocus={e => e.target.select()}
                                         onChange={e => setPaidAmount(e.target.value === '' ? 0 : Number(e.target.value))}
@@ -486,7 +486,7 @@ export const PurchasePage = () => {
                                 <div>
                                     <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Payment Method</label>
                                     <select
-                                        className="w-full p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+                                        className="w-full p-2.5 bg-muted border border-border rounded-lg outline-none"
                                         value={paymentMethod}
                                         onChange={e => setPaymentMethod(e.target.value)}
                                     >
@@ -501,20 +501,20 @@ export const PurchasePage = () => {
                     </div>
 
                     {/* SECTION D: Notes & Attachments */}
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="bg-card text-card-foreground p-6 rounded-xl shadow-sm border border-border">
                         <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
                             <FileText className="text-purple-500" /> Notes
                         </h2>
 
                         <div className="space-y-4">
                             <textarea
-                                className="w-full h-32 p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg resize-none outline-none focus:ring-2 focus:ring-purple-500"
+                                className="w-full h-32 p-3 bg-muted border border-border rounded-lg resize-none outline-none focus:ring-2 focus:ring-purple-500"
                                 placeholder="Add notes for this purchase..."
                                 value={notes}
                                 onChange={e => setNotes(e.target.value)}
                             />
 
-                            <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors">
+                            <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center text-gray-500 hover:bg-accent hover:text-accent-foreground/50 cursor-pointer transition-colors">
                                 <UploadCloud size={32} className="mb-2" />
                                 <span className="text-sm">Attach Invoice (PDF/Img)</span>
                             </div>

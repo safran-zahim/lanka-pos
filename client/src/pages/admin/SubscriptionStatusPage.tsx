@@ -94,11 +94,11 @@ export const SubscriptionStatusPage = () => {
         <div className="max-w-3xl mx-auto p-6 space-y-6">
             {/* Header */}
             <div>
-                <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white flex items-center gap-3">
-                    <Shield className="text-blue-600" size={26} />
+                <h1 className="text-2xl font-extrabold text-foreground flex items-center gap-3">
+                    <Shield className="text-primary" size={26} />
                     Subscription Status
                 </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                     Read-only view. Contact your system developer to make changes.
                 </p>
             </div>
@@ -121,7 +121,7 @@ export const SubscriptionStatusPage = () => {
                     <span className={`px-3 py-1 rounded-full border font-bold text-sm ${statusStyle}`}>
                         {status?.isSystemDisabled ? 'System Disabled' : (status?.subscriptionStatus ?? 'active').replace('_', ' ').toUpperCase()}
                     </span>
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-300 capitalize">
+                    <span className="text-sm font-medium text-muted-foreground capitalize">
                         {status?.isNeverEnd
                             ? <span className="flex items-center gap-1"><Infinity size={14} /> Lifetime (No Expiry)</span>
                             : `${status?.paymentCycle ?? 'monthly'} billing`
@@ -132,7 +132,7 @@ export const SubscriptionStatusPage = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div>
                         <p className="text-xs font-bold uppercase tracking-wide text-gray-500 mb-1">Expiry Date</p>
-                        <p className="font-semibold text-gray-900 dark:text-white">
+                        <p className="font-semibold text-foreground">
                             {status?.isNeverEnd ? 'Never Expires' : fmt(status?.subscriptionExpiresAt ?? null)}
                         </p>
                     </div>
@@ -164,25 +164,25 @@ export const SubscriptionStatusPage = () => {
             </div>
 
             {/* History */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+            <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm overflow-hidden">
                 <button
                     onClick={() => setShowHistory(v => !v)}
-                    className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                    className="w-full px-6 py-4 flex items-center justify-between hover:bg-accent hover:text-accent-foreground/50 transition-colors"
                 >
-                    <h2 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <History size={18} className="text-blue-500" /> Payment & Change History
+                    <h2 className="font-bold text-foreground flex items-center gap-2">
+                        <History size={18} className="text-primary" /> Payment & Change History
                     </h2>
                     {showHistory ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                 </button>
 
                 {showHistory && (
-                    <div className="border-t border-gray-100 dark:border-gray-700 max-h-[400px] overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
+                    <div className="border-t border-border max-h-[400px] overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
                         {history.length === 0 ? (
                             <div className="p-8 text-center text-gray-400 text-sm">No history recorded yet.</div>
                         ) : history.map(h => (
                             <div key={h.id} className="px-6 py-3 flex flex-col sm:flex-row sm:items-start gap-2">
                                 <div className="flex-1 min-w-0">
-                                    <div className="font-semibold text-sm text-gray-900 dark:text-white">
+                                    <div className="font-semibold text-sm text-foreground">
                                         {h.action.split(',').map(a => ACTION_LABELS[a] ?? a).join(' + ')}
                                     </div>
                                     <div className="text-xs text-gray-500 mt-0.5 space-x-2">
@@ -192,7 +192,7 @@ export const SubscriptionStatusPage = () => {
                                         {h.newExpiresAt && <span>Expiry: {fmt(h.newExpiresAt)}</span>}
                                         {h.paymentCycle && <span className="capitalize">{h.paymentCycle}</span>}
                                     </div>
-                                    {h.note && <div className="text-xs text-blue-600 dark:text-blue-400 italic mt-0.5">"{h.note}"</div>}
+                                    {h.note && <div className="text-xs text-primary italic mt-0.5">"{h.note}"</div>}
                                 </div>
                                 <div className="text-right text-xs text-gray-400 whitespace-nowrap shrink-0">
                                     <div className="font-medium">{h.changedByName ?? 'developer'}</div>

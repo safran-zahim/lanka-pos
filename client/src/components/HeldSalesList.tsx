@@ -51,8 +51,8 @@ export const HeldSalesList = ({ onRestore, onClose }: HeldSalesListProps) => {
             <DialogContent className="w-150 max-h-[80vh] p-6 flex flex-col">
                 <DialogHeader className="mb-6">
                     <div className="flex justify-between items-center">
-                        <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                            <Clock className="text-blue-500" />
+                        <DialogTitle className="text-xl font-bold text-foreground flex items-center gap-2">
+                            <Clock className="text-primary" />
                             Held Sales
                         </DialogTitle>
                         <Button variant="ghost" size="sm" onClick={onClose}>
@@ -65,13 +65,13 @@ export const HeldSalesList = ({ onRestore, onClose }: HeldSalesListProps) => {
                     {heldSales?.map((sale) => (
                         <div key={sale.id} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex justify-between items-center border border-gray-200 dark:border-transparent">
                             <div>
-                                <div className="font-medium text-gray-900 dark:text-white text-lg">
+                                <div className="font-medium text-foreground text-lg">
                                     {sale.note || `Sale #${sale.id}`}
                                 </div>
-                                <div className="text-sm text-gray-500 dark:text-gray-400">
+                                <div className="text-sm text-muted-foreground">
                                     {new Date(sale.createdAt || sale.timestamp).toLocaleString()}
                                 </div>
-                                <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                                <div className="text-sm text-muted-foreground mt-1">
                                     {(sale.items || []).length} items • Total: {formatCurrency((sale.items || []).reduce((sum: number, i: any) => sum + ((i.product?.retail_price || 0) * i.quantity), 0))}
                                 </div>
                             </div>
@@ -99,7 +99,7 @@ export const HeldSalesList = ({ onRestore, onClose }: HeldSalesListProps) => {
                     ))}
 
                     {heldSales?.length === 0 && (
-                        <div className="text-center text-gray-500 dark:text-gray-400 py-10">
+                        <div className="text-center text-muted-foreground py-10">
                             No held sales found.
                         </div>
                     )}

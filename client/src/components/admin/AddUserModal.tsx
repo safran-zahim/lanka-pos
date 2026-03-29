@@ -73,7 +73,7 @@ export const AddUserModal = ({ onClose, onSuccess }: AddUserModalProps) => {
                         <input
                             required
                             type="text"
-                            className="w-full bg-gray-700 text-white p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="w-full bg-gray-700 text-white p-2 rounded focus:ring-2 focus:ring-ring outline-none"
                             value={formData.username}
                             onChange={e => setFormData({ ...formData, username: e.target.value })}
                         />
@@ -83,7 +83,7 @@ export const AddUserModal = ({ onClose, onSuccess }: AddUserModalProps) => {
                         <input
                             required
                             type="password"
-                            className="w-full bg-gray-700 text-white p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="w-full bg-gray-700 text-white p-2 rounded focus:ring-2 focus:ring-ring outline-none"
                             value={formData.password}
                             onChange={e => setFormData({ ...formData, password: e.target.value })}
                         />
@@ -91,7 +91,7 @@ export const AddUserModal = ({ onClose, onSuccess }: AddUserModalProps) => {
                     <div>
                         <label className="block text-sm text-gray-400 mb-1">Role</label>
                         <select
-                            className="w-full bg-gray-700 text-white p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="w-full bg-gray-700 text-white p-2 rounded focus:ring-2 focus:ring-ring outline-none"
                             value={formData.role}
                             onChange={e => setFormData({ ...formData, role: e.target.value as any })}
                         >
@@ -105,7 +105,7 @@ export const AddUserModal = ({ onClose, onSuccess }: AddUserModalProps) => {
                         <input
                             type="number"
                             step="0.01"
-                            className="w-full bg-gray-700 text-white p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="w-full bg-gray-700 text-white p-2 rounded focus:ring-2 focus:ring-ring outline-none"
                             value={formData.hourly_rate}
                             onChange={e => setFormData({ ...formData, hourly_rate: e.target.value })}
                         />

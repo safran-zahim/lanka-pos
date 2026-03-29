@@ -3,6 +3,8 @@ import { useSettingsStore } from '../../store/useSettingsStore';
 import { Save, Loader, Percent, Tag, Scale, Gift, Settings as SettingsIcon } from 'lucide-react';
 import { useToast } from '../../store/useToast';
 import { BrandingPage } from './BrandingPage';
+import { Switch } from '../../components/ui/switch';
+import { Input } from '../../components/ui/Input';
 
 export const SettingsPage = () => {
     const { taxRate, taxEnabled, roundOffEnabled, roundOffDecimals, loyaltyEnabled, loyaltyEarnRate, loyaltyPointValue, toastEnabled, currencySymbol, currencyCode, locale, timeZone, loadSettings, updateSetting, loading, allowOverSelling, enableDailyRegister, enableCustomerCredit } = useSettingsStore();
@@ -166,7 +168,7 @@ export const SettingsPage = () => {
     if (loading) {
         return (
             <div className="p-6 flex justify-center items-center h-full">
-                <Loader className="animate-spin text-blue-600" size={32} />
+                <Loader className="animate-spin text-primary" size={32} />
             </div>
         );
     }
@@ -217,10 +219,10 @@ export const SettingsPage = () => {
     return (
         <div className="flex flex-col h-full overflow-hidden bg-gray-50 dark:bg-gray-950">
             {/* STICKY HEADER */}
-            <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex flex-shrink-0 justify-between items-center z-20">
+            <div className="bg-background text-foreground border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex flex-shrink-0 justify-between items-center z-20">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                        <SettingsIcon className="text-blue-600" size={28} />
+                    <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
+                        <SettingsIcon className="text-primary" size={28} />
                         System Settings
                     </h1>
                 </div>
@@ -230,7 +232,7 @@ export const SettingsPage = () => {
                         const isBusy = activeTab === 'branding' ? brandingSaving : isSaving;
                         const colorClass = config.color === 'gray'
                             ? 'bg-gray-300 text-gray-700 cursor-not-allowed'
-                            : 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20';
+                            : 'bg-primary hover:bg-primary/90 shadow-blue-600/20';
                         return (
                             <button
                                 onClick={config.onClick}
@@ -247,7 +249,7 @@ export const SettingsPage = () => {
 
             <div className="flex flex-1 overflow-hidden">
                 {/* SIDEBAR NAVIGATION */}
-                <div className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex-shrink-0 flex flex-col p-4 space-y-2 overflow-y-auto">
+                <div className="w-64 bg-background text-foreground border-r border-gray-200 dark:border-gray-800 flex-shrink-0 flex flex-col p-4 space-y-2 overflow-y-auto">
                     <div className="px-3 mb-4">
                         <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Configuration</p>
                     </div>
@@ -257,7 +259,7 @@ export const SettingsPage = () => {
                             onClick={() => setActiveTab(tab.id)}
                             className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === tab.id
                                 ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                                 }`}
                         >
                             <span className={activeTab === tab.id ? 'text-white' : 'text-gray-400'}>{tab.icon}</span>
@@ -272,108 +274,79 @@ export const SettingsPage = () => {
                         {activeTab === 'general' && (
                             <form onSubmit={handleSaveTax} className="space-y-8">
                                 <div className="space-y-1 mb-6">
-                                    <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white">General & Tax</h2>
-                                    <p className="text-gray-500 dark:text-gray-400">Manage your business tax rates and system preferences</p>
+                                    <h2 className="text-2xl font-extrabold text-foreground">General & Tax</h2>
+                                    <p className="text-muted-foreground">Manage your business tax rates and system preferences</p>
                                 </div>
                                 <div className="space-y-4">
-                                    <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200">Notifications</h3>
-                                    <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3">
+                                    <h3 className="text-lg font-bold text-foreground">Notifications</h3>
+                                    <div className="flex items-center justify-between bg-muted border border-border rounded-lg px-4 py-3">
                                         <div>
-                                            <p className="font-semibold text-gray-800 dark:text-gray-200">Show toast messages</p>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">Enable or disable pop-up notifications</p>
+                                            <p className="font-semibold text-foreground">Show toast messages</p>
+                                            <p className="text-sm text-muted-foreground">Enable or disable pop-up notifications</p>
                                         </div>
-                                        <label className="inline-flex items-center cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                className="sr-only"
-                                                checked={toastEnabledInput}
-                                                onChange={(e) => setToastEnabledInput(e.target.checked)}
+                                            <Switch 
+                                                checked={toastEnabledInput} 
+                                                onCheckedChange={setToastEnabledInput} 
                                             />
-                                            <div className={`w-11 h-6 rounded-full transition-colors ${toastEnabledInput ? 'bg-blue-600' : 'bg-gray-300'}`}>
-                                                <div className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${toastEnabledInput ? 'translate-x-5' : 'translate-x-1'}`} />
-                                            </div>
-                                        </label>
                                     </div>
-                                    <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3">
+                                    <div className="flex items-center justify-between bg-muted border border-border rounded-lg px-4 py-3">
                                         <div>
-                                            <p className="font-semibold text-gray-800 dark:text-gray-200">Allow Over-Selling</p>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">Allow selling products even when stock is zero</p>
+                                            <p className="font-semibold text-foreground">Allow Over-Selling</p>
+                                            <p className="text-sm text-muted-foreground">Allow selling products even when stock is zero</p>
                                         </div>
-                                        <label className="inline-flex items-center cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                className="sr-only"
-                                                checked={allowOverSellingInput}
-                                                onChange={(e) => setAllowOverSellingInput(e.target.checked)}
+                                            <Switch 
+                                                checked={allowOverSellingInput} 
+                                                onCheckedChange={setAllowOverSellingInput} 
                                             />
-                                            <div className={`w-11 h-6 rounded-full transition-colors ${allowOverSellingInput ? 'bg-orange-600' : 'bg-gray-300'}`}>
-                                                <div className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${allowOverSellingInput ? 'translate-x-5' : 'translate-x-1'}`} />
-                                            </div>
-                                        </label>
                                     </div>
-                                    <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3">
+                                    <div className="flex items-center justify-between bg-muted border border-border rounded-lg px-4 py-3">
                                         <div>
-                                            <p className="font-semibold text-gray-800 dark:text-gray-200">Enable Daily Register</p>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">Require cashiers to open a shift with a starting cash float before selling. Tracks all register cash movements.</p>
+                                            <p className="font-semibold text-foreground">Enable Daily Register</p>
+                                            <p className="text-sm text-muted-foreground">Require cashiers to open a shift with a starting cash float before selling. Tracks all register cash movements.</p>
                                         </div>
-                                        <label className="inline-flex items-center cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                className="sr-only"
-                                                checked={enableDailyRegisterInput}
-                                                onChange={(e) => setEnableDailyRegisterInput(e.target.checked)}
+                                            <Switch 
+                                                checked={enableDailyRegisterInput} 
+                                                onCheckedChange={setEnableDailyRegisterInput} 
                                             />
-                                            <div className={`w-11 h-6 rounded-full transition-colors ${enableDailyRegisterInput ? 'bg-blue-600' : 'bg-gray-300'}`}>
-                                                <div className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${enableDailyRegisterInput ? 'translate-x-5' : 'translate-x-1'}`} />
-                                            </div>
-                                        </label>
                                     </div>
-                                    <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3">
+                                    <div className="flex items-center justify-between bg-muted border border-border rounded-lg px-4 py-3">
                                         <div>
-                                            <p className="font-semibold text-gray-800 dark:text-gray-200">Enable Customer Credit</p>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">Allow customers to purchase items on credit. Requires customer selection.</p>
+                                            <p className="font-semibold text-foreground">Enable Customer Credit</p>
+                                            <p className="text-sm text-muted-foreground">Allow customers to purchase items on credit. Requires customer selection.</p>
                                         </div>
-                                        <label className="inline-flex items-center cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                className="sr-only"
-                                                checked={enableCustomerCreditInput}
-                                                onChange={(e) => setEnableCustomerCreditInput(e.target.checked)}
+                                            <Switch 
+                                                checked={enableCustomerCreditInput} 
+                                                onCheckedChange={setEnableCustomerCreditInput} 
                                             />
-                                            <div className={`w-11 h-6 rounded-full transition-colors ${enableCustomerCreditInput ? 'bg-amber-600' : 'bg-gray-300'}`}>
-                                                <div className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${enableCustomerCreditInput ? 'translate-x-5' : 'translate-x-1'}`} />
-                                            </div>
-                                        </label>
                                     </div>
                                 </div>
 
 
                                 {/* TAX SECTION */}
-                                <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                                    <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center gap-3 bg-gray-50/50 dark:bg-gray-800/50">
-                                        <div className="p-2 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-lg">
+                                <section className="bg-card text-card-foreground rounded-2xl shadow-sm border border-border overflow-hidden">
+                                    <div className="p-6 border-b border-border flex items-center gap-3 bg-gray-50/50 dark:bg-gray-800/50">
+                                        <div className="p-2 bg-primary/20 text-primary rounded-lg">
                                             <Percent size={20} />
                                         </div>
-                                        <h3 className="font-bold text-gray-900 dark:text-white">Tax Configuration</h3>
+                                        <h3 className="font-bold text-foreground">Tax Configuration</h3>
                                     </div>
                                     <div className="p-6 space-y-6">
-                                        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/40 rounded-xl border border-gray-100 dark:border-gray-800">
+                                        <div className="flex items-center justify-between p-4 bg-muted/40 rounded-xl border border-border">
                                             <div>
-                                                <p className="font-bold text-gray-900 dark:text-white">Enable Sales Tax</p>
+                                                <p className="font-bold text-foreground">Enable Sales Tax</p>
                                                 <p className="text-sm text-gray-500">Apply standard tax to all invoices</p>
                                             </div>
-                                            <label className="relative inline-flex items-center cursor-pointer">
-                                                <input type="checkbox" checked={taxEnabledInput} onChange={(e) => setTaxEnabledInput(e.target.checked)} className="sr-only peer" />
-                                                <div className="w-12 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                                            </label>
+                                                <Switch 
+                                                    checked={taxEnabledInput} 
+                                                    onCheckedChange={setTaxEnabledInput} 
+                                                />
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div className="space-y-2">
                                                 <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Default Tax Rate (%)</label>
                                                 <div className="relative">
-                                                    <input
+                                                    <Input
                                                         type="number" step="0.01" min="0" max="100" disabled={!taxEnabledInput}
-                                                        className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-3 rounded-xl border-2 border-transparent focus:border-blue-500 outline-none transition-all disabled:opacity-50"
                                                         value={rateInput} onChange={(e) => setRateInput(e.target.value)} placeholder="0.00"
                                                     />
                                                     <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-gray-400">%</span>
@@ -384,29 +357,29 @@ export const SettingsPage = () => {
                                 </section>
 
                                 {/* ROUNDING SECTION */}
-                                <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                                    <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center gap-3 bg-gray-50/50 dark:bg-gray-800/50">
+                                <section className="bg-card text-card-foreground rounded-2xl shadow-sm border border-border overflow-hidden">
+                                    <div className="p-6 border-b border-border flex items-center gap-3 bg-gray-50/50 dark:bg-gray-800/50">
                                         <div className="p-2 bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 rounded-lg">
                                             <Scale size={20} />
                                         </div>
-                                        <h3 className="font-bold text-gray-900 dark:text-white">Precision & Rounding</h3>
+                                        <h3 className="font-bold text-foreground">Precision & Rounding</h3>
                                     </div>
                                     <div className="p-6 space-y-6">
-                                        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/40 rounded-xl border border-gray-100 dark:border-gray-800">
+                                        <div className="flex items-center justify-between p-4 bg-muted/40 rounded-xl border border-border">
                                             <div>
-                                                <p className="font-bold text-gray-900 dark:text-white">Enable Auto Rounding</p>
+                                                <p className="font-bold text-foreground">Enable Auto Rounding</p>
                                                 <p className="text-sm text-gray-500">Round final totals automatically</p>
                                             </div>
-                                            <label className="relative inline-flex items-center cursor-pointer">
-                                                <input type="checkbox" checked={roundOffEnabledInput} onChange={(e) => setRoundOffEnabledInput(e.target.checked)} className="sr-only peer" />
-                                                <div className="w-12 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:bg-purple-600 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-                                            </label>
+                                                <Switch 
+                                                    checked={roundOffEnabledInput} 
+                                                    onCheckedChange={setRoundOffEnabledInput} 
+                                                />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Rounding Precision</label>
                                             <select
                                                 disabled={!roundOffEnabledInput}
-                                                className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-3 rounded-xl border-2 border-transparent focus:border-purple-500 outline-none transition-all disabled:opacity-50"
+                                                className="w-full bg-muted text-foreground p-3 rounded-md border border-input focus:ring-2 focus:ring-purple-500 outline-none transition-all disabled:opacity-50"
                                                 value={roundOffDecimalsInput} onChange={(e) => setRoundOffDecimalsInput(e.target.value)}
                                             >
                                                 <option value="0">0 (No Decimals)</option>
@@ -418,38 +391,36 @@ export const SettingsPage = () => {
                                 </section>
 
                                 {/* LOYALTY SECTION */}
-                                <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                                    <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center gap-3 bg-gray-50/50 dark:bg-gray-800/50">
-                                        <div className="p-2 bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 rounded-lg">
+                                <section className="bg-card text-card-foreground rounded-2xl shadow-sm border border-border overflow-hidden">
+                                    <div className="p-6 border-b border-border flex items-center gap-3 bg-gray-50/50 dark:bg-gray-800/50">
+                                        <div className="p-2 bg-green-100 dark:bg-green-900/40 text-success rounded-lg">
                                             <Gift size={20} />
                                         </div>
-                                        <h3 className="font-bold text-gray-900 dark:text-white">Loyalty Rewards</h3>
+                                        <h3 className="font-bold text-foreground">Loyalty Rewards</h3>
                                     </div>
                                     <div className="p-6 space-y-6">
-                                        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/40 rounded-xl border border-gray-100 dark:border-gray-800">
+                                        <div className="flex items-center justify-between p-4 bg-muted/40 rounded-xl border border-border">
                                             <div>
-                                                <p className="font-bold text-gray-900 dark:text-white">Loyalty Program</p>
+                                                <p className="font-bold text-foreground">Loyalty Program</p>
                                                 <p className="text-sm text-gray-500">Allow customers to earn and spend points</p>
                                             </div>
-                                            <label className="relative inline-flex items-center cursor-pointer">
-                                                <input type="checkbox" checked={loyaltyEnabledInput} onChange={(e) => setLoyaltyEnabledInput(e.target.checked)} className="sr-only peer" />
-                                                <div className="w-12 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:bg-green-600 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-                                            </label>
+                                                <Switch 
+                                                    checked={loyaltyEnabledInput} 
+                                                    onCheckedChange={setLoyaltyEnabledInput} 
+                                                />
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div className="space-y-2">
                                                 <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Earn Rate (Points per {currencySymbolInput}1)</label>
-                                                <input
+                                                <Input
                                                     type="number" step="0.01" min="0" disabled={!loyaltyEnabledInput}
-                                                    className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-3 rounded-xl border-2 border-transparent focus:border-green-500 outline-none transition-all disabled:opacity-50"
                                                     value={loyaltyEarnRateInput} onChange={(e) => setLoyaltyEarnRateInput(e.target.value)}
                                                 />
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Point Value ({currencySymbolInput} per point)</label>
-                                                <input
+                                                <Input
                                                     type="number" step="0.01" min="0" disabled={!loyaltyEnabledInput}
-                                                    className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-3 rounded-xl border-2 border-transparent focus:border-green-500 outline-none transition-all disabled:opacity-50"
                                                     value={loyaltyPointValueInput} onChange={(e) => setLoyaltyPointValueInput(e.target.value)}
                                                 />
                                             </div>
@@ -463,16 +434,15 @@ export const SettingsPage = () => {
                         {activeTab === 'currency' && (
                             <div className="space-y-6">
                                 <div className="space-y-1">
-                                    <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white">Currency</h2>
-                                    <p className="text-gray-500 dark:text-gray-400">Auto‑detected from system with editable dropdowns</p>
+                                    <h2 className="text-2xl font-extrabold text-foreground">Currency</h2>
+                                    <p className="text-muted-foreground">Auto‑detected from system with editable dropdowns</p>
                                 </div>
-                                <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                <section className="bg-card text-card-foreground rounded-2xl shadow-sm border border-border overflow-hidden">
                                     <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
                                             <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Currency Symbol</label>
-                                            <input
+                                            <Input
                                                 type="text"
-                                                className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-3 rounded-xl border-2 border-transparent focus:border-amber-500 outline-none transition-all"
                                                 value={currencySymbolInput}
                                                 onChange={(e) => setCurrencySymbolInput(e.target.value)}
                                                 placeholder="$"
@@ -480,9 +450,8 @@ export const SettingsPage = () => {
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Currency Code</label>
-                                            <input
+                                            <Input
                                                 type="text"
-                                                className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-3 rounded-xl border-2 border-transparent focus:border-amber-500 outline-none transition-all"
                                                 value={currencyCodeInput}
                                                 onChange={(e) => setCurrencyCodeInput(e.target.value.toUpperCase())}
                                                 placeholder="USD"
@@ -491,7 +460,7 @@ export const SettingsPage = () => {
                                         <div className="space-y-2">
                                             <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Locale</label>
                                             <select
-                                                className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-3 rounded-xl border-2 border-transparent focus:border-amber-500 outline-none transition-all"
+                                                className="w-full bg-muted text-foreground p-3 rounded-md border border-input focus:ring-2 focus:ring-amber-500 outline-none transition-all"
                                                 value={localeInput}
                                                 onChange={(e) => setLocaleInput(e.target.value)}
                                             >
@@ -505,7 +474,7 @@ export const SettingsPage = () => {
                                         <div className="space-y-2">
                                             <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Time Zone</label>
                                             <select
-                                                className="w-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-3 rounded-xl border-2 border-transparent focus:border-amber-500 outline-none transition-all"
+                                                className="w-full bg-muted text-foreground p-3 rounded-md border border-input focus:ring-2 focus:ring-amber-500 outline-none transition-all"
                                                 value={timeZoneInput}
                                                 onChange={(e) => setTimeZoneInput(e.target.value)}
                                             >
@@ -524,8 +493,8 @@ export const SettingsPage = () => {
                         {activeTab === 'branding' && (
                             <div className="space-y-6">
                                 <div className="space-y-1">
-                                    <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white">Branding</h2>
-                                    <p className="text-gray-500 dark:text-gray-400">Company identity, logo, and contact details</p>
+                                    <h2 className="text-2xl font-extrabold text-foreground">Branding</h2>
+                                    <p className="text-muted-foreground">Company identity, logo, and contact details</p>
                                 </div>
                                 <BrandingPage
                                     hideSave
