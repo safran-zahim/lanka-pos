@@ -49,15 +49,15 @@ export const ProductBatchHistoryModal = ({ product, onClose }: ProductBatchHisto
             <DialogContent className="w-full max-w-4xl p-0 rounded-2xl max-h-[90vh] overflow-hidden" showCloseButton={false}>
 
                 {/* Header */}
-                <DialogHeader className="p-6 border-b border-gray-200 dark:border-gray-800 bg-background text-foreground rounded-t-2xl">
+                <DialogHeader className="p-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-t-2xl">
                     <div className="flex justify-between items-center">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-primary/20 text-primary rounded-xl">
+                        <div className="p-3 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-xl">
                             <History size={24} />
                         </div>
                         <div>
-                            <DialogTitle className="text-xl font-bold text-foreground">Price History & Batches</DialogTitle>
-                            <p className="text-sm text-muted-foreground">{product.name} (SKU: {product.sku_code})</p>
+                            <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white">Price History & Batches</DialogTitle>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{product.name} (SKU: {product.sku_code})</p>
                         </div>
                     </div>
                     <Button type="button" onClick={onClose} variant="ghost" size="sm" className="text-gray-400 hover:text-gray-600 dark:hover:text-white">
@@ -73,9 +73,9 @@ export const ProductBatchHistoryModal = ({ product, onClose }: ProductBatchHisto
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                         </div>
                     ) : batches.length === 0 ? (
-                        <div className="text-center py-20 bg-muted/50 rounded-2xl border-2 border-dashed border-border">
+                        <div className="text-center py-20 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700">
                             <Package size={48} className="mx-auto text-gray-300 mb-4" />
-                            <p className="text-muted-foreground font-medium">No purchase history found for this product.</p>
+                            <p className="text-gray-500 dark:text-gray-400 font-medium">No purchase history found for this product.</p>
                             <p className="text-sm text-gray-400 mt-1">New batches will appear here when you add stock.</p>
                         </div>
                     ) : (
@@ -104,11 +104,11 @@ export const ProductBatchHistoryModal = ({ product, onClose }: ProductBatchHisto
                                     <div
                                         key={batch.id || batch.batch_id}
                                         className={`grid grid-cols-6 gap-4 p-4 rounded-xl border transition-all ${qty > 0
-                                                ? 'bg-card text-card-foreground border-border shadow-sm'
-                                                : 'bg-muted/50 border-border opacity-60'
+                                                ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm'
+                                                : 'bg-gray-50 dark:bg-gray-900/50 border-gray-100 dark:border-gray-800 opacity-60'
                                             }`}
                                     >
-                                        <div className="col-span-1 text-sm font-medium text-foreground">
+                                        <div className="col-span-1 text-sm font-medium text-gray-900 dark:text-white">
                                             {formatDateTime(new Date(createdDate))}
                                         </div>
 
@@ -116,12 +116,12 @@ export const ProductBatchHistoryModal = ({ product, onClose }: ProductBatchHisto
                                             {qty > 0 ? (
                                                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 uppercase">Active</span>
                                             ) : (
-                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-200 dark:bg-gray-700 text-muted-foreground uppercase">Sold Out</span>
+                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 uppercase">Sold Out</span>
                                             )}
                                         </div>
 
                                         <div className="col-span-1">
-                                            <div className="flex items-center gap-1 font-bold text-foreground">
+                                            <div className="flex items-center gap-1 font-bold text-gray-900 dark:text-white">
                                                 {formatCurrency(costPrice)}
                                                 {isCostUp && <TrendingUp size={14} className="text-red-500" />}
                                                 {isCostDown && <TrendingDown size={14} className="text-green-500" />}
@@ -130,7 +130,7 @@ export const ProductBatchHistoryModal = ({ product, onClose }: ProductBatchHisto
                                         </div>
 
                                         <div className="col-span-1">
-                                            <div className="flex items-center gap-1 font-bold text-foreground text-lg">
+                                            <div className="flex items-center gap-1 font-bold text-gray-900 dark:text-white text-lg">
                                                 {formatCurrency(retailPrice)}
                                                 {isRetailUp && <TrendingUp size={14} className="text-green-500" />}
                                                 {isRetailDown && <TrendingDown size={14} className="text-red-500" />}
@@ -138,11 +138,11 @@ export const ProductBatchHistoryModal = ({ product, onClose }: ProductBatchHisto
                                             <p className="text-[10px] text-gray-500">Customer Price</p>
                                         </div>
 
-                                        <div className="col-span-1 text-center font-mono font-bold text-primary text-lg">
+                                        <div className="col-span-1 text-center font-mono font-bold text-blue-600 dark:text-blue-400 text-lg">
                                             {qty}
                                         </div>
 
-                                        <div className="col-span-1 text-xs text-muted-foreground italic">
+                                        <div className="col-span-1 text-xs text-gray-500 dark:text-gray-400 italic">
                                             {batch.note || '-'}
                                         </div>
                                     </div>
@@ -153,10 +153,10 @@ export const ProductBatchHistoryModal = ({ product, onClose }: ProductBatchHisto
                 </div>
 
                 {/* Footer */}
-                <div className="p-6 border-t border-gray-200 dark:border-gray-800 bg-muted rounded-b-2xl">
+                <div className="p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 rounded-b-2xl">
                     <div className="flex justify-between items-center">
                         <div className="text-sm text-gray-500">
-                            Total Current Stock: <span className="font-bold text-foreground uppercase">{(product as any).stock_quantity || (product as any).stock || 0} {product.unit_id || 'units'}</span>
+                            Total Current Stock: <span className="font-bold text-gray-900 dark:text-white uppercase">{(product as any).stock_quantity || (product as any).stock || 0} {product.unit_id || 'units'}</span>
                         </div>
                         <Button
                             type="button"

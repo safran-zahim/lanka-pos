@@ -121,19 +121,19 @@ export const SaleDetailPage = () => {
 
     if (loading) {
         return (
-            <div className="p-6 flex flex-col items-center justify-center h-[50vh] text-foreground">
+            <div className="p-6 flex flex-col items-center justify-center h-[50vh] text-gray-900 dark:text-white">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-3"></div>
-                <div className="text-muted-foreground">Loading transaction...</div>
+                <div className="text-gray-500 dark:text-gray-400">Loading transaction...</div>
             </div>
         );
     }
 
     if (!transaction) {
         return (
-            <div className="p-6 flex flex-col items-center justify-center h-[50vh] text-foreground">
+            <div className="p-6 flex flex-col items-center justify-center h-[50vh] text-gray-900 dark:text-white">
                 <AlertTriangle className="text-red-400 mb-3" size={40} />
-                <div className="text-muted-foreground">Transaction not found.</div>
-                <button onClick={() => navigate('/admin/transactions')} className="mt-4 text-primary hover:underline text-sm">← Back to Sales</button>
+                <div className="text-gray-500 dark:text-gray-400">Transaction not found.</div>
+                <button onClick={() => navigate('/admin/transactions')} className="mt-4 text-blue-500 hover:underline text-sm">← Back to Sales</button>
             </div>
         );
     }
@@ -224,14 +224,14 @@ export const SaleDetailPage = () => {
     };
 
     return (
-        <div className="p-6 max-w-5xl mx-auto space-y-5 text-foreground">
+        <div className="p-6 max-w-5xl mx-auto space-y-5 text-gray-900 dark:text-white">
 
             {/* Header */}
             <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => navigate('/admin/transactions')}
-                        className="p-2 bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground rounded-lg shadow-sm border border-border transition-colors"
+                        className="p-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 transition-colors"
                     >
                         <ArrowLeft size={18} />
                     </button>
@@ -244,7 +244,7 @@ export const SaleDetailPage = () => {
                                 </span>
                             )}
                         </div>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                             Bill #{transaction.id} &nbsp;·&nbsp; {new Date(transaction.createdAt).toLocaleString()}
                             {isReturn && transaction.parentSaleId && (
                                 <span className="ml-2 text-red-500">
@@ -259,7 +259,7 @@ export const SaleDetailPage = () => {
                     <PaymentBadge method={transaction.paymentMethod || 'cash'} />
                     <button
                         onClick={() => setIsPrinting(true)}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm"
                     >
                         <Printer size={15} /> Print Receipt
                     </button>
@@ -270,17 +270,17 @@ export const SaleDetailPage = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
                 {/* Customer */}
-                <div className="bg-card text-card-foreground border border-border rounded-xl p-4 shadow-sm">
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm">
                     <div className="flex items-center gap-2 text-xs text-gray-400 uppercase tracking-wider font-semibold mb-2">
                         <Users size={12} /> Customer
                     </div>
                     {customer ? (
                         <div>
                             <div className="font-bold text-base">{customer.name}</div>
-                            <div className="text-sm text-muted-foreground">{customer.phone || '-'}</div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">{customer.phone || '-'}</div>
                             <button
                                 onClick={() => navigate(`/admin/customers/${customer.id}`)}
-                                className="mt-1.5 text-xs text-primary hover:underline flex items-center gap-1"
+                                className="mt-1.5 text-xs text-blue-500 hover:underline flex items-center gap-1"
                             >
                                 View Profile <ChevronRight size={12} />
                             </button>
@@ -291,16 +291,16 @@ export const SaleDetailPage = () => {
                 </div>
 
                 {/* Staff */}
-                <div className="bg-card text-card-foreground border border-border rounded-xl p-4 shadow-sm">
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm">
                     <div className="flex items-center gap-2 text-xs text-gray-400 uppercase tracking-wider font-semibold mb-2">
                         <User size={12} /> Served By
                     </div>
                     <div className="font-bold text-base">{staff?.username || 'Unknown'}</div>
-                    <div className="text-sm text-muted-foreground capitalize">{staff?.role || '-'}</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 capitalize">{staff?.role || '-'}</div>
                 </div>
 
                 {/* Note */}
-                <div className="bg-card text-card-foreground border border-border rounded-xl p-4 shadow-sm">
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm">
                     <div className="flex items-center gap-2 text-xs text-gray-400 uppercase tracking-wider font-semibold mb-2">
                         <FileText size={12} /> Note
                     </div>
@@ -311,16 +311,16 @@ export const SaleDetailPage = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-card text-card-foreground border border-border rounded-xl p-4 shadow-sm">
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider">Invoice Total</div>
-                    <div className="mt-1 text-xl font-bold text-foreground">{formatCurrency(grandTotal)}</div>
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Invoice Total</div>
+                    <div className="mt-1 text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(grandTotal)}</div>
                 </div>
-                <div className="bg-card text-card-foreground border border-border rounded-xl p-4 shadow-sm">
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider">Paid (This Invoice)</div>
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Paid (This Invoice)</div>
                     <div className="mt-1 text-xl font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(paidAgainstInvoice)}</div>
                 </div>
-                <div className="bg-card text-card-foreground border border-border rounded-xl p-4 shadow-sm">
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider">Open Due</div>
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Open Due</div>
                     <div className={`mt-1 text-xl font-bold ${dueAmount > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
                         {formatCurrency(dueAmount)}
                     </div>
@@ -328,15 +328,15 @@ export const SaleDetailPage = () => {
             </div>
 
             {/* Items Table */}
-            <div className="bg-card text-card-foreground border border-border rounded-xl shadow-sm overflow-hidden">
-                <div className="p-4 border-b border-border flex items-center gap-2">
-                    <Receipt size={16} className="text-primary" />
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
+                    <Receipt size={16} className="text-blue-500" />
                     <h2 className="font-bold text-base">Items</h2>
                     <span className="ml-auto text-sm text-gray-400">{items.length} line{items.length !== 1 ? 's' : ''}</span>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
-                        <thead className="text-xs text-muted-foreground bg-gray-50 dark:bg-gray-700/50">
+                        <thead className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50">
                             <tr>
                                 <th className="px-4 py-3 font-medium">Product</th>
                                 <th className="px-4 py-3 font-medium">SKU</th>
@@ -353,15 +353,15 @@ export const SaleDetailPage = () => {
                                 const batchId = item.batchId ?? item.batch_id ?? item.batch?.id ?? null;
                                 const batchDateRaw = item.batch?.purchase?.date || item.batch?.createdAt || item.batch?.created_at;
                                 return (
-                                    <tr key={item.id} className={`hover:bg-accent hover:text-accent-foreground/30 transition-colors ${qty < 0 ? 'bg-red-50/40 dark:bg-red-900/10' : ''}`}>
+                                    <tr key={item.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors ${qty < 0 ? 'bg-red-50/40 dark:bg-red-900/10' : ''}`}>
                                         <td className="px-4 py-3 font-medium">
                                             {item.product?.name || 'Unknown'}
                                             {qty < 0 && <span className="ml-2 text-[10px] bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-300 px-1.5 py-0.5 rounded font-bold">RETURN</span>}
                                         </td>
-                                        <td className="px-4 py-3 text-muted-foreground text-xs font-mono">
+                                        <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs font-mono">
                                             {item.product?.skuCode || '-'}
                                         </td>
-                                        <td className="px-4 py-3 text-muted-foreground text-xs">
+                                        <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">
                                             {batchId ? (
                                                 <div className="flex flex-col">
                                                     <span className="font-semibold text-gray-700 dark:text-gray-300">B#{batchId}</span>
@@ -371,13 +371,13 @@ export const SaleDetailPage = () => {
                                                 </div>
                                             ) : 'N/A'}
                                         </td>
-                                        <td className={`px-4 py-3 text-right font-medium ${qty < 0 ? 'text-destructive' : ''}`}>
+                                        <td className={`px-4 py-3 text-right font-medium ${qty < 0 ? 'text-red-600 dark:text-red-400' : ''}`}>
                                             {qty}
                                         </td>
-                                        <td className="px-4 py-3 text-right text-muted-foreground">
+                                        <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-400">
                                             {formatCurrency(price)}
                                         </td>
-                                        <td className={`px-4 py-3 text-right font-semibold ${qty < 0 ? 'text-destructive' : ''}`}>
+                                        <td className={`px-4 py-3 text-right font-semibold ${qty < 0 ? 'text-red-600 dark:text-red-400' : ''}`}>
                                             {formatCurrency(price * Math.abs(qty))}
                                         </td>
                                     </tr>
@@ -392,43 +392,43 @@ export const SaleDetailPage = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
                 {/* Financial Breakdown */}
-                <div className="bg-card text-card-foreground border border-border rounded-xl shadow-sm p-5">
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-5">
                     <h2 className="font-bold text-base mb-4 flex items-center gap-2">
-                        <Tag size={16} className="text-primary" /> Financial Breakdown
+                        <Tag size={16} className="text-blue-500" /> Financial Breakdown
                     </h2>
                     <div className="space-y-2.5 text-sm">
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Items Total</span>
+                            <span className="text-gray-600 dark:text-gray-400">Items Total</span>
                             <span className="font-medium">{formatCurrency(itemsTotal)}</span>
                         </div>
                         {discount > 0 && (
-                            <div className="flex justify-between text-success">
+                            <div className="flex justify-between text-green-600 dark:text-green-400">
                                 <span>Discount Applied</span>
                                 <span className="font-medium">− {formatCurrency(discount)}</span>
                             </div>
                         )}
-                        <div className="flex justify-between font-semibold border-t border-border pt-2 mt-1">
+                        <div className="flex justify-between font-semibold border-t border-gray-100 dark:border-gray-700 pt-2 mt-1">
                             <span>Subtotal (After Discount)</span>
                             <span>{formatCurrency(Math.max(0, displaySubtotal - discount))}</span>
                         </div>
                         {tax > 0 && (
-                            <div className="flex justify-between text-muted-foreground">
+                            <div className="flex justify-between text-gray-600 dark:text-gray-400">
                                 <span>Tax ({taxPercent}%)</span>
                                 <span className="font-medium">+ {formatCurrency(tax)}</span>
                             </div>
                         )}
                         {roundOff > 0 && (
-                            <div className="flex justify-between text-success">
+                            <div className="flex justify-between text-green-600 dark:text-green-400">
                                 <span>Round Off</span>
                                 <span className="font-medium">− {formatCurrency(roundOff)}</span>
                             </div>
                         )}
-                        <div className={`flex justify-between font-bold text-lg border-t border-border pt-3 mt-2 ${isReturn ? 'text-destructive' : 'text-foreground'}`}>
+                        <div className={`flex justify-between font-bold text-lg border-t border-gray-200 dark:border-gray-700 pt-3 mt-2 ${isReturn ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
                             <span>{isReturn ? 'REFUND TOTAL' : 'GRAND TOTAL'}</span>
                             <span>{formatCurrency(grandTotal)}</span>
                         </div>
                         {!isReturn && collectedNow > 0 && (
-                            <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold border-t border-border pt-2 mt-1">
+                            <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold border-t border-gray-100 dark:border-gray-700 pt-2 mt-1">
                                 <span>Collected Now</span>
                                 <span>{formatCurrency(collectedNow)}</span>
                             </div>
@@ -446,34 +446,34 @@ export const SaleDetailPage = () => {
                 <div className="space-y-4">
 
                     {/* Payment Method */}
-                    <div className="bg-card text-card-foreground border border-border rounded-xl shadow-sm p-5">
+                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-5">
                         <h2 className="font-bold text-base mb-3 flex items-center gap-2">
-                            {transaction.paymentMethod === 'card' ? <CreditCard size={16} className="text-primary" /> :
-                                transaction.paymentMethod === 'credit' ? <Wallet size={16} className="text-accent" /> :
+                            {transaction.paymentMethod === 'card' ? <CreditCard size={16} className="text-blue-500" /> :
+                                transaction.paymentMethod === 'credit' ? <Wallet size={16} className="text-orange-500" /> :
                                     <Banknote size={16} className="text-green-500" />}
                             Payment
                         </h2>
                         <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
-                                <span className="text-muted-foreground">Method</span>
+                                <span className="text-gray-600 dark:text-gray-400">Method</span>
                                 <PaymentBadge method={transaction.paymentMethod || 'cash'} />
                             </div>
                             {(transaction.paymentMethod === 'split' || transaction.paymentMethod === 'credit') && (cashPortion > 0 || cardPortion > 0 || creditPortion > 0) && (
                                 <>
                                     {cashPortion > 0 && (
-                                        <div className="flex justify-between text-muted-foreground ml-2 border-l-2 border-border pl-2">
+                                        <div className="flex justify-between text-gray-600 dark:text-gray-400 ml-2 border-l-2 border-gray-100 dark:border-gray-700 pl-2">
                                             <span>Cash Portion</span>
                                             <span className="font-medium">{formatCurrency(cashPortion)}</span>
                                         </div>
                                     )}
                                     {cardPortion > 0 && (
-                                        <div className="flex justify-between text-muted-foreground ml-2 border-l-2 border-border pl-2">
+                                        <div className="flex justify-between text-gray-600 dark:text-gray-400 ml-2 border-l-2 border-gray-100 dark:border-gray-700 pl-2">
                                             <span>Card Portion</span>
                                             <span className="font-medium">{formatCurrency(cardPortion)}</span>
                                         </div>
                                     )}
                                     {creditPortion > 0 && (
-                                        <div className="flex justify-between text-muted-foreground ml-2 border-l-2 border-border pl-2">
+                                        <div className="flex justify-between text-gray-600 dark:text-gray-400 ml-2 border-l-2 border-gray-100 dark:border-gray-700 pl-2">
                                             <span>Credit Portion</span>
                                             <span className="font-medium">{formatCurrency(creditPortion)}</span>
                                         </div>
@@ -481,7 +481,7 @@ export const SaleDetailPage = () => {
                                 </>
                             )}
                             {cashTendered > 0 && transaction.paymentMethod !== 'split' && (
-                                <div className="flex justify-between text-muted-foreground">
+                                <div className="flex justify-between text-gray-600 dark:text-gray-400">
                                     <span>Cash Tendered</span>
                                     <span className="font-medium">{formatCurrency(cashTendered)}</span>
                                 </div>
@@ -493,8 +493,8 @@ export const SaleDetailPage = () => {
                                     </div>
                                 )}
                             {creditPortion > 0 && (
-                                <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-border text-sm">
-                                    <p className="font-bold text-xs uppercase tracking-wider text-muted-foreground mb-1">On Account (Credit)</p>
+                                <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 text-sm">
+                                    <p className="font-bold text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400 mb-1">On Account (Credit)</p>
                                     <div className="flex justify-between font-semibold">
                                         <span>Charged to Account</span>
                                         <span className="text-orange-600 dark:text-orange-400">{formatCurrency(creditPortion)}</span>
@@ -512,7 +512,7 @@ export const SaleDetailPage = () => {
 
                     {/* Loyalty Points */}
                     {(pointsEarned > 0 || pointsRedeemed > 0) && (
-                        <div className="bg-card text-card-foreground border border-border rounded-xl shadow-sm p-5">
+                        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-5">
                             <h2 className="font-bold text-base mb-3 flex items-center gap-2">
                                 <Star size={16} className="text-purple-500" /> Loyalty Points
                             </h2>
@@ -534,16 +534,16 @@ export const SaleDetailPage = () => {
                     )}
 
                     {dueAmount > 0 && customer?.id && !isReturn && (
-                        <div className="bg-card text-card-foreground border border-border rounded-xl shadow-sm p-5">
+                        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-5">
                             <h2 className="font-bold text-base mb-3 flex items-center gap-2">
-                                <Wallet size={16} className="text-accent" /> Due Payment
+                                <Wallet size={16} className="text-orange-500" /> Due Payment
                             </h2>
                             <div className="space-y-3 text-sm">
                                 <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Invoice Due</span>
+                                    <span className="text-gray-600 dark:text-gray-400">Invoice Due</span>
                                     <span className="font-bold text-orange-600 dark:text-orange-400">{formatCurrency(dueAmount)}</span>
                                 </div>
-                                <div className="flex justify-between text-muted-foreground">
+                                <div className="flex justify-between text-gray-600 dark:text-gray-400">
                                     <span>Already Paid (This Bill)</span>
                                     <span className="font-semibold text-emerald-600 dark:text-emerald-400">{formatCurrency(paidAgainstInvoice)}</span>
                                 </div>
@@ -568,7 +568,7 @@ export const SaleDetailPage = () => {
                                     </button>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Amount</label>
+                                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase mb-1">Amount</label>
                                     <input
                                         type="number"
                                         value={paymentAmount}
@@ -580,11 +580,11 @@ export const SaleDetailPage = () => {
                                         placeholder="0.00"
                                     />
                                     {paymentAmount && parsedPaymentAmount > 0 && (
-                                        <p className="mt-1 text-xs text-muted-foreground">Remaining after this payment: {formatCurrency(remainingAfterInput)}</p>
+                                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Remaining after this payment: {formatCurrency(remainingAfterInput)}</p>
                                     )}
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Method</label>
+                                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase mb-1">Method</label>
                                     <select
                                         value={paymentMethod}
                                         onChange={(event) => setPaymentMethod(event.target.value as 'cash' | 'card' | 'bank')}
@@ -596,7 +596,7 @@ export const SaleDetailPage = () => {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Note</label>
+                                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase mb-1">Note</label>
                                     <input
                                         type="text"
                                         value={paymentNote}
@@ -613,17 +613,17 @@ export const SaleDetailPage = () => {
                                     {isPaying ? 'Processing...' : `Record Payment ${paymentAmount ? `(${formatCurrency(parsedPaymentAmount)})` : ''}`}
                                 </button>
 
-                                <div className="pt-2 border-t border-border">
-                                    <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Invoice Payment History</h3>
+                                <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                                    <h3 className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase mb-2">Invoice Payment History</h3>
                                     {loadingInvoicePayments ? (
-                                        <div className="text-xs text-muted-foreground">Loading payment history...</div>
+                                        <div className="text-xs text-gray-500 dark:text-gray-400">Loading payment history...</div>
                                     ) : invoicePayments.length === 0 ? (
-                                        <div className="text-xs text-muted-foreground">No payments recorded for this invoice yet.</div>
+                                        <div className="text-xs text-gray-500 dark:text-gray-400">No payments recorded for this invoice yet.</div>
                                     ) : (
                                         <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
                                             {invoicePayments.map((payment) => (
                                                 <div key={payment.id} className="flex items-center justify-between text-xs bg-gray-50 dark:bg-gray-700/40 rounded px-2 py-1.5">
-                                                    <span className="text-muted-foreground">{new Date(payment.createdAt).toLocaleString()} · {String(payment.paymentMethod || '').toUpperCase()}</span>
+                                                    <span className="text-gray-600 dark:text-gray-300">{new Date(payment.createdAt).toLocaleString()} · {String(payment.paymentMethod || '').toUpperCase()}</span>
                                                     <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(Number(payment.amount || 0))}</span>
                                                 </div>
                                             ))}
@@ -638,11 +638,11 @@ export const SaleDetailPage = () => {
 
             {/* Returns linked to this sale */}
             {returns.length > 0 && (
-                <div className="bg-card text-card-foreground border border-orange-200 dark:border-orange-900/40 rounded-xl shadow-sm overflow-hidden">
+                <div className="bg-white dark:bg-gray-800 border border-orange-200 dark:border-orange-900/40 rounded-xl shadow-sm overflow-hidden">
                     <div className="p-4 border-b border-orange-200 dark:border-orange-900/40 bg-orange-50 dark:bg-orange-900/10 flex items-center gap-2">
                         <RotateCcw size={16} className="text-orange-600 dark:text-orange-400" />
                         <h2 className="font-bold text-base text-orange-700 dark:text-orange-300">Returns Against This Bill</h2>
-                        <span className="ml-auto text-xs text-accent">{returns.length} return{returns.length !== 1 ? 's' : ''}</span>
+                        <span className="ml-auto text-xs text-orange-500">{returns.length} return{returns.length !== 1 ? 's' : ''}</span>
                     </div>
                     <div className="divide-y divide-gray-100 dark:divide-gray-700">
                         {returns.map((ret: any) => (
@@ -656,11 +656,11 @@ export const SaleDetailPage = () => {
                                     </button>
                                     <span className="text-xs text-gray-500">{new Date(ret.createdAt).toLocaleString()}</span>
                                 </div>
-                                <div className="text-sm text-muted-foreground space-y-0.5">
+                                <div className="text-sm text-gray-600 dark:text-gray-400 space-y-0.5">
                                     {(ret.items || []).map((it: any) => (
                                         <div key={it.id} className="flex justify-between">
                                             <span>{it.product?.name || 'Product'} × {Math.abs(Number(it.quantity || 0))}</span>
-                                            <span className="font-medium text-destructive">
+                                            <span className="font-medium text-red-600 dark:text-red-400">
                                                 − {formatCurrency(Number(it.price || 0) * Math.abs(Number(it.quantity || 0)))}
                                             </span>
                                         </div>

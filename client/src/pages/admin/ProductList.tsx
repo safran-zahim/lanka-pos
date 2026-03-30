@@ -15,9 +15,6 @@ import { useAuthStore } from '../../store/useAuthStore';
 import * as XLSX from 'xlsx';
 import { useToast } from '../../store/useToast';
 import { getApiUrl } from '../../config/api';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs';
-import { Button } from '../../components/ui/Button';
-import { Checkbox } from '../../components/ui/checkbox';
 
 export const ProductList = () => {
     const navigate = useNavigate();
@@ -348,7 +345,7 @@ export const ProductList = () => {
                         <>
                             <span className="font-mono text-sm">{row.barcode}</span>
                             {row.barcode_type ? (
-                                <span className="text-xs text-muted-foreground">{row.barcode_type}</span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400">{row.barcode_type}</span>
                             ) : (
                                 <span className="text-xs text-gray-400">Type unknown</span>
                             )}
@@ -399,8 +396,8 @@ export const ProductList = () => {
                 return (
                     <div className="flex flex-col gap-1">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium w-fit ${stock <= reorder
-                            ? 'bg-red-100 dark:bg-red-500/20 text-destructive'
-                            : 'bg-green-100 dark:bg-green-500/20 text-success'
+                            ? 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400'
+                            : 'bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400'
                             }`}>
                             {stock} {unitShortName}
                         </span>
@@ -417,7 +414,7 @@ export const ProductList = () => {
                                                 </span>
                                             ))}
                                             {batchSummary.activeBatches > batchSummary.badges.length && (
-                                                <span className="text-[10px] text-muted-foreground">
+                                                <span className="text-[10px] text-gray-500 dark:text-gray-400">
                                                     +{batchSummary.activeBatches - batchSummary.badges.length} more
                                                 </span>
                                             )}
@@ -436,42 +433,36 @@ export const ProductList = () => {
             header: 'Actions',
             cell: (row: any) => (
                 <div className="flex items-center gap-2">
-                    <Button
-                        variant="secondary"
-                        size="sm"
+                    <button
                         onClick={(e) => {
                             e.stopPropagation();
                             navigate(`/admin/products/${row.product_id}/history`);
                         }}
-                        className="bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border-none hover:bg-purple-100 dark:hover:bg-purple-900/50"
+                        className="p-2 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors"
                         title="Price History & Batches"
                     >
                         <History size={18} />
-                    </Button>
-                    <Button
-                        variant="secondary"
-                        size="sm"
+                    </button>
+                    <button
                         onClick={(e) => {
                             e.stopPropagation();
                             setEditingProduct(row);
                         }}
-                        className="bg-gray-50 dark:bg-gray-700 text-muted-foreground border-none hover:bg-gray-100 dark:hover:bg-gray-600"
+                        className="p-2 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                         title="Edit Product Details"
                     >
                         <Edit size={18} />
-                    </Button>
-                    <Button
-                        variant={row.isActive === false ? "danger" : "success"}
-                        size="sm"
+                    </button>
+                    <button
                         onClick={(e) => {
                             e.stopPropagation();
                             toggleProductStatus(row);
                         }}
                         disabled={togglingProductId === row.product_id}
-                        className={`border-none ${row.isActive === false
-                            ? 'bg-red-50 dark:bg-red-900/30 text-destructive hover:bg-red-100 dark:hover:bg-red-900/50'
-                            : 'bg-green-50 dark:bg-green-900/30 text-success hover:bg-green-100 dark:hover:bg-green-900/50'
-                            }`}
+                        className={`p-2 rounded-lg transition-colors ${row.isActive === false
+                            ? 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50'
+                            : 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/50'
+                            } disabled:opacity-50 disabled:cursor-not-allowed`}
                         title={row.isActive === false ? 'Mark as Active' : 'Mark as Inactive'}
                     >
                         {togglingProductId === row.product_id ? (
@@ -481,7 +472,7 @@ export const ProductList = () => {
                         ) : (
                             <Eye size={18} />
                         )}
-                    </Button>
+                    </button>
                 </div>
             )
         }
@@ -491,7 +482,7 @@ export const ProductList = () => {
         <div className="p-6">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                    <Package className="text-primary" />
+                    <Package className="text-blue-600" />
                     Products
                 </h1>
                 <div className="flex gap-3">
@@ -499,87 +490,81 @@ export const ProductList = () => {
                 </div>
             </div>
 
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
-                <div className="flex flex-wrap lg:flex-nowrap justify-between items-end gap-3 mb-6">
-                    <TabsList className="h-10">
-                        {tabs.map(tab => (
-                            <TabsTrigger
-                                key={tab.id}
-                                value={tab.id}
-                                className="flex items-center gap-2"
-                            >
-                                {tab.icon}
-                                {tab.label}
-                            </TabsTrigger>
-                        ))}
-                    </TabsList>
+            <div className="flex flex-wrap lg:flex-nowrap justify-between items-end gap-3 mb-6">
+                <div className="flex flex-wrap gap-2">
+                    {tabs.map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${activeTab === tab.id
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                }`}
+                        >
+                            {tab.icon}
+                            {tab.label}
+                        </button>
+                    ))}
                 </div>
-            <TabsContent value="products">
-                <div className="bg-card text-card-foreground rounded-lg p-4 shadow-sm border border-border">
+            </div>
+            {activeTab === 'products' && (
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
                     <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex items-center space-x-2">
-                            <Checkbox
+                        <div className="flex items-center gap-3">
+                            <input
+                                type="checkbox"
                                 id="showInactive"
                                 checked={showInactive}
-                                onCheckedChange={(val) => setShowInactive(!!val)}
+                                onChange={(e) => setShowInactive(e.target.checked)}
+                                className="rounded border-gray-300 dark:border-gray-600"
                             />
-                            <label htmlFor="showInactive" className="text-sm font-medium leading-none text-foreground cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                            <label htmlFor="showInactive" className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
                                 Show inactive products
                             </label>
                         </div>
                         <div className="flex flex-wrap gap-2">
                             {selectedProducts.length > 0 && (
                                 <>
-                                    <Button
-                                        variant="secondary"
-                                        size="sm"
+                                    <button
                                         onClick={handleBulkActivate}
                                         disabled={isBulkDeactivating}
-                                        className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-300 dark:border-green-700 hover:bg-green-100 dark:hover:bg-green-900/40 flex items-center gap-2 transition-all shadow-sm"
+                                        className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700 hover:bg-green-100 dark:hover:bg-green-900/40 h-9 px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all shadow-sm disabled:opacity-50 text-sm font-medium"
                                     >
                                         <Eye size={16} />
                                         {isBulkDeactivating ? '...' : `Make Active (${selectedProducts.length})`}
-                                    </Button>
-                                    <Button
-                                        variant="secondary"
-                                        size="sm"
+                                    </button>
+                                    <button
                                         onClick={handleBulkDeactivate}
                                         disabled={isBulkDeactivating}
-                                        className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-300 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/40 flex items-center gap-2 transition-all shadow-sm"
+                                        className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/40 h-9 px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all shadow-sm disabled:opacity-50 text-sm font-medium"
                                     >
                                         <EyeOff size={16} />
                                         {isBulkDeactivating ? 'Updating...' : `Make Inactive (${selectedProducts.length})`}
-                                    </Button>
+                                    </button>
                                 </>
                             )}
-                            <Button
-                                variant="secondary"
-                                size="sm"
+                            <button
                                 onClick={handleExport}
                                 disabled={isExporting}
-                                className="flex items-center gap-2 shadow-sm"
+                                className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 h-9 px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all shadow-sm disabled:opacity-50 text-sm"
                             >
                                 <Download size={16} />
                                 {isExporting ? 'Exporting...' : 'Bulk Export'}
-                            </Button>
-                            <Button
-                                variant="secondary"
-                                size="sm"
+                            </button>
+                            <button
                                 onClick={() => setIsBulkModalOpen(true)}
-                                className="flex items-center gap-2 shadow-sm"
+                                className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 h-9 px-3 py-1.5 rounded-lg flex items-center gap-2 transition-all shadow-sm text-sm"
                             >
                                 <Upload size={16} />
                                 Bulk Import
-                            </Button>
-                            <Button
-                                variant="primary"
-                                size="sm"
+                            </button>
+                            <button
                                 onClick={() => setIsAddModalOpen(true)}
-                                className="flex items-center gap-2 shadow-md hover:shadow-lg transition-all"
+                                className="bg-blue-600 hover:bg-blue-700 text-white h-9 px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-md hover:shadow-lg transition-all text-sm"
                             >
                                 <Plus size={16} />
                                 Add Product
-                            </Button>
+                            </button>
                         </div>
                     </div>
                     <DataTable
@@ -596,38 +581,37 @@ export const ProductList = () => {
                         getRowClassName={getRowClassName}
                     />
                 </div>
-            </TabsContent>
+            )}
 
-            <TabsContent value="brands">
-                <div className="bg-card text-card-foreground rounded-lg p-6 shadow-sm border border-border">
+            {activeTab === 'brands' && (
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
                     <div className="space-y-1 mb-4">
-                        <h2 className="text-xl font-bold text-foreground">Brand Library</h2>
-                        <p className="text-muted-foreground">Manage your product brands and manufacturers</p>
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Brand Library</h2>
+                        <p className="text-gray-500 dark:text-gray-400">Manage your product brands and manufacturers</p>
                     </div>
                     <BrandManager />
                 </div>
-            </TabsContent>
+            )}
 
-            <TabsContent value="units">
-                <div className="bg-card text-card-foreground rounded-lg p-6 shadow-sm border border-border">
+            {activeTab === 'units' && (
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
                     <div className="space-y-1 mb-4">
-                        <h2 className="text-xl font-bold text-foreground">Unit Definitions</h2>
-                        <p className="text-muted-foreground">Configure units of measurement (kg, pc, ltr, etc)</p>
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Unit Definitions</h2>
+                        <p className="text-gray-500 dark:text-gray-400">Configure units of measurement (kg, pc, ltr, etc)</p>
                     </div>
                     <UnitManager />
                 </div>
-            </TabsContent>
+            )}
 
-            <TabsContent value="categories">
-                <div className="bg-card text-card-foreground rounded-lg p-6 shadow-sm border border-border">
+            {activeTab === 'categories' && (
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
                     <div className="space-y-1 mb-4">
-                        <h2 className="text-xl font-bold text-foreground">Categories</h2>
-                        <p className="text-muted-foreground">Organize your inventory catalog</p>
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Categories</h2>
+                        <p className="text-gray-500 dark:text-gray-400">Organize your inventory catalog</p>
                     </div>
                     <CategoryManagerPanel />
                 </div>
-            </TabsContent>
-            </Tabs>
+            )}
 
             {activeTab === 'products' && isAddModalOpen && (
                 <AddProductModal

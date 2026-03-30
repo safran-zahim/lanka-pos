@@ -49,11 +49,11 @@ export const CustomerProfileModal = ({ customer, onClose }: CustomerProfileModal
             <DialogContent className="w-full max-w-225 p-6 max-h-[90vh] overflow-y-auto" showCloseButton={false}>
                 <DialogHeader className="mb-6">
                     <div className="flex justify-between items-center">
-                    <DialogTitle className="text-xl font-bold text-foreground flex items-center gap-2">
-                        <User className="text-primary" />
+                    <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        <User className="text-blue-500" />
                         Customer Profile
                     </DialogTitle>
-                    <Button type="button" onClick={onClose} variant="ghost" size="sm" className="text-muted-foreground hover:text-gray-700 dark:hover:text-white">
+                    <Button type="button" onClick={onClose} variant="ghost" size="sm" className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white">
                         <X size={24} />
                     </Button>
                     </div>
@@ -61,24 +61,24 @@ export const CustomerProfileModal = ({ customer, onClose }: CustomerProfileModal
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                        <div className="text-xs text-muted-foreground">Customer ID</div>
-                        <div className="font-semibold text-foreground">CUS-{String(customer.customer_id).padStart(4, '0')}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">Customer ID</div>
+                        <div className="font-semibold text-gray-900 dark:text-white">CUS-{String(customer.customer_id).padStart(4, '0')}</div>
                     </div>
                     <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                        <div className="text-xs text-muted-foreground">Points Balance</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">Points Balance</div>
                         <div className="font-semibold text-purple-600 dark:text-purple-400 flex items-center gap-2">
                             <Award size={16} /> {customer.loyalty_points_balance}
                         </div>
                     </div>
                     <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                        <div className="text-xs text-muted-foreground">Total Spend</div>
-                        <div className="font-semibold text-foreground">{customer.total_spend_to_date.toFixed(2)}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">Total Spend</div>
+                        <div className="font-semibold text-gray-900 dark:text-white">{customer.total_spend_to_date.toFixed(2)}</div>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-card text-card-foreground border border-border rounded-lg p-4">
-                        <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                        <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                             <User size={16} /> Details
                         </h3>
                         <div className="space-y-2 text-sm">
@@ -88,8 +88,8 @@ export const CustomerProfileModal = ({ customer, onClose }: CustomerProfileModal
                         </div>
                     </div>
 
-                    <div className="bg-card text-card-foreground border border-border rounded-lg p-4">
-                        <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                        <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                             <Award size={16} /> Points History
                         </h3>
                         <div className="space-y-2 max-h-48 overflow-y-auto text-sm">
@@ -111,13 +111,13 @@ export const CustomerProfileModal = ({ customer, onClose }: CustomerProfileModal
                     </div>
                 </div>
 
-                <div className="mt-6 bg-card text-card-foreground border border-border rounded-lg p-4">
-                    <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                <div className="mt-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                         <Receipt size={16} /> Bills & Sales History
                     </h3>
                     <div className="max-h-72 overflow-y-auto">
                         <table className="w-full text-sm">
-                            <thead className="text-xs text-muted-foreground border-b border-border">
+                            <thead className="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
                                 <tr>
                                     <th className="py-2 text-left">Bill #</th>
                                     <th className="py-2 text-left">Date</th>
@@ -133,7 +133,7 @@ export const CustomerProfileModal = ({ customer, onClose }: CustomerProfileModal
                                         <td className="py-2">{new Date(t.createdAt || t.timestamp).toLocaleString()}</td>
                                         <td className="py-2 text-right">{transactionItemsMap.get(t.id)?.count || 0}</td>
                                         <td className="py-2 text-right">{(t.tax || t.tax_amount || 0).toFixed(2)}</td>
-                                        <td className="py-2 text-right font-semibold text-foreground">{(t.total || t.total_amount || 0).toFixed(2)}</td>
+                                        <td className="py-2 text-right font-semibold text-gray-900 dark:text-white">{(t.total || t.total_amount || 0).toFixed(2)}</td>
                                     </tr>
                                 ))}
                             </tbody>
