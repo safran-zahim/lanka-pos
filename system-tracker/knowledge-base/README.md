@@ -17,3 +17,8 @@ This folder stores long-form technical knowledge for the Lanka POS workspace.
 ## Update Rule
 
 Update this knowledge base when system behavior, architecture, routes, models, or processing flows change.
+
+## Repository Convention Note
+
+- Keep browser e2e test assets in `tools/testing/`.
+- Keep process/readme documentation under `docs/` or `system-tracker/`, not inside application source folders.

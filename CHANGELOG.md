@@ -1,5 +1,17 @@
 # Feature Updates & Bug Fixes Changelog
 
+## [2026-03-31] - Backend Type Safety & E2E Stability
+### 🛡️ Backend Type Hardening
+- **Resolved "Internal server error" (500)**: Fixed a class of bugs where optional Zod-parsed data was being passed directly to Prisma `create`/`update` methods, causing runtime type mismatches and crashes.
+- **Customer Controller**: Explicitly mapped `name`, `phone`, `email`, and `address` fields in `createCustomer` and `updateCustomer`. Removed unsafe `as any` casts.
+- **Supplier Controller**: Hardened `createSupplier` and `updateSupplier` with explicit field mapping for `name`, `contactPerson`, `email`, etc.
+- **Expense Controller**: Fixed `createExpenseCategory` to ensure required `name` property is always explicitly passed to the database.
+- **Subscription Controller**: Conducted a type audit to ensure all subscription history and status updates are type-safe.
+
+### 🧪 E2E Verification
+- **Test Matrix Phase 1**: Initiated master data verification. Resolved infrastructure blockers preventing test execution.
+- **TypeScript Compilation**: Fixed project-wide `tsc` errors in controllers that were previously suppressed with `@ts-ignore` or `as any`.
+
 ## [2026-03-28] - Build Portability Check & Documentation Alignment
 
 ### Build Verification

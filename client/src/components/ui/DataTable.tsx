@@ -21,6 +21,11 @@ interface DataTableProps<T> {
     searchable?: boolean;
     onSearch?: (term: string) => void;
     getRowClassName?: (item: T) => string; // Optional row styling function
+    totalCount?: number; // Total records (for server-side pagination)
+    currentPage?: number; // Current page (from parent)
+    pageSize?: number; // Page size (from parent)
+    onPageChange?: (page: number) => void;
+    onPageSizeChange?: (pageSize: number) => void;
 }
 
 export function DataTable<T>({
@@ -35,28 +40,54 @@ export function DataTable<T>({
     pagination = true,
     searchable = true,
     onSearch,
-    getRowClassName
+    getRowClassName,
+    totalCount,
+    currentPage: externalCurrentPage,
+    pageSize: externalPageSize,
+    onPageChange,
+    onPageSizeChange
 }: DataTableProps<T>) {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState<{ key: keyof T | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
-    const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(10);
+    const [internalCurrentPage, setInternalCurrentPage] = useState(1);
+    const [internalPageSize, setInternalPageSize] = useState(10);
     const [selectedIds, setSelectedIds] = useState<Set<any>>(new Set());
+
+    const currentPage = externalCurrentPage ?? internalCurrentPage;
+    const pageSize = externalPageSize ?? internalPageSize;
+    const isServerSide = totalCount !== undefined;
+
+    const changePage = (page: number) => {
+        if (onPageChange) {
+            onPageChange(page);
+        } else {
+            setInternalCurrentPage(page);
+        }
+    };
+
+    const changePageSize = (size: number) => {
+        if (onPageSizeChange) {
+            onPageSizeChange(size);
+        } else {
+            setInternalPageSize(size);
+            setInternalCurrentPage(1);
+        }
+    };
 
     // 1. Filter
     const filteredData = useMemo(() => {
-        if (onSearch) return data; // If external search, assume data is already filtered or parent handles it
+        if (onSearch || isServerSide) return data; // If external/server search, assume data is handled
         if (!searchTerm) return data;
         return data.filter(item =>
             Object.values(item as any).some(val =>
                 String(val).toLowerCase().includes(searchTerm.toLowerCase())
             )
         );
-    }, [data, searchTerm, onSearch]);
+    }, [data, searchTerm, onSearch, isServerSide]);
 
     // 2. Sort
     const sortedData = useMemo(() => {
-        if (!sortConfig.key) return filteredData;
+        if (!sortConfig.key || isServerSide) return filteredData;
         return [...filteredData].sort((a, b) => {
             const aVal = a[sortConfig.key!] as any;
             const bVal = b[sortConfig.key!] as any;
@@ -64,12 +95,13 @@ export function DataTable<T>({
             if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
             return 0;
         });
-    }, [filteredData, sortConfig]);
+    }, [filteredData, sortConfig, isServerSide]);
 
     // 3. Paginate — if pageSize is 0, show all
-    const effectivePageSize = pageSize === 0 ? sortedData.length || 1 : pageSize;
-    const totalPages = pagination ? Math.ceil(sortedData.length / effectivePageSize) : 1;
-    const paginatedData = pagination ? sortedData.slice((currentPage - 1) * effectivePageSize, currentPage * effectivePageSize) : sortedData;
+    const dataSize = isServerSide ? (totalCount ?? 0) : sortedData.length;
+    const effectivePageSize = pageSize === 0 ? dataSize || 1 : pageSize;
+    const totalPages = pagination ? Math.ceil(dataSize / effectivePageSize) : 1;
+    const paginatedData = (pagination && !isServerSide) ? sortedData.slice((currentPage - 1) * effectivePageSize, currentPage * effectivePageSize) : sortedData;
 
     // Handlers
     const handleSort = (key: keyof T) => {
@@ -135,7 +167,7 @@ export function DataTable<T>({
                                 <span>Show</span>
                                 <select
                                     value={pageSize}
-                                    onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                                    onChange={e => changePageSize(Number(e.target.value))}
                                     className="border border-border bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                                 >
                                     {[10, 50, 100].map(n => (
@@ -230,7 +262,7 @@ export function DataTable<T>({
                     </span>
                     <div className="flex items-center gap-2">
                         <button
-                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            onClick={() => changePage(Math.max(1, currentPage - 1))}
                             disabled={currentPage === 1}
                             className="p-2 border border-border rounded-lg disabled:opacity-50 hover:bg-accent hover:text-accent-foreground"
                         >
@@ -240,7 +272,7 @@ export function DataTable<T>({
                             Page {currentPage} of {Math.max(1, totalPages)}
                         </span>
                         <button
-                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            onClick={() => changePage(Math.min(totalPages, currentPage + 1))}
                             disabled={currentPage === totalPages || totalPages === 0}
                             className="p-2 border border-border rounded-lg disabled:opacity-50 hover:bg-accent hover:text-accent-foreground"
                         >

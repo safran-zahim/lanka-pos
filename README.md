@@ -1,4 +1,12 @@
-# POS System
+# Lanka POS
+
+Full-stack retail point-of-sale and inventory management system with a backend API and a modern web client.
+
+## Portfolio Summary
+
+- **Title:** Lanka POS
+- **Description:** A full-stack point-of-sale platform for retail operations, including product and inventory management, batch-based stock tracking, daily register and cash drawer control, expense management, credit sales, supplier payments, and sales reporting.
+- **Tech Stack:** Node.js, Express, TypeScript, Prisma, PostgreSQL, React, Vite, Tailwind CSS, Electron, Docker
 
 This project includes both the **backend API** (Node.js, Express, TypeScript, Prisma) and the **POS web client** (Vite + React + Tailwind).
 
@@ -57,9 +65,9 @@ This project includes both the **backend API** (Node.js, Express, TypeScript, Pr
 ## 🚀 Getting Started
 
 > [!IMPORTANT]
-> **Hybrid Database Setup**:
-> - **Local Development**: Uses **SQLite** (no Docker required).
-> - **CI/CD & Production**: Uses **PostgreSQL** via Docker.
+> **Database Setup (Current Standard)**:
+> - **Local Development**: Uses **PostgreSQL**.
+> - **CI/CD & Production**: Uses **PostgreSQL**.
 
 ### Prerequisites
 
@@ -80,12 +88,12 @@ cd client
 npm install
 ```
 
-### 2. Database Setup (Local - SQLite)
+### 2. Database Setup (Local - PostgreSQL)
 
-For local development, we use SQLite to avoid Docker dependencies.
+For local development, use PostgreSQL (local service, Docker, or hosted Postgres in `.env`).
 
 ```bash
-# Generate Prisma Client (uses schema.prisma -> SQLite)
+# Generate Prisma Client
 npx prisma generate
 
 # Create the database and tables
@@ -98,9 +106,12 @@ Create a `.env` file in the root directory:
 
 ```env
 PORT=3000
-DATABASE_URL="file:./dev.db"  # SQLite for local dev
+DATABASE_URL="postgresql://<user>:<password>@<host>:5432/<db>?schema=public"
+DIRECT_URL="postgresql://<user>:<password>@<host>:5432/<db>?schema=public"
 JWT_SECRET="dev_secret_key_123"
 ```
+
+If you use Supabase or Neon, use the provider connection URLs for `DATABASE_URL` and `DIRECT_URL`.
 
 ---
 
@@ -306,6 +317,20 @@ This securely connects to Supabase and automatically creates the `superadmin`, `
 ## 🔐 Default Credentials
 See [docs/operations/CREDENTIALS.md](./docs/operations/CREDENTIALS.md) for a list of default logins and important secrets.
 
-## 📖 API Documentation & Project Structure
-(See original README for API details)
+---
+
+## 🗺️ Project Documentation & Knowledge Base
+
+For a centralized view of all architectural designs, operational logs, and verification protocols, see the **[Master Knowledge Index](./docs/MASTER_INDEX.md)**.
+
+### Folder Structure Overview
+- **`client/`**: React/Vite frontend source code.
+- **`src/`**: Node.js/Express backend source code.
+- **`docs/`**: Project-wide architectural and design documentation.
+- **`system-tracker/`**: Operational excellence logs, daily updates, and development history.
+- **`prisma/`**: Database schema and migration files.
+- **`tools/`**: Helper scripts for testing and automation.
+
+---
+*Last Updated: 2026-03-31*
 

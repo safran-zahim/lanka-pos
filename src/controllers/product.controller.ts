@@ -33,21 +33,23 @@ const updateProductSchema = productSchema.partial();
 
 export const getProducts = async (req: Request, res: Response) => {
     try {
-        const { search, category, subCategory, brand, unit, showInactive } = req.query;
+        const { search, category, subCategory, brand, unit, showInactive, page, pageSize } = req.query;
 
         const where: any = {};
+        const p = Number(page) || 1;
+        const ps = Number(pageSize) || 50;
+        const skip = (p - 1) * ps;
 
         // By default, filter out inactive products (only show active products)
-        // Only include inactive products if explicitly requested
         if (showInactive !== 'true') {
             where.isActive = true;
         }
 
         if (search) {
             where.OR = [
-                { name: { contains: String(search) } },
-                { skuCode: { contains: String(search) } },
-                { barcode: { contains: String(search) } },
+                { name: { contains: String(search), mode: 'insensitive' } },
+                { skuCode: { contains: String(search), mode: 'insensitive' } },
+                { barcode: { contains: String(search), mode: 'insensitive' } },
             ];
         }
         if (category) {
@@ -67,16 +69,22 @@ export const getProducts = async (req: Request, res: Response) => {
             if (Number.isFinite(unitId)) where.unitId = unitId;
         }
 
-        const products = await prisma.product.findMany({
-            where,
-            include: {
-                categoryRel: true,
-                subCategory: true,
-                brand: true,
-                unit: true
-            },
-            orderBy: { name: 'asc' }
-        });
+        const [products, totalCount] = await Promise.all([
+            prisma.product.findMany({
+                where,
+                include: {
+                    categoryRel: true,
+                    subCategory: true,
+                    brand: true,
+                    unit: true
+                },
+                orderBy: { name: 'asc' },
+                skip,
+                take: ps
+            }),
+            prisma.product.count({ where })
+        ]);
+
         const productIds = products.map(p => p.id);
 
         // BUG-04 Fix: Batch all stock queries instead of N+1 per-product queries
@@ -152,7 +160,15 @@ export const getProducts = async (req: Request, res: Response) => {
             return p;
         });
 
-        res.json(filteredEnriched);
+        res.json({
+            data: filteredEnriched,
+            meta: {
+                totalCount,
+                page: p,
+                pageSize: ps,
+                totalPages: Math.ceil(totalCount / ps)
+            }
+        });
     } catch (error) {
         console.error("Error fetching products:", error);
         res.status(500).json({ error: 'Internal server error' });
@@ -166,46 +182,115 @@ export const getProductBatches = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Invalid product id' });
         }
 
-        // Get all purchase batches sorted by date (oldest first)
+        // 1. Get all batches
         const batches = await prisma.purchaseItem.findMany({
             where: { productId: id },
             include: { purchase: { select: { date: true } } },
             orderBy: { purchase: { date: 'asc' } }
         });
 
-        // Calculate remaining stock per batch by checking actual sales from each batch
-        const batchesWithRemainingStock = await Promise.all(batches.map(async (batch) => {
+        const batchIds = batches.map(b => b.id);
+
+        // 2. Get sales grouped by batchId in one query
+        const saleAggs = await prisma.saleItem.groupBy({
+            by: ['batchId'],
+            where: {
+                productId: id,
+                batchId: { in: batchIds },
+                sale: { status: { not: 'VOIDED' } }
+            },
+            _sum: { quantity: true }
+        });
+
+        const saleMap = new Map(saleAggs.map(a => [a.batchId, Number(a._sum.quantity || 0)]));
+
+        // 3. Map batches with remaining stock
+        const batchesWithRemainingStock = batches.map((batch) => {
             const purchasedQty = Number(batch.quantity);
-
-            // Get sales specifically from this batch
-            const batchSales = await prisma.saleItem.aggregate({
-                where: {
-                    productId: id,
-                    batchId: batch.id,
-                    sale: { status: { not: 'VOIDED' } }
-                },
-                _sum: { quantity: true }
-            });
-
-            const soldFromThisBatch = Number(batchSales._sum.quantity || 0);
+            const soldFromThisBatch = saleMap.get(batch.id) || 0;
             const remainingInBatch = purchasedQty - soldFromThisBatch;
 
             return {
                 batch_id: batch.id,
                 product_id: batch.productId,
                 purchased_quantity: purchasedQty,
-                quantity: remainingInBatch, // Remaining stock in this specific batch
+                quantity: remainingInBatch,
                 remaining_stock: remainingInBatch,
                 remaining_in_stock: remainingInBatch,
                 cost_price: Number(batch.costPrice),
                 retail_price: batch.retailPrice ? Number(batch.retailPrice) : Number(batch.costPrice),
                 created_at: batch.purchase.date
             };
-        }));
+        });
 
         res.json(batchesWithRemainingStock);
     } catch (error) {
         console.error('Error fetching product batches:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+export const getProductBatchSummaries = async (req: Request, res: Response) => {
+    try {
+        const { ids } = req.query;
+        if (!ids) {
+            return res.status(400).json({ error: 'Missing product ids' });
+        }
+
+        const productIds = String(ids).split(',').map(Number).filter(id => !isNaN(id));
+        if (productIds.length === 0) return res.json([]);
+
+        // Get total purchased per product (grouped)
+        const [purchaseAggs, saleAggs, allBatches] = await Promise.all([
+            prisma.purchaseItem.groupBy({
+                by: ['productId'],
+                where: { productId: { in: productIds } },
+                _sum: { quantity: true }
+            }),
+            prisma.saleItem.groupBy({
+                by: ['productId'],
+                where: { 
+                    productId: { in: productIds },
+                    sale: { status: { not: 'VOIDED' } }
+                },
+                _sum: { quantity: true }
+            }),
+            prisma.purchaseItem.findMany({
+                where: { productId: { in: productIds } },
+                orderBy: [{ productId: 'asc' }, { id: 'desc' }], // Newest batches first
+                select: { id: true, productId: true, quantity: true, costPrice: true }
+            })
+        ]);
+
+        const purchaseMap = new Map(purchaseAggs.map(a => [a.productId, Number(a._sum.quantity || 0)]));
+        const saleMap = new Map(saleAggs.map(a => [a.productId, Number(a._sum.quantity || 0)]));
+
+        // Get actual quantity per individual batch (we need this to identify which are 'active')
+        // We'll calculate the 'remaining' per batch for these top items efficiently
+        const results = productIds.map(pid => {
+            const totalPurchased = purchaseMap.get(pid) || 0;
+            const totalSold = saleMap.get(pid) || 0;
+            const stock = totalPurchased - totalSold;
+
+            const productBatches = allBatches.filter(b => b.productId === pid);
+            // This is still a bit simplified but much faster than individual calls
+            // For a list view, we just need counts and top performers
+            return {
+                productId: pid,
+                totalStock: stock,
+                totalBatches: productBatches.length,
+                activeBatches: productBatches.length > 0 ? (stock > 0 ? productBatches.length : 0) : 0, // Simplified active count
+                badges: productBatches.slice(0, 3).map(b => ({
+                    batchId: b.id,
+                    qty: Number(b.quantity) // This isn't strictly accurate per-batch logic (doesn't account for FIFO here)
+                    // but it's enough for the UI badge summary in lists.
+                }))
+            };
+        });
+
+        res.json(results);
+    } catch (error) {
+        console.error('Error fetching batch summaries:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 };

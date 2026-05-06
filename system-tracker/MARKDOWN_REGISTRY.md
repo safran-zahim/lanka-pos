@@ -2,7 +2,7 @@
 
 This registry tracks all repository Markdown files in one place.
 
-Last updated: 2026-03-28
+Last updated: 2026-04-01
 
 ## Root
 
@@ -29,7 +29,11 @@ Last updated: 2026-03-28
 - docs/guides/BUILD.md
 - docs/guides/DESKTOP_APP_GUIDE.md
 - docs/guides/LOCAL_SETUP.md
+- docs/MASTER_INDEX.md
 - docs/operations/CREDENTIALS.md
+- docs/VERIFICATION_WORKBOOK.md
+- docs/specs/adoption_plan.md
+- docs/specs/prd.md
 - docs/specs/srs.md
 
 ## Client
@@ -54,6 +58,10 @@ Last updated: 2026-03-28
 - system-tracker/daily/2026-03-26.md
 - system-tracker/daily/2026-03-27.md
 - system-tracker/daily/2026-03-28.md
+- system-tracker/daily/2026-03-29.md
+- system-tracker/daily/2026-03-30.md
+- system-tracker/daily/2026-03-31.md
+- system-tracker/daily/2026-04-01.md
 - system-tracker/docs-updates/README.md
 - system-tracker/docs-updates/daily-doc-updates.md
 - system-tracker/templates/daily-template.md

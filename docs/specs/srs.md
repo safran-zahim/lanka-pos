@@ -6,7 +6,7 @@
 This document defines the software requirements for the Lanka POS system. It describes the system's scope, features, functional requirements, and non-functional requirements for business stakeholders.
 
 ### 1.2 Scope
-Lanka POS is a point-of-sale system that includes a web client and a backend API. It supports sales transactions, inventory management, customer management, staff roles, and subscription status checks. It can run locally using SQLite for the backend and IndexedDB for offline/demo data, or against a hosted PostgreSQL database in production.
+Lanka POS is a point-of-sale system that includes a web client and a backend API. It supports sales transactions, inventory management, customer management, staff roles, and subscription status checks. It runs against PostgreSQL for backend data and IndexedDB for frontend offline/demo data.
 
 ### 1.3 Definitions, Acronyms, and Abbreviations
 - POS: Point of Sale
@@ -29,12 +29,13 @@ Lanka POS is a client-server application:
 - Frontend: Vite + React UI
 - Backend: Node.js + Express API
 - Database: Prisma ORM
-  - Local dev: SQLite
+  - Local dev: PostgreSQL
   - Production: PostgreSQL
 
 ### 2.2 Product Functions (High Level)
 - User login and role-based access
 - Sales processing (sale/return/parked)
+- Returns View: Dedicated filtered view for return transactions in history
 - Product and inventory management
 - Customer management and loyalty points
 - Reporting and transaction history
@@ -58,7 +59,7 @@ Lanka POS is a client-server application:
 
 ### 2.5 Design and Implementation Constraints
 - Uses Prisma schemas for DB structure
-- Local environment uses SQLite file database
+- Local environment uses PostgreSQL
 - Frontend uses IndexedDB for local demo data
 
 ### 2.6 User Documentation
@@ -68,7 +69,7 @@ Lanka POS is a client-server application:
 
 ### 2.7 Assumptions and Dependencies
 - Node.js and npm installed
-- Database access available (SQLite local or PostgreSQL in production)
+- Database access available (PostgreSQL in local and production)
 - Network access between frontend and backend when running separately
 
 ## 3. Functional Requirements
@@ -164,6 +165,9 @@ Lanka POS is a client-server application:
 - Password reset workflow
 - Advanced reporting and analytics
 - Multi-location inventory
+- Gift Vouchers issuing and redemption
+- Category-specific Tax customization
+- Automated Subscription Plan catalog
 
 ## 7. Approval
 - Business owner approval

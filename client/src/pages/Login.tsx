@@ -83,21 +83,21 @@ export const Login = () => {
             {/* Left Side - Deep Dark Modern Branding & Visuals */}
             <div className="hidden lg:flex flex-col w-[55%] relative overflow-hidden items-center justify-center p-16 bg-slate-950">
                 {/* Dynamic Floating Orbs / Glassmorphism Background layer */}
-                <div className="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] rounded-full bg-blue-600/20 blur-[120px] mix-blend-screen pointer-events-none animate-pulse duration-[8000ms]" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-violet-600/20 blur-[150px] mix-blend-screen pointer-events-none" />
+                <div className="absolute top-[-20%] left-[-10%] w-200 h-200 rounded-full bg-blue-600/20 blur-[120px] mix-blend-screen pointer-events-none animate-pulse duration-8000" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-150 h-150 rounded-full bg-violet-600/20 blur-[150px] mix-blend-screen pointer-events-none" />
                 
                 {/* Subtle Grid overlay */}
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_10%,transparent_100%)] pointer-events-none" />
+                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-size-[40px_40px] mask-[radial-gradient(ellipse_60%_60%_at_50%_50%,#000_10%,transparent_100%)] pointer-events-none" />
 
                 <div className="relative z-10 w-full max-w-lg">
                     {/* Animated Brand Logo */}
-                    <div className="w-20 h-20 mb-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-violet-600 p-[2px] shadow-2xl shadow-blue-500/20 transform hover:-translate-y-2 transition-all duration-500 cursor-default">
+                    <div className="w-20 h-20 mb-10 rounded-2xl bg-linear-to-tr from-blue-600 to-violet-600 p-0.5 shadow-2xl shadow-blue-500/20 transform hover:-translate-y-2 transition-all duration-500 cursor-default">
                         <div className="w-full h-full rounded-2xl bg-slate-950/90 backdrop-blur-xl flex items-center justify-center">
                             <Store size={36} className="text-blue-400" />
                         </div>
                     </div>
 
-                    <h1 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-white/60 mb-6 tracking-tight animate-in fade-in slide-in-from-bottom-8 duration-1000">
+                    <h1 className="text-6xl font-black text-transparent bg-clip-text bg-linear-to-br from-white via-white to-white/60 mb-6 tracking-tight animate-in fade-in slide-in-from-bottom-8 duration-1000">
                         {APP_CONFIG.appName}
                     </h1>
                     <p className="text-xl text-slate-300/80 font-medium leading-relaxed mb-12 max-w-md animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-150">
@@ -142,11 +142,11 @@ export const Login = () => {
             {/* Right Side - Premium Login Form */}
             <div className="w-full lg:w-[45%] flex items-center justify-center p-6 sm:p-12 relative overflow-hidden">
                 {/* Subtle right-side lighting orb */}
-                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-background to-background opacity-60 pointer-events-none" />
+                <div className="absolute top-0 right-0 w-125 h-125 bg-[radial-gradient(circle_at_top_right,var(--tw-gradient-stops))] from-primary/10 via-background to-background opacity-60 pointer-events-none" />
 
-                <div className="w-full max-w-[420px] relative z-10 animate-in fade-in slide-in-from-right-8 duration-700">
+                <div className="w-full max-w-105 relative z-10 animate-in fade-in slide-in-from-right-8 duration-700">
                     <div className="mb-10 text-center lg:text-left">
-                        <div className="mx-auto lg:mx-0 inline-flex lg:hidden w-16 h-16 mb-6 rounded-2xl bg-gradient-to-tr from-blue-600 to-violet-600 p-[2px] shadow-xl">
+                        <div className="mx-auto lg:mx-0 inline-flex lg:hidden w-16 h-16 mb-6 rounded-2xl bg-linear-to-tr from-blue-600 to-violet-600 p-0.5 shadow-xl">
                             <div className="w-full h-full rounded-2xl bg-card flex items-center justify-center">
                                 <Store size={28} className="text-primary" />
                             </div>
@@ -227,10 +227,10 @@ export const Login = () => {
                                 <Button
                                     type="submit"
                                     disabled={isLoading || !form.formState.isValid}
-                                    className="w-full h-12 text-base font-extrabold bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white shadow-xl shadow-blue-500/20 border-0 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 relative overflow-hidden group"
+                                    className="w-full h-12 text-base font-extrabold bg-linear-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white shadow-xl shadow-blue-500/20 border-0 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 relative overflow-hidden group"
                                 >
                                     {/* Shine reflection effect */}
-                                    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-[shimmer_1.5s_infinite]" />
+                                    <div className="absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-white/20 to-transparent group-hover:animate-[shimmer_1.5s_infinite]" />
                                     
                                     <span className="relative flex items-center justify-center">
                                         {isLoading ? (

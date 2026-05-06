@@ -50,11 +50,23 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     loadSettings: async () => {
         try {
             const token = useAuthStore.getState().token;
+            // If no token, use defaults and stop loading
+            if (!token) {
+                set({ loading: false });
+                return;
+            }
+
             const response = await fetch(getApiUrl('/settings'), {
-                headers: token ? { Authorization: `Bearer ${token}` } : undefined
+                headers: { Authorization: `Bearer ${token}` }
             });
 
-            const settingsList = response.ok ? await response.json() : [];
+            // If 401/403, just skip and use defaults
+            if (!response.ok) {
+                set({ loading: false });
+                return;
+            }
+
+            const settingsList = await response.json();
             const settingsMap = (settingsList || []).reduce((acc: Record<string, any>, setting: any) => {
                 acc[setting.key] = setting.value;
                 return acc;

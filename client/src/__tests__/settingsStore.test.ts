@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('../db/db', () => {
     const settingsMap = new Map<string, any>();
@@ -19,6 +19,11 @@ import { useSettingsStore } from '../store/useSettingsStore';
 
 describe('useSettingsStore', () => {
     beforeEach(() => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ([])
+        }));
+
         useSettingsStore.setState({
             taxEnabled: true,
             taxRate: 0.08,
@@ -34,6 +39,10 @@ describe('useSettingsStore', () => {
             timeZone: 'UTC',
             loading: false
         });
+    });
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
     });
 
     it('updates toastEnabled setting', async () => {

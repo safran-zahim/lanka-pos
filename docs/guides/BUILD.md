@@ -29,7 +29,7 @@ cd ..
 
 ## 2. Database Setup
 
-The desktop application uses a local SQLite database file. You need to ensure the Prisma schema is set up correctly.
+The current project standard uses PostgreSQL for local and production workflows. Ensure your `.env` contains valid `DATABASE_URL` and `DIRECT_URL` values before building.
 
 1.  **Generate Prisma Client**:
     ```bash
@@ -37,7 +37,7 @@ The desktop application uses a local SQLite database file. You need to ensure th
     ```
 
 2.  **Create/Migrate Database**:
-    This creates the `dev.db` file which will be bundled with the application (based on current configuration).
+  This applies Prisma migrations against your configured PostgreSQL database.
     ```bash
     npx prisma migrate dev --name init_build
     ```
@@ -100,6 +100,13 @@ If you encounter errors related to `better-sqlite3` or `prisma` during the build
   ./node_modules/.bin/electron-rebuild
   ```
 
+### Windows Build Portability
+- Use `npm run build` from repository root (script is now Windows-safe and no longer relies on Unix-only `true`).
+- If shell behavior differs in custom terminals, run these steps directly:
+  1. `npm install --include=dev`
+  2. `tsc`
+  3. `npx prisma generate`
+
 ### White Screen / "Not Allowed to Load Local Resource"
 - Check `electron-main.js`. In production, it loads `mainWindow.loadFile(...)`. Ensure `client/dist/index.html` exists and the path is correct.
 - Ensure `homepage` in `client/package.json` is set to `./` or configured correctly for Electron (file protocol).
@@ -108,6 +115,7 @@ If you encounter errors related to `better-sqlite3` or `prisma` during the build
 - The application is now configured to copy `dev.db` from the installer's `extraResources` footprint into the user's `userData` directory (typically `AppData/Roaming/Lanka POS/database` on Windows).
 - This approach prevents read-only errors since `Program Files` is restricted, and ensures the database persists across app updates.
 - If you need to ship a new pre-filled database, just rebuild the app with the updated `dev.db` file. The app will only copy the template if one doesn't already exist in the user data folder.
+
 ## Configuration Reference (`package.json`)
 
 The build configuration is located in the `build` section of `package.json`:
@@ -133,3 +141,10 @@ The build configuration is located in the `build` section of `package.json`:
   }
 }
 ```
+
+## Test Automation Layout
+
+- Keep Playwright assets in the dedicated test area:
+  - `tools/testing/playwright.config.ts`
+  - `tools/testing/e2e/`
+- Do not place browser e2e specs under `client/src`.

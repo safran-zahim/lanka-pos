@@ -103,7 +103,17 @@ export const getSupplierById = async (req: Request, res: Response) => {
 export const createSupplier = async (req: Request, res: Response) => {
     try {
         const data = supplierSchema.parse(req.body);
-        const supplier = await prisma.supplier.create({ data: data as any });
+        const supplier = await prisma.supplier.create({
+            data: {
+                name: data.name,
+                contactPerson: data.contactPerson,
+                email: data.email,
+                phone: data.phone,
+                address: data.address,
+                taxId: data.taxId,
+                notes: data.notes,
+            }
+        });
         res.status(201).json(supplier);
     } catch (error) {
         if (error instanceof z.ZodError) {
@@ -123,7 +133,15 @@ export const updateSupplier = async (req: Request, res: Response) => {
         const data = supplierSchema.partial().parse(req.body);
         const supplier = await prisma.supplier.update({
             where: { id },
-            data,
+            data: {
+                name: data.name,
+                contactPerson: data.contactPerson,
+                email: data.email,
+                phone: data.phone,
+                address: data.address,
+                taxId: data.taxId,
+                notes: data.notes,
+            },
         });
         res.json(supplier);
     } catch (error) {

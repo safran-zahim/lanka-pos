@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
+import { Input } from '../ui/Input';
 
 type BarcodeType = 'C128' | 'C39' | 'EAN13' | 'EAN8' | 'UPCA' | 'UPCE';
 
@@ -380,7 +381,7 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
                                         <div className="space-y-3">
                                             <Label className="text-xs font-black ml-1 text-muted-foreground/80 flex justify-between">
                                                 SKU Code
-                                                {!isEdit && <span className="text-[10px] text-primary/40 font-black tracking-[0.1em]">AUTO-GENERATED</span>}
+                                                {!isEdit && <span className="text-[10px] text-primary/40 font-black tracking-widest">AUTO-GENERATED</span>}
                                             </Label>
                                             <div className="relative group/sku">
                                                 <Input
@@ -597,7 +598,7 @@ export const AddProductModal = ({ onClose, onSuccess, product }: AddProductModal
                                     </div>
                                 </div>
 
-                                <div className="p-10 rounded-2xl border border-border bg-card flex flex-col gap-6 min-h-[440px] shadow-xs">
+                                <div className="p-10 rounded-2xl border border-border bg-card flex flex-col gap-6 min-h-110 shadow-xs">
                                     <div className="flex items-center justify-between border-b border-border/10 pb-4 mb-2">
                                         <Label className="text-xs font-black uppercase tracking-[0.2em] text-primary">Extended Details</Label>
                                         <span className="text-[10px] font-bold text-muted-foreground/30 italic uppercase">Description</span>

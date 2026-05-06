@@ -17,6 +17,13 @@ export const getDashboardInsights = async (req: Request, res: Response) => {
             include: { items: true }
         });
 
+        // Get all unique batch IDs from today's sales to fetch costs in bulk
+        const batchIds = todaySales.flatMap(s => s.items.map(i => i.batchId).filter(id => !!id)) as number[];
+        const relevantBatches = batchIds.length > 0 
+            ? await prisma.purchaseItem.findMany({ where: { id: { in: batchIds } } })
+            : [];
+        const batchMap = new Map(relevantBatches.map(b => [b.id, b.costPrice]));
+
         let totalRevenue = new Decimal(0);
         let totalCOGS = new Decimal(0);
         let transactionCount = todaySales.length;
@@ -24,11 +31,10 @@ export const getDashboardInsights = async (req: Request, res: Response) => {
         for (const sale of todaySales) {
             totalRevenue = totalRevenue.plus(new Decimal(sale.total.toString()));
             for (const item of sale.items) {
-                // If batchId exists, we can get exact cost
                 if (item.batchId) {
-                    const batch = await prisma.purchaseItem.findUnique({ where: { id: item.batchId } });
-                    if (batch) {
-                        totalCOGS = totalCOGS.plus(new Decimal(batch.costPrice.toString()).times(item.quantity.toString()));
+                    const costPrice = batchMap.get(item.batchId);
+                    if (costPrice) {
+                        totalCOGS = totalCOGS.plus(new Decimal(costPrice.toString()).times(item.quantity.toString()));
                     }
                 }
             }
@@ -54,18 +60,17 @@ export const getDashboardInsights = async (req: Request, res: Response) => {
                 sale: { createdAt: { gte: thirtyDaysAgo }, status: 'COMPLETED' }
             },
             _sum: { quantity: true },
-            _count: { _all: true }
         });
 
-        // Map product IDs to Categories
-        const products = await prisma.product.findMany({
+        // Map product IDs to Categories in bulk
+        const productsWithCat = await prisma.product.findMany({
             where: { id: { in: categorySales.map(cs => cs.productId) } },
-            select: { id: true, category: true, categoryId: true, categoryRel: { select: { name: true } } }
+            select: { id: true, category: true, categoryRel: { select: { name: true } } }
         });
 
         const categoryStats: Record<string, number> = {};
         for (const cs of categorySales) {
-            const product = products.find(p => p.id === cs.productId);
+            const product = productsWithCat.find(p => p.id === cs.productId);
             const catName = product?.categoryRel?.name || product?.category || 'Uncategorized';
             categoryStats[catName] = (categoryStats[catName] || 0) + Number(cs._sum.quantity || 0);
         }
@@ -80,29 +85,34 @@ export const getDashboardInsights = async (req: Request, res: Response) => {
         const returningCustomers = customerOrders.filter(co => co._count._all > 1).length;
         const newCustomers = customerOrders.filter(co => co._count._all === 1).length;
 
-        // 5. Inventory Intelligence & Value
+        // 5. Inventory Intelligence & Value (Optimized)
+        // Group everything by product ID to avoid per-product queries
+        const [purchaseAgg, saleAgg] = await Promise.all([
+            prisma.purchaseItem.groupBy({ by: ['productId'], _sum: { quantity: true } }),
+            prisma.saleItem.groupBy({ by: ['productId'], _sum: { quantity: true } })
+        ]);
+
         const allActiveProducts = await prisma.product.findMany({ 
             where: { isActive: true },
-            include: { brand: true, categoryRel: true, purchaseItems: true }
+            include: { brand: true, categoryRel: true, purchaseItems: { orderBy: { id: 'desc' }, take: 1 } }
         });
 
         const lowStockItems: any[] = [];
         let totalInventoryValue = new Decimal(0);
+        const purchaseMap = new Map(purchaseAgg.map(a => [a.productId, Number(a._sum.quantity || 0)]));
+        const saleMap = new Map(saleAgg.map(a => [a.productId, Number(a._sum.quantity || 0)]));
         const productStockMap = new Map<number, number>();
 
-        // Calculate current stock levels and inventory value
         for (const p of allActiveProducts) {
-            const purchaseAgg = await prisma.purchaseItem.aggregate({ where: { productId: p.id }, _sum: { quantity: true } });
-            const saleAgg = await prisma.saleItem.aggregate({ where: { productId: p.id }, _sum: { quantity: true } });
-            const stock = Number(purchaseAgg._sum.quantity || 0) - Number(saleAgg._sum.quantity || 0);
+            const stock = (purchaseMap.get(p.id) || 0) - (saleMap.get(p.id) || 0);
             productStockMap.set(p.id, stock);
-
+            
             if (stock <= Number(p.reorderLevel)) {
                 lowStockItems.push({ id: p.id, name: p.name, stock, reorderLevel: p.reorderLevel });
             }
 
-            // Value calculation using latest cost price or average
-            const latestBatch = p.purchaseItems.sort((a, b) => b.id - a.id)[0];
+            // Value calculation using optimized latest batch grab
+            const latestBatch = p.purchaseItems[0];
             if (latestBatch && stock > 0) {
                 totalInventoryValue = totalInventoryValue.plus(new Decimal(latestBatch.costPrice.toString()).times(stock));
             }
@@ -113,7 +123,7 @@ export const getDashboardInsights = async (req: Request, res: Response) => {
             where: {
                 sale: { createdAt: { gte: thirtyDaysAgo }, status: 'COMPLETED' }
             },
-            include: { product: { include: { brand: true } } }
+            include: { product: { select: { id: true, name: true, brand: { select: { name: true } } } } }
         });
 
         const productStatsMap = new Map<number, { name: string, quantity: number, revenue: number, brand: string }>();
@@ -130,14 +140,7 @@ export const getDashboardInsights = async (req: Request, res: Response) => {
             productStatsMap.set(item.productId, current);
         }
 
-        const topProducts = Array.from(productStatsMap.entries())
-            .map(([id, stats]) => ({
-                id,
-                name: stats.name,
-                quantity: stats.quantity,
-                revenue: stats.revenue,
-                brand: stats.brand
-            }))
+        const topProducts = Array.from(productStatsMap.values())
             .sort((a, b) => b.revenue - a.revenue)
             .slice(0, 10);
 

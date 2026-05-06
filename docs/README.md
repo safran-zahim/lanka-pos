@@ -34,3 +34,8 @@ This folder is the centralized home for project documentation.
 ## Rule
 
 Add new project documentation under `docs/` (or `system-tracker/` for tracker workflow docs), not at repository root.
+
+## Test and Docs Placement
+
+- Place browser e2e test assets in `tools/testing/` (for example `tools/testing/e2e/`).
+- Keep test workflow writeups and READMEs under `docs/` or `system-tracker/` only.

@@ -24,9 +24,9 @@ npm install
 cd ..
 ```
 
-### Step 2: Setup Database (SQLite - No Docker needed!)
+### Step 2: Setup Database (PostgreSQL)
 
-The system uses SQLite for local development, which is just a file - no server required!
+The current local standard is PostgreSQL. You can use Docker, a local PostgreSQL service, or a hosted Postgres database (for example Supabase/Neon).
 
 ```bash
 # Generate Prisma Client
@@ -41,15 +41,16 @@ npx prisma db seed
 
 ### Step 3: Configure Environment
 
-The `.env` file is already configured for local development:
+Configure `.env` for PostgreSQL:
 
 ```env
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://<user>:<password>@<host>:5432/<db>?schema=public"
+DIRECT_URL="postgresql://<user>:<password>@<host>:5432/<db>?schema=public"
 JWT_SECRET="dev_secret_key_123"
 PORT=3000
 ```
 
-No changes needed! ✅
+Use your own connection details before running migrations.
 
 ## 🚀 Running the Application
 
@@ -101,10 +102,10 @@ The system comes with pre-seeded demo accounts (stored in browser IndexedDB):
 
 ## 📂 Where is Data Stored?
 
-### Backend Data (SQLite)
-- **Location**: `c:\web project\lanka pos\dev.db`
-- **Type**: Single file database
-- **Backup**: Just copy the `dev.db` file!
+### Backend Data (PostgreSQL)
+- **Location**: Your configured PostgreSQL instance
+- **Type**: PostgreSQL database
+- **Backup**: Use PostgreSQL-native backup tools for your provider/environment
 
 ### Frontend Data (IndexedDB)
 - **Location**: Browser storage (Chrome/Edge)
@@ -142,14 +143,12 @@ taskkill /PID <PID_NUMBER> /F
 Reset the database:
 
 ```bash
-# Delete old database
-rm dev.db
-rm -r prisma/migrations
-
-# Recreate
+# Recreate schema
 npx prisma migrate dev --name init_local
 npx prisma db seed
 ```
+
+If you are using Docker, you can also recreate the Postgres container and re-run migrations.
 
 ### Frontend Not Loading
 
@@ -170,15 +169,21 @@ Once running, open your browser to:
 
 ### Quick Backup
 ```bash
-# Copy the database file
-copy dev.db dev.db.backup
+# Example: export a PostgreSQL dump
+pg_dump "$DATABASE_URL" > lanka-pos-backup.sql
 ```
 
 ### Full Backup
 Create a folder with:
-- `dev.db` (database)
+- Database dump (for example `lanka-pos-backup.sql`)
 - `.env` (configuration)
 - `client/` folder (if you made UI changes)
+
+## 🧪 Test Asset Location Rule
+
+- Keep browser e2e tests outside the app source tree in `tools/testing/e2e/`.
+- Keep Playwright config in `tools/testing/playwright.config.ts`.
+- Keep documentation for test workflows under `docs/` or `system-tracker/`, not inside app source folders.
 
 ## 🔒 Security Notes
 

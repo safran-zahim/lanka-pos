@@ -304,7 +304,7 @@ export const Dashboard = () => {
                         <span className="text-xs text-muted-foreground">Today's Traffic</span>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-[250px]">
+                        <div className="h-62.5">
                             <Line
                                 data={heatmapData}
                                 options={{
@@ -364,7 +364,7 @@ export const Dashboard = () => {
                         <CardTitle className="text-lg flex items-center gap-2"><TrendingUp size={20} className="text-primary" />Category Mix</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-[200px]">
+                        <div className="h-50">
                             <Doughnut
                                 data={categoryData}
                                 options={{
@@ -382,7 +382,7 @@ export const Dashboard = () => {
                         <CardTitle className="text-lg flex items-center gap-2"><Package size={20} className="text-primary"/>Brand Distribution</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-[200px]">
+                        <div className="h-50">
                             <Doughnut
                                 data={brandData}
                                 options={{
@@ -400,7 +400,7 @@ export const Dashboard = () => {
                         <CardTitle className="text-lg flex items-center gap-2"><Users size={20} className="text-primary" />CRM Insights</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-[200px]">
+                        <div className="h-50">
                             <Bar
                                 data={crmData}
                                 options={{

@@ -6,7 +6,7 @@
   "scripts": {
     "start": "npx prisma generate && node dist/src/app.js",
     "dev": "nodemon --exec ts-node src/app.ts",
-    "build": "npm install --include=dev && tsc || true && npx prisma generate",
+    "build": "npm install --include=dev && tsc && npx prisma generate",
     "build:all": "npm run build && npm --prefix client run build",
     "render-build": "npm install --include=dev && npm run build && npx prisma generate",
     "render-start": "node dist/src/app.js",
@@ -34,6 +34,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.0",

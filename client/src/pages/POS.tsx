@@ -865,7 +865,7 @@ export const POS = () => {
                         <select
                             value={selectedBrand}
                             onChange={(e) => setSelectedBrand(e.target.value)}
-                            className="bg-background text-foreground text-foreground rounded-lg px-3 py-2.5 border-2 border-gray-300 dark:border-gray-700 outline-none focus:ring-2 focus:ring-ring focus:border-blue-500 max-w-37.5 font-medium"
+                            className="bg-background text-foreground rounded-lg px-3 py-2.5 border border-border outline-none focus:ring-2 focus:ring-ring focus:border-ring max-w-37.5 font-medium"
                         >
                             <option value="All">All Brands</option>
                             {brands?.map(b => (
@@ -882,7 +882,7 @@ export const POS = () => {
                                 onClick={() => setSelectedCategory(String(cat))}
                                 className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-semibold transition-all ${selectedCategory === cat
                                     ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                                    : 'bg-white dark:bg-gray-700 text-foreground hover:bg-accent border-2 border-border'
+                                    : 'bg-card text-card-foreground hover:bg-accent border border-border'
                                     }`}
                             >
                                 {cat}
@@ -909,11 +909,11 @@ export const POS = () => {
                                 <button
                                     key={product.product_id}
                                     onClick={() => handleAddProduct(product)}
-                                    className={`bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground p-3 rounded-xl flex flex-col justify-between h-28 transition-all active:scale-95 shadow-sm border ${isLowStock ? 'border-red-300 dark:border-red-800 ring-1 ring-red-100 dark:ring-red-900/30' : 'border-border'}`}
+                                    className={`bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground p-3 rounded-xl flex flex-col justify-between h-28 transition-all active:scale-95 shadow-sm border ${isLowStock ? 'border-destructive/40 ring-1 ring-destructive/20' : 'border-border'}`}
                                 >
                                     <div className="w-full text-left">
                                         <div className="font-medium text-sm leading-tight line-clamp-2 text-foreground mb-1">
-                                            {product.name} <span className="text-xs text-gray-500">({product.sku_code})</span>
+                                            {product.name} <span className="text-xs text-muted-foreground">({product.sku_code})</span>
                                         </div>
                                         <div className={`text-[10px] font-semibold ${stockClass}`}>
                                             {stockLabel}
@@ -1273,7 +1273,7 @@ export const POS = () => {
                     <div className="grid grid-cols-4 gap-2">
                         <button
                             onClick={clearCart}
-                            className="flex flex-col items-center justify-center py-2 bg-destructive hover:bg-destructive/90 text-white rounded-lg hover:bg-red-600 dark:hover:bg-red-700 transition-all shadow-md active:scale-95"
+                            className="flex flex-col items-center justify-center py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-all shadow-md active:scale-95"
                         >
                             <Trash2 size={20} />
                             <span className="text-[10px] uppercase font-bold mt-1">Void</span>

@@ -119,16 +119,28 @@ export const ProductList = () => {
         }
     };
 
-    const loadProducts = async () => {
+    const [pagination, setPagination] = useState({ page: 1, totalPages: 1, totalCount: 0 });
+
+    const loadProducts = async (page = 1, search = searchTerm) => {
         if (!token) return;
         setLoading(true);
         try {
-            const response = await fetch(getApiUrl('/products?showInactive=true'), {
+            const query = new URLSearchParams({
+                showInactive: String(showInactive),
+                page: String(page),
+                pageSize: '50',
+                search: search
+            });
+            const response = await fetch(getApiUrl(`/products?${query.toString()}`), {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Failed to load products');
             const payload = await response.json();
-            const mapped = (payload || []).map((product: any): Product => ({
+            const data = payload.data || [];
+            
+            setPagination(payload.meta || { page, totalPages: 1, totalCount: data.length });
+
+            const mapped = data.map((product: any): Product => ({
                 product_id: product.id,
                 sku_code: product.skuCode || '',
                 name: product.name,
@@ -169,8 +181,16 @@ export const ProductList = () => {
     };
 
     useEffect(() => {
-        loadProducts();
-    }, [token]);
+        loadProducts(1, searchTerm);
+    }, [token, showInactive]); // Reload on token or inactive filter change
+
+    // Debounced search
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            loadProducts(1, searchTerm);
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [searchTerm]);
 
     const toggleProductStatus = async (product: Product) => {
         if (!product.product_id) return;
@@ -237,73 +257,53 @@ export const ProductList = () => {
         return '';
     };
 
-    // Use filtering on fetched products
+    // Use filtering on fetched products (Reduced as server now does heavy lifting)
     const filteredProducts = useMemo(() => {
+        // We still filter for 'instant' feel on small changes, 
+        // but loadProducts is the primary way to get new results.
         return products.filter(product => {
-            const search = searchTerm.toLowerCase();
-            const name = (product?.name || '').toLowerCase();
-            const sku_code = (product?.sku_code || '').toLowerCase();
-
-            const matchesSearch = name.includes(search) || sku_code.includes(search);
             const matchesStatus = showInactive || product.isActive !== false;
-
-            return matchesSearch && matchesStatus;
+            return matchesStatus;
         });
-    }, [products, searchTerm, showInactive]);
+    }, [products, showInactive]);
 
     useEffect(() => {
         if (!token || activeTab !== 'products') return;
 
         const loadBatchSummaries = async () => {
-            // Guard against too many parallel requests by limiting to top visible records.
-            const targets = filteredProducts
-                .filter((p) => p.product_id)
-                .slice(0, 60);
-
-            if (targets.length === 0) {
+            const ids = products.map(p => p.product_id).filter(id => !!id).join(',');
+            if (!ids) {
                 setBatchStockByProduct({});
                 return;
             }
 
             try {
-                const summaries = await Promise.all(
-                    targets.map(async (p) => {
-                        const productId = String(p.product_id);
-                        const response = await fetch(getApiUrl(`/products/${productId}/batches`), {
-                            headers: { Authorization: `Bearer ${token}` }
-                        });
+                const response = await fetch(getApiUrl(`/products/batch-summaries?ids=${ids}`), {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
 
-                        if (!response.ok) {
-                            return [productId, { totalBatches: 0, activeBatches: 0, badges: [] }] as const;
-                        }
-
-                        const batches = await response.json();
-                        const allBatches = Array.isArray(batches) ? batches : [];
-                        const activeBatches = allBatches.filter((b: any) => Number(b.quantity ?? b.remaining_in_stock ?? b.remaining_stock ?? 0) > 0);
-                        const topBadges = activeBatches
-                            .sort((a: any, b: any) => Number(b.quantity ?? 0) - Number(a.quantity ?? 0))
-                            .slice(0, 3)
-                            .map((b: any) => ({
-                                batchId: String(b.batch_id),
-                                qty: Number(b.quantity ?? b.remaining_in_stock ?? b.remaining_stock ?? 0)
-                            }));
-
-                        return [productId, {
-                            totalBatches: allBatches.length,
-                            activeBatches: activeBatches.length,
-                            badges: topBadges
-                        }] as const;
-                    })
-                );
-
-                setBatchStockByProduct(Object.fromEntries(summaries));
+                if (!response.ok) return;
+                const summaries = await response.json();
+                
+                const summaryMap: Record<string, any> = {};
+                summaries.forEach((s: any) => {
+                    summaryMap[String(s.productId)] = {
+                        totalBatches: s.totalBatches,
+                        activeBatches: s.activeBatches,
+                        badges: s.badges.map((b: any) => ({
+                            batchId: String(b.batchId),
+                            qty: b.qty
+                        }))
+                    };
+                });
+                setBatchStockByProduct(summaryMap);
             } catch (error) {
                 console.error('Failed to load product batch summaries', error);
             }
         };
 
         loadBatchSummaries();
-    }, [token, activeTab, filteredProducts]);
+    }, [token, activeTab, products]);
 
     const tabs = [
         { id: 'products', label: 'Products', icon: <Package size={18} /> },
@@ -579,6 +579,11 @@ export const ProductList = () => {
                         onSelectionChange={setSelectedProducts}
                         onRowClick={(row) => navigate(`/admin/products/${row.product_id}/history`)}
                         getRowClassName={getRowClassName}
+                        // Server-side pagination props
+                        totalCount={pagination.totalCount}
+                        currentPage={pagination.page}
+                        pageSize={50}
+                        onPageChange={(p) => loadProducts(p)}
                     />
                 </div>
             )}

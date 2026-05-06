@@ -56,7 +56,14 @@ export const createCustomer = async (req: Request, res: Response) => {
         const data = customerSchema.parse(req.body);
 
         const customer = await prisma.$transaction(async (tx) => {
-            const created = await tx.customer.create({ data: data as any });
+            const created = await tx.customer.create({
+                data: {
+                    name: data.name,
+                    phone: data.phone,
+                    email: data.email,
+                    address: data.address,
+                }
+            });
             await logAudit(tx, {
                 staffId: actor?.id,
                 staffName: actor?.username,
@@ -174,7 +181,15 @@ export const updateCustomer = async (req: Request, res: Response) => {
         const before = await prisma.customer.findUnique({ where: { id }, select: { name: true, phone: true, email: true, address: true } });
 
         const updated = await prisma.$transaction(async (tx) => {
-            const customer = await tx.customer.update({ where: { id }, data });
+            const customer = await tx.customer.update({
+                where: { id },
+                data: {
+                    name: data.name,
+                    phone: data.phone,
+                    email: data.email,
+                    address: data.address
+                }
+            });
             await logAudit(tx, {
                 staffId: actor?.id,
                 staffName: actor?.username,

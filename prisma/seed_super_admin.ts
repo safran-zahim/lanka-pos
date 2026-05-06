@@ -48,11 +48,11 @@ async function main() {
         console.log(`Staff updated/created: ${user.name} (Role: ${user.role}, ID: ${user.id})`);
     }
 
-    // Update AppConfig to use plan
+    // Keep app config aligned with current schema (no subscriptionPlanId relation)
     await prisma.appConfig.upsert({
         where: { key: 'main' },
-        update: { subscriptionPlanId: plan.id },
-        create: { key: 'main', subscriptionStatus: 'active', subscriptionPlanId: plan.id }
+        update: { subscriptionStatus: 'active' },
+        create: { key: 'main', subscriptionStatus: 'active' }
     });
     console.log('AppConfig updated');
 }

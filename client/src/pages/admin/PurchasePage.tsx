@@ -187,7 +187,7 @@ export const PurchasePage = () => {
     return (
         <div className="p-6 max-w-[1600px] mx-auto space-y-6 animate-fade-in">
             {/* Header / Actions */}
-            <div className="flex justify-between items-center bg-card text-card-foreground p-4 rounded-xl shadow-sm border border-border">
+            <div className="sticky top-0 z-30 flex justify-between items-center bg-card/95 backdrop-blur-sm text-card-foreground p-4 rounded-xl shadow-sm border border-border">
                 <div className="flex items-center gap-4">
                     <button onClick={() => navigate('/admin/purchases')} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
                         <ArrowLeft />

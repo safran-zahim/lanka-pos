@@ -71,6 +71,7 @@ export const SalesHistoryDashboard = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const isTransactionsRoute = window.location.pathname.includes('/transactions');
+    const [transactionType, setTransactionType] = useState<'all' | 'sale' | 'return'>('all');
     const [activeTab, setActiveTab] = useState<'daily' | 'transactions' | 'products'>(isTransactionsRoute ? 'transactions' : 'daily');
     const [customers, setCustomers] = useState<Customer[]>([]);
 
@@ -132,10 +133,11 @@ export const SalesHistoryDashboard = () => {
         return list.filter((txn) => {
             const matchesSearch = txn.transaction_id?.toString().includes(searchQuery.trim()) ?? false;
             const matchesPayment = paymentMethod === 'all' ? true : txn.payment_method === paymentMethod;
+            const matchesType = transactionType === 'all' ? true : txn.type === transactionType;
 
-            return matchesSearch && matchesPayment;
+            return matchesSearch && matchesPayment && matchesType;
         });
-    }, [transactions, searchQuery, paymentMethod]);
+    }, [transactions, searchQuery, paymentMethod, transactionType]);
 
     const paginatedTransactions = useMemo(() => {
         return filteredTransactions
@@ -252,6 +254,7 @@ export const SalesHistoryDashboard = () => {
     const handleReset = () => {
         setSearchQuery('');
         setPaymentMethod('all');
+        setTransactionType('all');
         setStartDate(todayValue);
         setEndDate(todayValue);
         setCurrentPage(1);
@@ -380,7 +383,7 @@ export const SalesHistoryDashboard = () => {
                             value={paymentMethod}
                             onChange={(event) => setPaymentMethod(event.target.value as PaymentFilter)}
                         >
-                            <option value="all">All</option>
+                            <option value="all">All Methods</option>
                             <option value="cash">Cash</option>
                             <option value="card">Card</option>
                             <option value="split">Split</option>
@@ -388,6 +391,18 @@ export const SalesHistoryDashboard = () => {
                         </select>
                     </div>
                     <div>
+                        <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Transaction type</label>
+                        <select
+                            className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 text-sm"
+                            value={transactionType}
+                            onChange={(event) => setTransactionType(event.target.value as any)}
+                        >
+                            <option value="all">All Types</option>
+                            <option value="sale">Sales Only</option>
+                            <option value="return">Returns Only</option>
+                        </select>
+                    </div>
+                    <div className="lg:col-span-1">
                         <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Search ID</label>
                         <div className="relative mt-1">
                             <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
@@ -464,7 +479,7 @@ export const SalesHistoryDashboard = () => {
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Daily Sales</h3>
                         </div>
                         <div className="overflow-x-auto overflow-y-auto w-full">
-                            <table className="w-full text-left border-collapse min-w-[600px]">
+                            <table className="w-full text-left border-collapse min-w-150">
                                 <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
                                     <tr>
                                         <th className="p-4 font-medium text-gray-500 dark:text-gray-400">Date</th>
@@ -514,7 +529,7 @@ export const SalesHistoryDashboard = () => {
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Products Sold</h3>
                         </div>
                         <div className="overflow-x-auto overflow-y-auto w-full">
-                            <table className="w-full text-left border-collapse min-w-[600px]">
+                            <table className="w-full text-left border-collapse min-w-150">
                                 <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
                                     <tr>
                                         <th className="p-4 font-medium text-gray-500 dark:text-gray-400">Product</th>
@@ -576,7 +591,7 @@ export const SalesHistoryDashboard = () => {
                             </div>
                         </div>
                         <div className="overflow-x-auto overflow-y-auto w-full">
-                            <table className="w-full text-left border-collapse min-w-[980px]">
+                            <table className="w-full text-left border-collapse min-w-245">
                                 <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
                                     <tr>
                                         <th className="p-4 font-medium text-gray-500 dark:text-gray-400">ID</th>
@@ -639,7 +654,7 @@ export const SalesHistoryDashboard = () => {
                                                 </td>
                                                 <td className="p-4">
                                                     {batchSummary.length > 0 ? (
-                                                        <div className="flex flex-wrap gap-1.5 max-w-[260px]">
+                                                        <div className="flex flex-wrap gap-1.5 max-w-65">
                                                             {batchSummary.slice(0, 4).map((entry) => (
                                                                 <span
                                                                     key={entry.batchId}

@@ -91,12 +91,11 @@ async function resetDatabase() {
         });
         console.log('  ✓ Created Super Admin account');
 
-        // Update AppConfig
+        // Create app config using current schema fields
         await prisma.appConfig.create({
             data: {
                 key: 'main',
-                subscriptionStatus: 'active',
-                subscriptionPlanId: plan.id
+                subscriptionStatus: 'active'
             }
         });
         console.log('  ✓ Created app configuration');

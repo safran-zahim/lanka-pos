@@ -91,9 +91,6 @@ export const AddSupplierModal: React.FC<AddSupplierModalProps> = ({ isOpen, onCl
                         <DialogTitle className="text-xl font-bold text-gray-800 dark:text-white">
                             {supplier ? 'Edit Supplier' : 'Add New Supplier'}
                         </DialogTitle>
-                        <Button variant="ghost" size="sm" onClick={onClose}>
-                            <X size={24} />
-                        </Button>
                     </div>
                 </DialogHeader>
 

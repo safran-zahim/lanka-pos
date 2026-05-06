@@ -132,3 +132,29 @@
 - `docs/specs/srs.md`: Added missing requirement coverage for audit traceability, shift reconciliation reporting, operational notification center behavior, and responsive-first usability expectations.
 - `CHANGELOG.md`: Added 2026-03-28 entry covering Windows build portability verification and documentation alignment scope.
 - `system-tracker/daily/2026-03-28.md`: Added 11:45 entry for SRS/changelog/knowledge-base consistency update.
+
+## 2026-03-30
+
+- `system-tracker/daily/2026-03-30.md`: Added full daily verification log for stabilization pass, e2e relocation, and tracker sync.
+- `system-tracker/knowledge-base/LANKA_POS_WORKSPACE_ARCHITECTURE_ANALYSIS.md`: Added architecture history entry for 2026-03-30 stabilization and test-layout standardization.
+- `system-tracker/knowledge-base/README.md`: Added repository convention note for centralized e2e test placement and docs placement policy.
+- `docs/README.md`: Added explicit test/doc placement rule summary.
+- `README.md`: Updated local setup baseline to PostgreSQL and refreshed environment guidance.
+- `docs/guides/LOCAL_SETUP.md`: Updated local setup guide to PostgreSQL and added test asset location rule.
+- `docs/guides/BUILD.md`: Updated database/build guidance and documented centralized Playwright layout.
+- `docs/specs/srs.md`: Updated requirement/spec text to reflect PostgreSQL local+production baseline.
+- `system-tracker/MARKDOWN_REGISTRY.md`: Refreshed registry date and added current daily tracker files.
+- `system-tracker/daily/2026-03-30.md`: Added continuation entries (23:34 and 23:41) for shadcn POS/Login/admin/dashboard utility consistency cleanup and verification.
+- `system-tracker/knowledge-base/LANKA_POS_WORKSPACE_ARCHITECTURE_ANALYSIS.md`: Added continuation architecture history entries for POS-first class cleanup plus dashboard/admin utility normalization.
+
+## 2026-03-31
+
+- `system-tracker/daily/2026-03-31.md`: Added new day log for Playwright headed-slow continuation, baseline e2e verification rerun, and outcome tracking.
+- `system-tracker/MARKDOWN_REGISTRY.md`: Updated registry date and included today's daily tracker file.
+
+## 2026-04-01
+
+- `system-tracker/daily/2026-04-01.md`: Added re-watch audit log for tracker/knowledge-base synchronization.
+- `system-tracker/knowledge-base/LANKA_POS_WORKSPACE_ARCHITECTURE_ANALYSIS.md`: Added 2026-03-31 architecture history entry for backend type-safety hardening and E2E stability verification.
+- `system-tracker/MARKDOWN_REGISTRY.md`: Refreshed date and added newly introduced docs/spec files and 2026-04-01 daily tracker file.
+- `docs/MASTER_INDEX.md`: Replaced absolute `file://` URL targets with repository-relative markdown links for workspace/CI portability.
